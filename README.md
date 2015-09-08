@@ -101,13 +101,16 @@ Make sure your implementation works on non-power-of-two sized arrays (see
 In `stream_compaction/efficient.cu`, implement
 `StreamCompaction::Efficient::scan`
 
+This is equivalent to the "Work-Efficient Parallel Scan" from the slides and
+*GPU Gems 3* section 39.2.2. Instead of using shared memory as in Example 39-2,
+use global memory only. This will again require multiple kernel invocations.
+
 ### 3.2. Stream Compaction
 In `stream_compaction/efficient.cu`, implement
 `StreamCompaction::Efficient::compact`
 
-This is equivalent to the "Work-Efficient Parallel Scan" from the slides and
-*GPU Gems 3* section 39.2.2. You will need to implement the scatter algorithm
-presented in the slides and the GPU Gems chapter.
+For compaction, you will also need to implement the scatter algorithm presented
+in the slides and the GPU Gems chapter.
 
 In `stream_compaction/common.cu`, implement these for use in `compact`:
 
