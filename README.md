@@ -161,19 +161,18 @@ Always profile with Release mode builds and run without debugging.
   run time on your GPU.
   * (You shouldn't compare unoptimized implementations to each other!)
 
-* Compare all of these GPU Scan implementations (Naive Global, Naive Shared,
-  Work-Efficient, and Thrust) to the serial CPU version of Scan. Plot a graph
-  of the comparison.
-  * Note that Naive Shared and Work-Efficient implementations will be have
-    small maximum array sizes (~1024).
-  * You should use CUDA events for timing. Be sure **not** to include memory
-    operations in your performance measurements, for comparability.
-  * To guess at what might be happening with the Thrust implementation, take a
-    look at the Nsight timeline for its execution.
+* Compare all of these GPU Scan implementations (Naive, Work-Efficient, and
+  Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
+  (with array size on the independent axis).
+  * You should use CUDA events for timing. Be sure **not** to include any
+    explicit memory operations in your performance measurements, for
+    comparability.
+  * To guess at what might be happening inside the Thrust implementation, take
+    a look at the Nsight timeline for its execution.
 
 * Write a brief explanation of the phenomena you see here.
-  * Can you find the performance bottlenecks? Is it memory or computation? Is it
-    different for each implementation?
+  * Can you find the performance bottlenecks? Is it memory I/O? Computation? Is
+    it different for each implementation?
 
 These questions should help guide you in performance analysis on future
 assignments, as well.

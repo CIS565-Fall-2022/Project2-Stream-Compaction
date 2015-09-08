@@ -11,7 +11,7 @@ namespace Efficient {
 /**
  * Performs prefix-sum (aka scan) on idata, storing the result into odata.
  */
-void scanBlock(int n, int *odata, const int *idata) {
+void scan(int n, int *odata, const int *idata) {
     // TODO
     printf("TODO\n");
 }
@@ -25,7 +25,7 @@ void scanBlock(int n, int *odata, const int *idata) {
  * @param idata  The array of elements to compact.
  * @returns      The number of elements remaining after compaction.
  */
-int compactBlock(int n, int *odata, const int *idata) {
+int compact(int n, int *odata, const int *idata) {
     // TODO
     return -1;
 }
