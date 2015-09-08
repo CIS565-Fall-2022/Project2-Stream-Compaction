@@ -14,7 +14,7 @@ anything here that you don't want to share with the world.)
 Instructions (delete me)
 ========================
 
-This is due **INSTRUCTOR TODO**.
+This is due Sunday, September 13 at midnight.
 
 **Summary:** In this project, you'll implement GPU stream compaction in CUDA,
 from scratch. This algorithm is widely used, and will be important for
@@ -37,7 +37,7 @@ on the implementation of scan and stream compaction.
 
 * The [slides on Parallel Algorithms](https://github.com/CIS565-Fall-2015/cis565-fall-2015.github.io/raw/master/lectures/2-Parallel-Algorithms.pptx)
   for Scan, Stream Compaction, and Work-Efficient Parallel Scan.
-* [GPU Gems 3, Chapter 39](http://http.developer.nvidia.com/GPUGems3/gpugems3_ch39.html).
+* GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](http://http.developer.nvidia.com/GPUGems3/gpugems3_ch39.html).
 
 Your GPU stream compaction implementation will live inside of the
 `stream_compaction` subproject. This way, you will be able to easily copy it
@@ -75,7 +75,7 @@ In `stream_compaction/cpu.cu`, implement:
   the `scan` function.
 * `StreamCompaction::CPU::compactWithScan`: stream compaction using the `scan`
   function. Map the input array to an array of 0s and 1s, scan it, and use
-  Scatter to produce the output. You will need a **CPU** Scatter implementation
+  scatter to produce the output. You will need a **CPU** scatter implementation
   for this (see slides or GPU Gems chapter for an explanation).
 
 These implementations should only be a few lines long.
@@ -106,7 +106,7 @@ In `stream_compaction/efficient.cu`, implement
 `StreamCompaction::Efficient::compact`
 
 This is equivalent to the "Work-Efficient Parallel Scan" from the slides and
-*GPU Gems 3* section 39.2.2. You will need to implement the Scatter algorithm
+*GPU Gems 3* section 39.2.2. You will need to implement the scatter algorithm
 presented in the slides and the GPU Gems chapter.
 
 In `stream_compaction/common.cu`, implement these for use in `compact`:
@@ -186,7 +186,7 @@ list of `SOURCE_FILES`), you must test that your project can build in Moore
 1. Open a GitHub pull request so that we can see that you have finished.
    The title should be "Submission: YOUR NAME".
 2. Send an email to the TA (gmail: kainino1+cis565@) with:
-   * **Subject**: in the form of `[CIS565] Project 0: PENNKEY`
+   * **Subject**: in the form of `[CIS565] Project 2: PENNKEY`
    * Direct link to your pull request on GitHub
    * In the form of a grade (0-100+) with comments, evaluate your own
      performance on the project.
