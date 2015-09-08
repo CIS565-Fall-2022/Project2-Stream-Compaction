@@ -83,11 +83,7 @@ These implementations should only be a few lines long.
 
 ## Part 2: Naive GPU Scan Algorithm
 
-### 2.1. Global Memory Scan
-
-In `stream_compaction/naive.cu`, implement:
-
-* `StreamCompaction::Naive::scan`
+In `stream_compaction/naive.cu`, implement `StreamCompaction::Naive::scan`
 
 This uses the "Naive" algorithm from GPU Gems 3, Section 39.2.1. However, note
 that they use shared memory in Example 39-1; don't do that yet. Instead, write
@@ -100,10 +96,14 @@ Make sure your implementation works on non-power-of-two sized arrays (see
 
 ## Part 3: Work-Efficient GPU Scan & Stream Compaction
 
-In `stream_compaction/efficient.cu`, implement:
+### 3.1. Scan
 
-* `StreamCompaction::Efficient::scan`
-* `StreamCompaction::Efficient::compact`
+In `stream_compaction/efficient.cu`, implement
+`StreamCompaction::Efficient::scan`
+
+### 3.2. Stream Compaction
+In `stream_compaction/efficient.cu`, implement
+`StreamCompaction::Efficient::compact`
 
 This is equivalent to the "Work-Efficient Parallel Scan" from the slides and
 *GPU Gems 3* section 39.2.2. You will need to implement the Scatter algorithm
