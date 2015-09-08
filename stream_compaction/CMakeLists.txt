@@ -1,6 +1,14 @@
 set(SOURCE_FILES
-    "stream_compaction.h"
-    "stream_compaction.cu"
+    "common.h"
+    "common.cu"
+    "cpu.h"
+    "cpu.cu"
+    "naive.h"
+    "naive.cu"
+    "efficient.h"
+    "efficient.cu"
+    "thrust.h"
+    "thrust.cu"
     )
 
 cuda_add_library(stream_compaction

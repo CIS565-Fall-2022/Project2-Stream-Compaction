@@ -20,6 +20,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 endif()
 
+include_directories(.)
 add_subdirectory(stream_compaction)
 
 cuda_add_executable(${CMAKE_PROJECT_NAME}
