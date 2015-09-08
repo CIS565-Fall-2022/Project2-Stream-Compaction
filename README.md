@@ -85,10 +85,15 @@ These implementations should only be a few lines long.
 
 In `stream_compaction/naive.cu`, implement `StreamCompaction::Naive::scan`
 
-This uses the "Naive" algorithm from GPU Gems 3, Section 39.2.1. However, note
-that they use shared memory in Example 39-1; don't do that yet. Instead, write
+This uses the "Naive" algorithm from GPU Gems 3, Section 39.2.1. We haven't yet
+taught shared memory, but you **shouldn't use it yet**. Example 39-1 uses
+shared memory, but is limited to operating on very small arrays! Instead, write
 this using global memory only. As a result of this, you will have to do
 `ilog2ceil(n)` separate kernel invocations.
+
+Beware of errors in Example 39-1 in the book; the pseudocode (Example 2) is
+probably correct, but the CUDA code has a few small errors (missing braces, bad
+indentation, etc.)
 
 Make sure your implementation works on non-power-of-two sized arrays (see
 `ilog2ceil`).
@@ -101,9 +106,18 @@ Make sure your implementation works on non-power-of-two sized arrays (see
 In `stream_compaction/efficient.cu`, implement
 `StreamCompaction::Efficient::scan`
 
-This is equivalent to the "Work-Efficient Parallel Scan" from the slides and
-*GPU Gems 3* section 39.2.2. Instead of using shared memory as in Example 39-2,
-use global memory only. This will again require multiple kernel invocations.
+This uses the "Naive" algorithm from GPU Gems 3, Section 39.2.1. We haven't yet
+taught shared memory, but you **shouldn't use it yet**. Example 39-1 uses
+shared memory, but is limited to operating on very small arrays! Instead, write
+this using global memory only. As a result of this, you will have to do
+`ilog2ceil(n)` separate kernel invocations.
+
+Beware of errors in Example 39-1 in the book; the pseudocode (Example 2) is
+probably correct, but the CUDA code has a few small errors (missing braces, bad
+indentation, etc.)
+
+Make sure your implementation works on non-power-of-two sized arrays (see
+`ilog2ceil`).
 
 ### 3.2. Stream Compaction
 In `stream_compaction/efficient.cu`, implement
@@ -116,13 +130,6 @@ In `stream_compaction/common.cu`, implement these for use in `compact`:
 
 * `StreamCompaction::Common::kernMapToBoolean`
 * `StreamCompaction::Common::kernScatter`
-
-Beware of errors in Example 39-2 in the book; the pseudocode (Examples 3/4) is
-correct, but the CUDA code has a few errors (missing braces, bad indentation,
-etc.)
-
-Make sure your implementation works on non-power-of-two sized arrays (see
-`ilog2ceil`).
 
 
 ## Part 4: Using Thrust's Implementation
