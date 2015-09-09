@@ -20,6 +20,10 @@ This is due Sunday, September 13 at midnight.
 from scratch. This algorithm is widely used, and will be important for
 accelerating your path tracer project.
 
+Your stream compaction implementations in this project will simply remove `0`s
+from an array of `int`s. In the path tracer, you will remove terminated paths
+from an array of rays.
+
 In addition to being useful for your path tracer, this project is meant to
 reorient your algorithmic thinking to the way of the GPU. On GPUs, many
 algorithms can benefit from massive parallelism and, in particular, data
@@ -68,6 +72,8 @@ important for debugging performance bottlenecks in your program.
 
 ## Part 1: CPU Scan & Stream Compaction
 
+This stream compaction method will remove `0`s from an array of `int`s.
+
 In `stream_compaction/cpu.cu`, implement:
 
 * `StreamCompaction::CPU::scan`: compute an exclusive prefix sum.
@@ -86,17 +92,20 @@ These implementations should only be a few lines long.
 In `stream_compaction/naive.cu`, implement `StreamCompaction::Naive::scan`
 
 This uses the "Naive" algorithm from GPU Gems 3, Section 39.2.1. We haven't yet
-taught shared memory, but you **shouldn't use it yet**. Example 39-1 uses
+taught shared memory, and you **shouldn't use it yet**. Example 39-1 uses
 shared memory, but is limited to operating on very small arrays! Instead, write
 this using global memory only. As a result of this, you will have to do
 `ilog2ceil(n)` separate kernel invocations.
 
 Beware of errors in Example 39-1 in the book; both the pseudocode and the CUDA
-code in the online version of this chapter are known to have a few small errors
+code in the online version of Chapter 39 are known to have a few small errors
 (in superscripting, missing braces, bad indentation, etc.)
 
-Make sure your implementation works on non-power-of-two sized arrays (see
-`ilog2ceil`).
+Since the parallel scan algorithm operates on a binary tree structure, it works
+best with arrays with power-of-two length. Make sure your implementation works
+on non-power-of-two sized arrays (see `ilog2ceil`). This requires extra memory
+- your intermediate array sizes will need to be rounded to the next power of
+two.
 
 
 ## Part 3: Work-Efficient GPU Scan & Stream Compaction
@@ -106,20 +115,16 @@ Make sure your implementation works on non-power-of-two sized arrays (see
 In `stream_compaction/efficient.cu`, implement
 `StreamCompaction::Efficient::scan`
 
-This uses the "Naive" algorithm from GPU Gems 3, Section 39.2.1. We haven't yet
-taught shared memory, but you **shouldn't use it yet**. Example 39-1 uses
-shared memory, but is limited to operating on very small arrays! Instead, write
-this using global memory only. As a result of this, you will have to do
-`ilog2ceil(n)` separate kernel invocations.
+All of the text in Part 2 applies.
 
-Beware of errors in Example 39-2 in the book; both the pseudocode and the CUDA
-code in the online version of this chapter are known to have a few small errors
-(in superscripting, missing braces, bad indentation, etc.)
-
-Make sure your implementation works on non-power-of-two sized arrays (see
-`ilog2ceil`).
+* This uses the "Work-Efficient" algorithm from GPU Gems 3, Section 39.2.2.
+* Beware of errors in Example 39-2.
+* Test non-power-of-two sized arrays.
 
 ### 3.2. Stream Compaction
+
+This stream compaction method will remove `0`s from an array of `int`s.
+
 In `stream_compaction/efficient.cu`, implement
 `StreamCompaction::Efficient::compact`
 
