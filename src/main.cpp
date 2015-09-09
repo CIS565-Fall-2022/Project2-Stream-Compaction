@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     printf("** SCAN TESTS **\n");
     printf("****************\n");
 
-    genArray(SIZE, a, 50);
+    genArray(SIZE - 1, a, 50);  // Leave a 0 at the end to test that edge case
     printArray(SIZE, a, true);
 
     zeroArray(SIZE, b);
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 
     // Compaction tests
 
-    genArray(SIZE, a, 4);
+    genArray(SIZE - 1, a, 4);  // Leave a 0 at the end to test that edge case
     printArray(SIZE, a, true);
 
     int count, expectedCount, expectedNPOT;

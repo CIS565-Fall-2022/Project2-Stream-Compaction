@@ -91,9 +91,9 @@ shared memory, but is limited to operating on very small arrays! Instead, write
 this using global memory only. As a result of this, you will have to do
 `ilog2ceil(n)` separate kernel invocations.
 
-Beware of errors in Example 39-1 in the book; the pseudocode (Example 2) is
-probably correct, but the CUDA code has a few small errors (missing braces, bad
-indentation, etc.)
+Beware of errors in Example 39-1 in the book; both the pseudocode and the CUDA
+code in the online version of this chapter are known to have a few small errors
+(in superscripting, missing braces, bad indentation, etc.)
 
 Make sure your implementation works on non-power-of-two sized arrays (see
 `ilog2ceil`).
@@ -112,9 +112,9 @@ shared memory, but is limited to operating on very small arrays! Instead, write
 this using global memory only. As a result of this, you will have to do
 `ilog2ceil(n)` separate kernel invocations.
 
-Beware of errors in Example 39-1 in the book; the pseudocode (Example 2) is
-probably correct, but the CUDA code has a few small errors (missing braces, bad
-indentation, etc.)
+Beware of errors in Example 39-2 in the book; both the pseudocode and the CUDA
+code in the online version of this chapter are known to have a few small errors
+(in superscripting, missing braces, bad indentation, etc.)
 
 Make sure your implementation works on non-power-of-two sized arrays (see
 `ilog2ceil`).
@@ -150,7 +150,7 @@ GPU).  You can create a `thrust::device_vector` by creating a
 ## Part 5: Radix Sort (Extra Credit) (+10)
 
 Add an additional module to the `stream_compaction` subproject. Implement radix
-sort using one of your scan implementations.
+sort using one of your scan implementations. Add tests to check its correctness.
 
 
 ## Write-up
@@ -183,6 +183,11 @@ Always profile with Release mode builds and run without debugging.
 * Write a brief explanation of the phenomena you see here.
   * Can you find the performance bottlenecks? Is it memory I/O? Computation? Is
     it different for each implementation?
+
+* Paste the output of the test program into a triple-backtick block in your
+  README.
+  * If you add your own tests (e.g. for radix sort or to test additional corner
+    cases), be sure to mention it explicitly.
 
 These questions should help guide you in performance analysis on future
 assignments, as well.
