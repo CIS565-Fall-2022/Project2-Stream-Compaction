@@ -8,6 +8,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_CXX_STANDARD 11)
 
 list(APPEND CUDA_NVCC_FLAGS_DEBUG -G -g)
+list(APPEND CUDA_NVCC_FLAGS_RELWITHDEBUGINFO -lineinfo)
 
 # Crucial magic for CUDA linking
 find_package(Threads REQUIRED)
