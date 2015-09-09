@@ -61,11 +61,11 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration buildProperties="" description="" id="com.nvidia.cuda.ide.toolchain.base.1399573849.1760580076" name="Release" parent="org.eclipse.cdt.build.core.emptycfg">
+				<configuration artifactName="Project2-Stream-Compaction" buildProperties="" description="" id="com.nvidia.cuda.ide.toolchain.base.1399573849.1760580076" name="Release" parent="org.eclipse.cdt.build.core.emptycfg">
 					<folderInfo id="com.nvidia.cuda.ide.toolchain.base.1399573849.1760580076." name="/" resourcePath="">
 						<toolChain id="com.nvidia.cuda.ide.toolchain.base.1561798243" name="com.nvidia.cuda.ide.toolchain.base" superClass="com.nvidia.cuda.ide.toolchain.base">
 							<targetPlatform archList="all" binaryParser="com.nvidia.cuda.ide.elf;com.nvidia.cuda.ide.macho;com.nvidia.cuda.ide.cubin" id="com.nvidia.cuda.ide.targetPlatform.1475147392" isAbstract="false" name="Debug Platform" osList="linux,macosx" superClass="com.nvidia.cuda.ide.targetPlatform"/>
-							<builder id="com.nvidia.cuda.ide.builder.1097461705" incrementalBuildTarget="${ConfigName}" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="CUDA Toolkit 7.0 Builder" parallelBuildOn="false" superClass="com.nvidia.cuda.ide.builder"/>
+							<builder buildPath="${workspace_loc:/Project2-Stream-Compaction}/" id="com.nvidia.cuda.ide.builder.1097461705" incrementalBuildTarget="${ConfigName}" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="CUDA Toolkit 7.0 Builder" parallelBuildOn="false" superClass="com.nvidia.cuda.ide.builder"/>
 							<tool id="nvcc.compiler.base.1057470587" name="NVCC Compiler" superClass="nvcc.compiler.base">
 								<option id="nvcc.compiler.pic.142091408" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
 								<inputType id="nvcc.compiler.input.cu.1437389017" superClass="nvcc.compiler.input.cu"/>
@@ -181,9 +181,6 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="Project2-Stream-Compaction.null.1857600751" name="Project2-Stream-Compaction"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Release">
@@ -198,5 +195,18 @@
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/Project2-Stream-Compaction"/>
 		</configuration>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.toolchain.base.1399573849.1760580076;com.nvidia.cuda.ide.toolchain.base.1399573849.1760580076.;nvcc.compiler.base.1057470587;nvcc.compiler.input.cpp.1784409725">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.toolchain.base.1399573849.1760580076;com.nvidia.cuda.ide.toolchain.base.1399573849.1760580076.;nvcc.compiler.base.1057470587;nvcc.compiler.input.cu.1437389017">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.toolchain.base.1399573849.1760580076;com.nvidia.cuda.ide.toolchain.base.1399573849.1760580076.;nvcc.compiler.base.1057470587;nvcc.compiler.input.c.920638684">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>
