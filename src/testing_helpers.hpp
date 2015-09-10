@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdlib>
+
 template<typename T>
 int cmpArrays(int n, T *a, T *b) {
     for (int i = 0; i < n; i++) {
@@ -38,13 +40,10 @@ void zeroArray(int n, int *a) {
 }
 
 void genArray(int n, int *a, int maxval) {
-    auto rand = std::bind(
-            std::uniform_int_distribution<int>(0, maxval),
-            std::default_random_engine(0));
-    rand();
+    srand(0);
 
     for (int i = 0; i < n; i++) {
-        a[i] = rand();
+        a[i] = rand() % maxval;
     }
 }
 

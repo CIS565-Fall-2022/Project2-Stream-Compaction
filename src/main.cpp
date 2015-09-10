@@ -7,8 +7,6 @@
  */
 
 #include <cstdio>
-#include <functional>
-#include <random>
 #include <stream_compaction/cpu.h>
 #include <stream_compaction/naive.h>
 #include <stream_compaction/efficient.h>
