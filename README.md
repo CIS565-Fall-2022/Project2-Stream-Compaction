@@ -69,10 +69,19 @@ important for debugging performance bottlenecks in your program.
 * `main.cpp`
   * Some testing code for your implementations.
 
+**Note 1:** The tests will simply compare against your CPU implementation
+Do it first!
+
+**Note 2:** The tests default to an array of size 256.
+Test with something larger (10,000?), too!
+
 
 ## Part 1: CPU Scan & Stream Compaction
 
 This stream compaction method will remove `0`s from an array of `int`s.
+
+Do this first, and double check the output! It will be used as the expected
+value for the other tests.
 
 In `stream_compaction/cpu.cu`, implement:
 
