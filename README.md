@@ -199,9 +199,12 @@ Always profile with Release mode builds and run without debugging.
   (with array size on the independent axis).
   * You should use CUDA events for timing GPU code. Be sure **not** to include
     any explicit memory operations (`cudaMalloc`, `cudaMemcpy`) in your
-    performance measurements, for comparability.
-  * You should use the C++11 `std::chrono` API for timing CPU code. See this
+    performance measurements, for comparability. Note that CUDA events cannot
+    time CPU code.
+  * You can use the C++11 `std::chrono` API for timing CPU code. See this
     [Stack Overflow answer](http://stackoverflow.com/a/23000049) for an example.
+    Note that `std::chrono` may not provide high-precision timing. If it does
+    not, you can either use it to time many iterations, or use another method.
   * To guess at what might be happening inside the Thrust implementation (e.g.
     allocation, memory copy), take a look at the Nsight timeline for its
     execution. Your analysis here doesn't have to be detailed, since you aren't
