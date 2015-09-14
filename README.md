@@ -106,16 +106,16 @@ shared memory, but is limited to operating on very small arrays! Instead, write
 this using global memory only. As a result of this, you will have to do
 `ilog2ceil(n)` separate kernel invocations.
 
+Since your individual GPU threads are not guaranteed to run simultaneously, you
+can't generally operate on an array in-place on the GPU; it will cause race
+conditions. Instead, create two device arrays. Swap them at each iteration:
+read from A and write to B, read from B and write to A, and so on.
+
 Beware of errors in Example 39-1 in the book; both the pseudocode and the CUDA
 code in the online version of Chapter 39 are known to have a few small errors
 (in superscripting, missing braces, bad indentation, etc.)
 
-Since the parallel scan algorithm operates on a binary tree structure, it works
-best with arrays with power-of-two length. Make sure your implementation works
-on non-power-of-two sized arrays (see `ilog2ceil`). This requires extra memory
-- your intermediate array sizes will need to be rounded to the next power of
-two.
-
+Be sure to test non-power-of-two-sized arrays.
 
 ## Part 3: Work-Efficient GPU Scan & Stream Compaction
 
@@ -124,11 +124,20 @@ two.
 In `stream_compaction/efficient.cu`, implement
 `StreamCompaction::Efficient::scan`
 
-All of the text in Part 2 applies.
+Most of the text in Part 2 applies.
 
 * This uses the "Work-Efficient" algorithm from GPU Gems 3, Section 39.2.2.
+* This can be done in place - it doesn't suffer from the race conditions of
+  the naive method, since there won't be a case where one thread writes to
+  and another thread reads from the same location in the array.
 * Beware of errors in Example 39-2.
-* Test non-power-of-two sized arrays.
+* Test non-power-of-two-sized arrays.
+
+Since the work-efficient scan operates on a binary tree structure, it works
+best with arrays with power-of-two length. Make sure your implementation works
+on non-power-of-two sized arrays (see `ilog2ceil`). This requires extra memory
+- your intermediate array sizes will need to be rounded to the next power of
+two.
 
 ### 3.2. Stream Compaction
 
