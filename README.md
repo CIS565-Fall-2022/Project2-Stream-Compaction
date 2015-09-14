@@ -188,9 +188,11 @@ Always profile with Release mode builds and run without debugging.
 * Compare all of these GPU Scan implementations (Naive, Work-Efficient, and
   Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
   (with array size on the independent axis).
-  * You should use CUDA events for timing. Be sure **not** to include any
-    explicit memory operations in your performance measurements, for
-    comparability.
+  * You should use CUDA events for timing GPU code. Be sure **not** to include
+    any explicit memory operations (`cudaMalloc`, `cudaMemcpy`) in your
+    performance measurements, for comparability.
+  * You should use the C++11 `std::chrono` API for timing CPU code. See this
+    [Stack Overflow answer](http://stackoverflow.com/a/23000049) for an example.
   * To guess at what might be happening inside the Thrust implementation, take
     a look at the Nsight timeline for its execution.
 
