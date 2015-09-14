@@ -193,8 +193,10 @@ Always profile with Release mode builds and run without debugging.
     performance measurements, for comparability.
   * You should use the C++11 `std::chrono` API for timing CPU code. See this
     [Stack Overflow answer](http://stackoverflow.com/a/23000049) for an example.
-  * To guess at what might be happening inside the Thrust implementation, take
-    a look at the Nsight timeline for its execution.
+  * To guess at what might be happening inside the Thrust implementation (e.g.
+    allocation, memory copy), take a look at the Nsight timeline for its
+    execution. Your analysis here doesn't have to be detailed, since you aren't
+    even looking at the code for the implementation.
 
 * Write a brief explanation of the phenomena you see here.
   * Can you find the performance bottlenecks? Is it memory I/O? Computation? Is
