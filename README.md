@@ -198,7 +198,7 @@ Always profile with Release mode builds and run without debugging.
   Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
   (with array size on the independent axis).
   * You should use CUDA events for timing GPU code. Be sure **not** to include
-    any explicit memory operations (`cudaMalloc`, `cudaMemcpy`) in your
+    any *initial/final* memory operations (`cudaMalloc`, `cudaMemcpy`) in your
     performance measurements, for comparability. Note that CUDA events cannot
     time CPU code.
   * You can use the C++11 `std::chrono` API for timing CPU code. See this
