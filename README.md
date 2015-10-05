@@ -73,7 +73,7 @@ important for debugging performance bottlenecks in your program.
 Do it first!
 
 **Note 2:** The tests default to an array of size 256.
-Test with something larger (10,000?), too!
+Test with something larger (10,000? 1,000,000?), too!
 
 
 ## Part 1: CPU Scan & Stream Compaction
