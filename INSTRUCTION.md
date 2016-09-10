@@ -1,7 +1,7 @@
 Project 2 Stream Compaction Instructions
 ========================
 
-This is due **Sunday, September TBD 2016 at midnight**.
+This is due **Tuesday, September 27 2016 at midnight**.
 
 **Summary:** In this project, you'll implement GPU stream compaction in CUDA,
 from scratch. This algorithm is widely used, and will be important for
@@ -26,7 +26,7 @@ compaction.
 **Algorithm overview & details:** There are two primary references for details
 on the implementation of scan and stream compaction.
 
-* The [slides on Parallel Algorithms](https://github.com/CIS565-Fall-2015/cis565-fall-2015.github.io/raw/master/lectures/2-Parallel-Algorithms.pptx)
+* The [slides on Parallel Algorithms](https://github.com/CIS565-Fall-2016/cis565-fall-2016.github.io/raw/master/lectures/3-Parallel-Algorithms.pptx)
   for Scan, Stream Compaction, and Work-Efficient Parallel Scan.
 * GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](http://http.developer.nvidia.com/GPUGems3/gpugems3_ch39.html).
 
@@ -94,7 +94,7 @@ can't generally operate on an array in-place on the GPU; it will cause race
 conditions. Instead, create two device arrays. Swap them at each iteration:
 read from A and write to B, read from B and write to A, and so on.
 
-Beware of errors in Example 39-1 in the book; both the pseudocode and the CUDA
+Beware of errors in Example 39-1 in the chapter; both the pseudocode and the CUDA
 code in the online version of Chapter 39 are known to have a few small errors
 (in superscripting, missing braces, bad indentation, etc.)
 
