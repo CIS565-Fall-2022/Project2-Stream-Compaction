@@ -26,7 +26,7 @@ compaction.
 **Algorithm overview & details:** There are two primary references for details
 on the implementation of scan and stream compaction.
 
-* The [slides on Parallel Algorithms](https://github.com/CIS565-Fall-2016/cis565-fall-2016.github.io/raw/master/lectures/3-Parallel-Algorithms.pptx)
+* The [slides on Parallel Algorithms](https://github.com/CIS565-Fall-2016/cis565-fall-2016.github.io/blob/master/lectures/3-Parallel-Algorithms-1.pptx?raw=true)
   for Scan, Stream Compaction, and Work-Efficient Parallel Scan.
 * GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](http://http.developer.nvidia.com/GPUGems3/gpugems3_ch39.html).
 
