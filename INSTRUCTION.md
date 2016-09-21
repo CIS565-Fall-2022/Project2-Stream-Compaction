@@ -29,6 +29,9 @@ on the implementation of scan and stream compaction.
 * The [slides on Parallel Algorithms](https://github.com/CIS565-Fall-2016/cis565-fall-2016.github.io/blob/master/lectures/3-Parallel-Algorithms-1.pptx?raw=true)
   for Scan, Stream Compaction, and Work-Efficient Parallel Scan.
 * GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](http://http.developer.nvidia.com/GPUGems3/gpugems3_ch39.html).
+    - This online version contains a few small errors (in superscripting, missing braces, bad indentation, etc.)
+    - We now maintain a fix for this at [GPU Gem 3 Ch 39 Patch](#gpu-gem-3-ch-39-patch). Thanks for contributions by [@immiao](https://github.com/immiao) and [trungtle](https://github.com/trungtle). 
+    And welcome to contribute by openning a pull request.
 
 Your GPU stream compaction implementation will live inside of the
 `stream_compaction` subproject. This way, you will be able to easily copy it
@@ -223,3 +226,16 @@ The template of the comment section of your pull request is attached below, you 
     * ...
 * Feedback on the project itself, if any.
 
+## GPU Gem 3 Ch 39 Patch
+
+* Example 1
+![](img/example-1.png)
+
+* Example 2
+![](img/example-2.jpg)
+
+* Figure-39-4
+![](img/figure-39-4.jpg)
+
+* Figure-39-2. This image shows an inclusive scan while we should implement an exclusive scan here.
+![](img/figure-39-2.jpg)
