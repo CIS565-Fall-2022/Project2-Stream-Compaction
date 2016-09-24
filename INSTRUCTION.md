@@ -155,8 +155,28 @@ To measure timing, be sure to exclude memory operations by passing
 GPU).  You can create a `thrust::device_vector` by creating a
 `thrust::host_vector` from the given pointer, then casting it.
 
+## Part 5: Why is my GPU approach so slow? (Extra Credit) (+5)
 
-## Part 5: Radix Sort (Extra Credit) (+10)
+If you implement your efficient scan version following the slides closely, there's a good chance 
+that you are getting an "efficient" gpu scan that is actually not that efficient -- it is slower than my cpu approach? 
+
+Though it is totally acceptable for this assignment. 
+Besides explain the reason of this phenomena, you are encouraged try to upgrade your work-efficient gpu scan. 
+
+Thinking about this may lead you to an aha moment: 
+- What is the occupancy at a deeper level in the upper/down sweep? Are most threads actually working?
+- Are you always launching the same number of blocks throughout each level of the upper/down sweep?
+- If some threads are being lazy, can we do an early termination on them? 
+- How can I compact the threads? What should I modify to keep the remaining threads still working correctly?
+
+Keep in mind this optimization won't need you change a lot of your code structions. 
+It's all about some index calculation hacks.
+
+If you don't run into the slower gpu approach. 
+Congratulations! You are way ahead and you earn this extra credit automatically. 
+
+
+## Part 6: Radix Sort (Extra Credit) (+10)
 
 Add an additional module to the `stream_compaction` subproject. Implement radix
 sort using one of your scan implementations. Add tests to check its correctness.
@@ -237,5 +257,5 @@ The template of the comment section of your pull request is attached below, you 
 * Figure-39-4
 ![](img/figure-39-4.jpg)
 
-* Figure-39-2. This image shows an inclusive scan while we should implement an exclusive scan here.
+* Figure-39-2. This image shows an naive inclusive scan. We should convert this to an exclusive one for compaction.
 ![](img/figure-39-2.jpg)
