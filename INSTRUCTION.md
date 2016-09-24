@@ -158,18 +158,18 @@ GPU).  You can create a `thrust::device_vector` by creating a
 ## Part 5: Why is my GPU approach so slow? (Extra Credit) (+5)
 
 If you implement your efficient scan version following the slides closely, there's a good chance 
-that you are getting an "efficient" gpu scan that is actually not that efficient -- it is slower than my cpu approach? 
+that you are getting an "efficient" gpu scan that is actually not that efficient -- it is slower than the cpu approach? 
 
-Though it is totally acceptable for this assignment. 
-Besides explain the reason of this phenomena, you are encouraged try to upgrade your work-efficient gpu scan. 
+Though it is totally acceptable for this assignment, 
+In addition to explain the reason of this phenomena, you are encouraged to try to upgrade your work-efficient gpu scan. 
 
-Thinking about this may lead you to an aha moment: 
+Thinking about these may lead you to an aha moment: 
 - What is the occupancy at a deeper level in the upper/down sweep? Are most threads actually working?
 - Are you always launching the same number of blocks throughout each level of the upper/down sweep?
 - If some threads are being lazy, can we do an early termination on them? 
 - How can I compact the threads? What should I modify to keep the remaining threads still working correctly?
 
-Keep in mind this optimization won't need you change a lot of your code structions. 
+Keep in mind this optimization won't need you change a lot of your code structures. 
 It's all about some index calculation hacks.
 
 If you don't run into the slower gpu approach. 
