@@ -259,3 +259,52 @@ The template of the comment section of your pull request is attached below, you 
 
 * Figure-39-2. This image shows an naive inclusive scan. We should convert this to an exclusive one for compaction.
 ![](img/figure-39-2.jpg)
+
+## Algorithm Examples
+
+* scan: 
+  - goal: produce a prefix sum array of a given array (we only care about exclusive scan here)
+  - input
+    - [1 5 0 1 2 0 3]
+  - output
+    - [0 1 6 6 7 9 9]
+* compact: 
+  - goal: closely and neatly packed the elements != 0
+  - input
+    - [1 5 0 1 2 0 3]
+  - output
+    - [1 5 1 2 3]
+* compactWithoutScan (CPU)
+  - an implementation of compact. So the goal, input and output should all be the same as compact
+  - Simply loop through the input array, meanwhile maintain a pointer indicating which address shall we put the next non-zero element
+* compactWithScan (CPU/GPU)
+  - an implementation of compact. So the goal, input and output should all be the same as compact
+  - 3 steps
+    - map
+      + goal: map our original data array (integer, Light Ray, etc) to a bool array
+      + input
+        - [1 5 0 1 2 0 3]
+      + output
+        - [1 1 0 1 1 0 1]
+    - scan
+        + take the output of last step as input
+        + input
+          - [1 1 0 1 1 0 1]
+        + output
+          - [0 1 2 2 3 4 4]
+    - scatter
+        + preserve non-zero elements and compact them into a new array
+        + input:
+          + original array
+            - [1 5 0 1 2 0 3]
+          + mapped array
+            - [1 1 0 1 1 0 1]
+          + scanned array
+            - [0 1 2 2 3 4 4]
+        + output:
+          - [1 5 1 2 3]
+        + This can be done in parallel on GPU
+        + You can try multi-threading on CPU if you want (not required and not our focus)
+        + for each element input[i] in original array
+          - if it's non-zero (given by mapped array)
+          - then put it at output[index], where index = scanned[i]
