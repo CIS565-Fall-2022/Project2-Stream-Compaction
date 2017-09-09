@@ -28,13 +28,13 @@ on the implementation of scan and stream compaction.
 
 * The [slides on Parallel Algorithms](https://github.com/CIS565-Fall-2016/cis565-fall-2016.github.io/blob/master/lectures/3-Parallel-Algorithms-1.pptx?raw=true)
   for Scan, Stream Compaction, and Work-Efficient Parallel Scan.
-* GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](http://http.developer.nvidia.com/GPUGems3/gpugems3_ch39.html).
-    - This online version contains a few small errors (in superscripting, missing braces, bad indentation, etc.)
-    - We now maintain a fix for this at [GPU Gem 3 Ch 39 Patch](#gpu-gem-3-ch-39-patch). Thanks for contributions by [@immiao](https://github.com/immiao) and [trungtle](https://github.com/trungtle). 
-    And welcome to contribute by openning a pull request.
+* GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html).
+    - This online version contains a few small errors (in superscripting, missing braces, bad indentation, etc.) 
+    - We maintain a fix for this at [GPU Gem 3 Ch 39 Patch](https://github.com/CIS565-Fall-2017/Project2-Stream-Compaction/blob/master/INSTRUCTION.md#gpu-gem-3-ch-39-patch). If you find more errors in the chapter, welcome to open new pull requests to contribute.
+* If you are still unclear after reading the steps, take a look at the last chapter - [Algorithm Examples](https://github.com/CIS565-Fall-2017/Project2-Stream-Compaction/blob/master/INSTRUCTION.md#algorithm-examples).
 
 Your GPU stream compaction implementation will live inside of the
-`stream_compaction` subproject. This way, you will be able to easily copy it
+`stream_compaction` subproject. In this way, you will be able to easily copy it
 over for use in your GPU path tracer.
 
 
