@@ -12,7 +12,7 @@ list(APPEND CUDA_NVCC_FLAGS_RELWITHDEBUGINFO -lineinfo)
 
 # Crucial magic for CUDA linking
 find_package(Threads REQUIRED)
-find_package(CUDA REQUIRED)
+find_package(CUDA 8.0 REQUIRED)
 
 set(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE ON)
 set(CUDA_SEPARABLE_COMPILATION ON)
