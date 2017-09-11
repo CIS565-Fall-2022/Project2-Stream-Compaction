@@ -13,11 +13,11 @@
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
-int main(int argc, char* argv[]) {
-    const int SIZE = 1 << 8;
-    const int NPOT = SIZE - 3; // Non-Power-Of-Two
-    int a[SIZE], b[SIZE], c[SIZE];
+const int SIZE = 1 << 20;
+const int NPOT = SIZE - 3; // Non-Power-Of-Two
+int a[SIZE], b[SIZE], c[SIZE];
 
+int main(int argc, char* argv[]) {
     // Scan tests
 
     printf("\n");

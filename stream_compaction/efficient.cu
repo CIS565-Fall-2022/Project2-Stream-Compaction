@@ -8,11 +8,9 @@ namespace StreamCompaction {
         using StreamCompaction::Common::PerformanceTimer;
         PerformanceTimer& timer()
         {
-            // not thread-safe
             static PerformanceTimer timer;
             return timer;
         }
-        // TODO: __global__
 
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.

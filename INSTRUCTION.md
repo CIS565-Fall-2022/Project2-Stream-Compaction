@@ -26,7 +26,7 @@ compaction.
 **Algorithm overview & details:** There are two primary references for details
 on the implementation of scan and stream compaction.
 
-* The [slides on Parallel Algorithms](https://github.com/CIS565-Fall-2016/cis565-fall-2016.github.io/blob/master/lectures/3-Parallel-Algorithms-1.pptx?raw=true)
+* The [slides on Parallel Algorithms](https://docs.google.com/presentation/d/1ETVONA7QDM-WqsEj4qVOGD6Kura5I6E9yqH-7krnwZ0/edit#slide=id.p126)
   for Scan, Stream Compaction, and Work-Efficient Parallel Scan.
 * GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html).
     - This online version contains a few small errors (in superscripting, missing braces, bad indentation, etc.) 
@@ -71,7 +71,7 @@ value for the other tests.
 
 In `stream_compaction/cpu.cu`, implement:
 
-* `StreamCompaction::CPU::scan`: compute an exclusive prefix sum.
+* `StreamCompaction::CPU::scan`: compute an exclusive prefix sum. For performance comparison, this is supposed to be a simple `for` loop. But for better understanding before starting moving to GPU, you can simulate the GPU scan in this function first.
 * `StreamCompaction::CPU::compactWithoutScan`: stream compaction without using
   the `scan` function.
 * `StreamCompaction::CPU::compactWithScan`: stream compaction using the `scan`
@@ -86,11 +86,7 @@ These implementations should only be a few lines long.
 
 In `stream_compaction/naive.cu`, implement `StreamCompaction::Naive::scan`
 
-This uses the "Naive" algorithm from GPU Gems 3, Section 39.2.1. We haven't yet
-taught shared memory, and you **shouldn't use it yet**. Example 39-1 uses
-shared memory, but is limited to operating on very small arrays! Instead, write
-this using global memory only. As a result of this, you will have to do
-`ilog2ceil(n)` separate kernel invocations.
+This uses the "Naive" algorithm from GPU Gems 3, Section 39.2.1. Example 39-1 uses shared memory. This is not required in this project. You can simply use global memory. As a result of this, you will have to do `ilog2ceil(n)` separate kernel invocations.
 
 Since your individual GPU threads are not guaranteed to run simultaneously, you
 can't generally operate on an array in-place on the GPU; it will cause race
@@ -155,7 +151,7 @@ To measure timing, be sure to exclude memory operations by passing
 GPU).  You can create a `thrust::device_vector` by creating a
 `thrust::host_vector` from the given pointer, then casting it.
 
-## Part 5: Why is my GPU approach so slow? (Extra Credit) (+5)
+## Part 5: Why is My GPU Approach So Slow? (Extra Credit) (+5)
 
 If you implement your efficient scan version following the slides closely, there's a good chance 
 that you are getting an "efficient" gpu scan that is actually not that efficient -- it is slower than the cpu approach? 
@@ -181,6 +177,13 @@ Congratulations! You are way ahead and you earn this extra credit automatically.
 Add an additional module to the `stream_compaction` subproject. Implement radix
 sort using one of your scan implementations. Add tests to check its correctness.
 
+## Part 7: GPU Scan Using Shared Memory && Hardware Optimization(Extra Credit) (+10)
+
+Implement [GPU Gem Ch 39](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html) Example 39.1, 39.2.
+
+Notice that the size of the shared memory is dynamic and related to the block size. Since each SM has limited shared memory, the block size you set will affect the occupancy of the blocks in each SM. For example, let's say your graphics card has N Kb of shared memory per SM, if you use the maximum of N Kb shared memory per block, then you would have a max occupancy of 1 block per SM. This might not be the best performance.
+
+Besides we can optimize the efficiency by changing our memory access pattern to avoid bank conflicts. See [GPU Gem Ch 39](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html) Section 39.2.3. This hasn't been covered in the course but we encourage you to challenge yourself.
 
 ## Write-up
 
@@ -203,14 +206,11 @@ Always profile with Release mode builds and run without debugging.
 * Compare all of these GPU Scan implementations (Naive, Work-Efficient, and
   Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
   (with array size on the independent axis).
-  * You should use CUDA events for timing GPU code. Be sure **not** to include
-    any *initial/final* memory operations (`cudaMalloc`, `cudaMemcpy`) in your
-    performance measurements, for comparability. Note that CUDA events cannot
-    time CPU code.
-  * You can use the C++11 `std::chrono` API for timing CPU code. See this
-    [Stack Overflow answer](http://stackoverflow.com/a/23000049) for an example.
-    Note that `std::chrono` may not provide high-precision timing. If it does
-    not, you can either use it to time many iterations, or use another method.
+  * We wrapped up both CPU and GPU timing functions as a performance timer class for you to conveniently measure the time cost.
+    * We use `std::chrono` to provide CPU high-precision timing and CUDA event to measure the CUDA performance.
+    * For CPU, put your CPU code between `timer().startCpuTimer()` and `timer().endCpuTimer()`.
+    * For GPU, put your CUDA code between `timer().startGpuTimer()` and `timer().endGpuTimer()`. Be sure **not** to include any *initial/final* memory operations (`cudaMalloc`, `cudaMemcpy`) in your performance measurements, for comparability.
+    * Don't mix up `CpuTimer` and `GpuTimer`.
   * To guess at what might be happening inside the Thrust implementation (e.g.
     allocation, memory copy), take a look at the Nsight timeline for its
     execution. Your analysis here doesn't have to be detailed, since you aren't

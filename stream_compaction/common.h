@@ -30,7 +30,6 @@ inline int ilog2ceil(int x) {
     return ilog2(x - 1) + 1;
 }
 
-
 namespace StreamCompaction {
     namespace Common {
         __global__ void kernMapToBoolean(int n, int *bools, const int *idata);
@@ -41,6 +40,8 @@ namespace StreamCompaction {
 	    /**
 	    * This class is used for timing the performance
 	    * Uncopyable and unmovable
+        *
+        * Adapted from WindyDarian(https://github.com/WindyDarian)
 	    */
 	    class PerformanceTimer
 	    {
