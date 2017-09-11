@@ -152,6 +152,8 @@ To measure timing, be sure to exclude memory operations by passing
 GPU).  You can create a `thrust::device_vector` by creating a
 `thrust::host_vector` from the given pointer, then casting it.
 
+For thrust stream compaction, take a look at [thrust::remove_if](https://thrust.github.io/doc/group__stream__compaction.html). It's not required to analyze `thrust::remove_if` but you're encouraged to do so.
+
 ## Part 5: Why is My GPU Approach So Slow? (Extra Credit) (+5)
 
 If you implement your efficient scan version following the slides closely, there's a good chance 
