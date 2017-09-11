@@ -13,7 +13,7 @@
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 20;
+const int SIZE = 1 << 8; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int a[SIZE], b[SIZE], c[SIZE];
 
@@ -29,6 +29,9 @@ int main(int argc, char* argv[]) {
     a[SIZE - 1] = 0;
     printArray(SIZE, a, true);
 
+    // initialize b using StreamCompaction::CPU::scan you implement
+    // We use b for further comparison. Make sure your StreamCompaction::CPU::scan is correct.
+    // At first all cases passed because b && c are both all zeroes.
     zeroArray(SIZE, b);
     printDesc("cpu scan, power-of-two");
     StreamCompaction::CPU::scan(SIZE, b, a);
@@ -97,6 +100,8 @@ int main(int argc, char* argv[]) {
 
     int count, expectedCount, expectedNPOT;
 
+    // initialize b using StreamCompaction::CPU::compactWithoutScan you implement
+    // We use b for further comparison. Make sure your StreamCompaction::CPU::compactWithoutScan is correct.
     zeroArray(SIZE, b);
     printDesc("cpu compact without scan, power-of-two");
     count = StreamCompaction::CPU::compactWithoutScan(SIZE, b, a);

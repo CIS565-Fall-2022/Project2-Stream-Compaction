@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <ctime>
 
 template<typename T>
 int cmpArrays(int n, T *a, T *b) {
@@ -43,7 +44,7 @@ void zeroArray(int n, int *a) {
 }
 
 void genArray(int n, int *a, int maxval) {
-    srand(0);
+    srand(time(nullptr));
 
     for (int i = 0; i < n; i++) {
         a[i] = rand() % maxval;
