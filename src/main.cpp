@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 
     // initialize b using StreamCompaction::CPU::scan you implement
     // We use b for further comparison. Make sure your StreamCompaction::CPU::scan is correct.
-    // At first all cases passed because b && c are both all zeroes.
+    // At first all cases passed because b && c are all zeroes.
     zeroArray(SIZE, b);
     printDesc("cpu scan, power-of-two");
     StreamCompaction::CPU::scan(SIZE, b, a);
