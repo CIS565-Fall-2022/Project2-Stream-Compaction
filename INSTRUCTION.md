@@ -32,6 +32,7 @@ on the implementation of scan and stream compaction.
     - This online version contains a few small errors (in superscripting, missing braces, bad indentation, etc.) 
     - We maintain a fix for this at [GPU Gem 3 Ch 39 Patch](https://github.com/CIS565-Fall-2017/Project2-Stream-Compaction/blob/master/INSTRUCTION.md#gpu-gem-3-ch-39-patch). If you find more errors in the chapter, welcome to open new pull requests to contribute.
 * If you are still unclear after reading the steps, take a look at the last chapter - [Algorithm Examples](https://github.com/CIS565-Fall-2017/Project2-Stream-Compaction/blob/master/INSTRUCTION.md#algorithm-examples).
+* [Recitation slides](https://docs.google.com/presentation/d/173xvOdq2F5SpIjL611LYQnvyiTa5gI294dbFYTblzPw/edit?usp=sharing)
 
 Your GPU stream compaction implementation will live inside of the
 `stream_compaction` subproject. In this way, you will be able to easily copy it
