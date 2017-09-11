@@ -121,5 +121,5 @@ int main(int argc, char* argv[]) {
     //printArray(count, c, true);
     printCmpLenResult(count, expectedNPOT, b, c);
 
-	system("pause");
+    system("pause");
 }
