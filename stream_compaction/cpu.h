@@ -1,11 +1,15 @@
 #pragma once
 
+#include "common.h"
+
 namespace StreamCompaction {
-namespace CPU {
-    void scan(int n, int *odata, const int *idata);
+    namespace CPU {
+	    StreamCompaction::Common::PerformanceTimer& timer();
 
-    int compactWithoutScan(int n, int *odata, const int *idata);
+        void scan(int n, int *odata, const int *idata);
 
-    int compactWithScan(int n, int *odata, const int *idata);
-}
+        int compactWithoutScan(int n, int *odata, const int *idata);
+
+        int compactWithScan(int n, int *odata, const int *idata);
+    }
 }

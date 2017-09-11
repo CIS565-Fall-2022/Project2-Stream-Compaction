@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cstdlib>
+#include <cstdio>
+#include <iostream>
+#include <string>
 
 template<typename T>
 int cmpArrays(int n, T *a, T *b) {
@@ -59,3 +62,8 @@ void printArray(int n, int *a, bool abridged = false) {
     printf("]\n");
 }
 
+template<typename T>
+void printElapsedTime(T time, std::string note = "")
+{
+	std::cout << "   elapsed time: " << time << "ms    " << note << std::endl;
+}

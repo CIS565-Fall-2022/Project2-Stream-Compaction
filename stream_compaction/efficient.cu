@@ -4,31 +4,39 @@
 #include "efficient.h"
 
 namespace StreamCompaction {
-namespace Efficient {
+    namespace Efficient {
+        using StreamCompaction::Common::PerformanceTimer;
+        PerformanceTimer& timer()
+        {
+            // not thread-safe
+            static PerformanceTimer timer;
+            return timer;
+        }
+        // TODO: __global__
 
-// TODO: __global__
+        /**
+         * Performs prefix-sum (aka scan) on idata, storing the result into odata.
+         */
+        void scan(int n, int *odata, const int *idata) {
+            timer().startGpuTimer();
+            // TODO
+            timer().endGpuTimer();
+        }
 
-/**
- * Performs prefix-sum (aka scan) on idata, storing the result into odata.
- */
-void scan(int n, int *odata, const int *idata) {
-    // TODO
-    printf("TODO\n");
-}
-
-/**
- * Performs stream compaction on idata, storing the result into odata.
- * All zeroes are discarded.
- *
- * @param n      The number of elements in idata.
- * @param odata  The array into which to store elements.
- * @param idata  The array of elements to compact.
- * @returns      The number of elements remaining after compaction.
- */
-int compact(int n, int *odata, const int *idata) {
-    // TODO
-    return -1;
-}
-
-}
+        /**
+         * Performs stream compaction on idata, storing the result into odata.
+         * All zeroes are discarded.
+         *
+         * @param n      The number of elements in idata.
+         * @param odata  The array into which to store elements.
+         * @param idata  The array of elements to compact.
+         * @returns      The number of elements remaining after compaction.
+         */
+        int compact(int n, int *odata, const int *idata) {
+            timer().startGpuTimer();
+            // TODO
+            timer().endGpuTimer();
+            return -1;
+        }
+    }
 }
