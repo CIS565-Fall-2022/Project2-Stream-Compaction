@@ -242,7 +242,6 @@ The title should be "Project 2: YOUR NAME".
 The template of the comment section of your pull request is attached below, you can do some copy and paste:  
 
 * [Repo Link](https://link-to-your-repo)
-* `Your PENNKEY`
 * (Briefly) Mentions features that you've completed. Especially those bells and whistles you want to highlight
     * Feature 0
     * Feature 1
