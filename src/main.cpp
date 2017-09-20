@@ -15,7 +15,9 @@
 
 const int SIZE = 1 << 8; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
-int a[SIZE], b[SIZE], c[SIZE];
+int *a = new int[SIZE];
+int *b = new int[SIZE];
+int *c = new int[SIZE];
 
 int main(int argc, char* argv[]) {
     // Scan tests
@@ -140,4 +142,7 @@ int main(int argc, char* argv[]) {
     printCmpLenResult(count, expectedNPOT, b, c);
 
     system("pause"); // stop Win32 console from closing on exit
+	delete[] a;
+	delete[] b;
+	delete[] c;
 }
