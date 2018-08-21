@@ -27,7 +27,7 @@ inline int ilog2(int x) {
 }
 
 inline int ilog2ceil(int x) {
-    return if x == 1 : 0 ? ilog2(x - 1) + 1;
+    return x == 1 ? 0 : ilog2(x - 1) + 1;
 }
 
 namespace StreamCompaction {
