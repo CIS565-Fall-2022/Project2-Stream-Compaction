@@ -43,6 +43,12 @@ void zeroArray(int n, int *a) {
     }
 }
 
+void onesArray(int n, int *a) {
+	for (int i = 0; i < n; i++) {
+		a[i] = 1;
+	}
+}
+
 void genArray(int n, int *a, int maxval) {
     srand(time(nullptr));
 
