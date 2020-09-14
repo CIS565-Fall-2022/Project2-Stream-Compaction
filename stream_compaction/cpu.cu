@@ -8,8 +8,8 @@ namespace StreamCompaction {
         using StreamCompaction::Common::PerformanceTimer;
         PerformanceTimer& timer()
         {
-	        static PerformanceTimer timer;
-	        return timer;
+            static PerformanceTimer timer;
+            return timer;
         }
 
         /**
@@ -18,9 +18,9 @@ namespace StreamCompaction {
          * (Optional) For better understanding before starting moving to GPU, you can simulate your GPU scan in this function first.
          */
         void scan(int n, int *odata, const int *idata) {
-	        timer().startCpuTimer();
+            timer().startCpuTimer();
             // TODO
-	        timer().endCpuTimer();
+            timer().endCpuTimer();
         }
 
         /**
@@ -29,9 +29,9 @@ namespace StreamCompaction {
          * @returns the number of elements remaining after compaction.
          */
         int compactWithoutScan(int n, int *odata, const int *idata) {
-	        timer().startCpuTimer();
+            timer().startCpuTimer();
             // TODO
-	        timer().endCpuTimer();
+            timer().endCpuTimer();
             return -1;
         }
 
@@ -41,9 +41,9 @@ namespace StreamCompaction {
          * @returns the number of elements remaining after compaction.
          */
         int compactWithScan(int n, int *odata, const int *idata) {
-	        timer().startCpuTimer();
-	        // TODO
-	        timer().endCpuTimer();
+            timer().startCpuTimer();
+            // TODO
+            timer().endCpuTimer();
             return -1;
         }
     }

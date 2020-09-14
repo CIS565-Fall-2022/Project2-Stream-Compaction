@@ -1,7 +1,7 @@
 Project 2 Stream Compaction Instructions
 ========================
 
-This is due **Tuesday, September 18 2017 at midnight**.
+This is due **Tuesday, September 22 2020 at midnight**.
 
 **Summary:** In this project, you'll implement GPU stream compaction in CUDA,
 from scratch. This algorithm is widely used, and will be important for
@@ -29,7 +29,7 @@ on the implementation of scan and stream compaction.
 * The [slides on Parallel Algorithms](https://docs.google.com/presentation/d/1ETVONA7QDM-WqsEj4qVOGD6Kura5I6E9yqH-7krnwZ0/edit#slide=id.p126)
   for Scan, Stream Compaction, and Work-Efficient Parallel Scan.
 * GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html).
-    - This online version contains a few small errors (in superscripting, missing braces, bad indentation, etc.) 
+    - This online version contains a few small errors (in superscripting, missing braces, bad indentation, etc.)
     - We maintain a fix for this at [GPU Gem 3 Ch 39 Patch](https://github.com/CIS565-Fall-2017/Project2-Stream-Compaction/blob/master/INSTRUCTION.md#gpu-gem-3-ch-39-patch). If you find more errors in the chapter, welcome to open new pull requests to contribute.
 * If you are still unclear after reading the steps, take a look at the last chapter - [Algorithm Examples](https://github.com/CIS565-Fall-2017/Project2-Stream-Compaction/blob/master/INSTRUCTION.md#algorithm-examples).
 * [Recitation slides](https://docs.google.com/presentation/d/1daOnWHOjMp1sIqMdVsNnvEU1UYynKcEMARc_W6bGnqE/edit?usp=sharing)
@@ -37,7 +37,6 @@ on the implementation of scan and stream compaction.
 Your GPU stream compaction implementation will live inside of the
 `stream_compaction` subproject. In this way, you will be able to easily copy it
 over for use in your GPU path tracer.
-
 
 ## Part 0: The Usual
 
@@ -62,7 +61,6 @@ Do it first!
 **Note 2:** The tests default to an array of size 256.
 Test with something larger (10,000? 1,000,000?), too!
 
-
 ## Part 1: CPU Scan & Stream Compaction
 
 This stream compaction method will remove `0`s from an array of `int`s.
@@ -81,7 +79,6 @@ In `stream_compaction/cpu.cu`, implement:
   for this (see slides or GPU Gems chapter for an explanation).
 
 These implementations should only be a few lines long.
-
 
 ## Part 2: Naive GPU Scan Algorithm
 
@@ -137,7 +134,6 @@ In `stream_compaction/common.cu`, implement these for use in `compact`:
 * `StreamCompaction::Common::kernMapToBoolean`
 * `StreamCompaction::Common::kernScatter`
 
-
 ## Part 4: Using Thrust's Implementation
 
 In `stream_compaction/thrust.cu`, implement:
@@ -156,24 +152,23 @@ For thrust stream compaction, take a look at [thrust::remove_if](https://thrust.
 
 ## Part 5: Why is My GPU Approach So Slow? (Extra Credit) (+5)
 
-If you implement your efficient scan version following the slides closely, there's a good chance 
-that you are getting an "efficient" gpu scan that is actually not that efficient -- it is slower than the cpu approach? 
+If you implement your efficient scan version following the slides closely, there's a good chance
+that you are getting an "efficient" gpu scan that is actually not that efficient -- it is slower than the cpu approach?
 
-Though it is totally acceptable for this assignment, 
-In addition to explain the reason of this phenomena, you are encouraged to try to upgrade your work-efficient gpu scan. 
+Though it is totally acceptable for this assignment,
+In addition to explain the reason of this phenomena, you are encouraged to try to upgrade your work-efficient gpu scan.
 
-Thinking about these may lead you to an aha moment: 
+Thinking about these may lead you to an aha moment:
 - What is the occupancy at a deeper level in the upper/down sweep? Are most threads actually working?
 - Are you always launching the same number of blocks throughout each level of the upper/down sweep?
-- If some threads are being lazy, can we do an early termination on them? 
+- If some threads are being lazy, can we do an early termination on them?
 - How can I compact the threads? What should I modify to keep the remaining threads still working correctly?
 
-Keep in mind this optimization won't need you change a lot of your code structures. 
+Keep in mind this optimization won't need you change a lot of your code structures.
 It's all about some index calculation hacks.
 
-If you don't run into the slower gpu approach. 
-Congratulations! You are way ahead and you earn this extra credit automatically. 
-
+If you don't run into the slower gpu approach.
+Congratulations! You are way ahead and you earn this extra credit automatically.
 
 ## Part 6: Radix Sort (Extra Credit) (+10)
 
@@ -239,7 +234,7 @@ Beware of any build issues discussed on the Google Group.
 
 Open a GitHub pull request so that we can see that you have finished.
 The title should be "Project 2: YOUR NAME".
-The template of the comment section of your pull request is attached below, you can do some copy and paste:  
+The template of the comment section of your pull request is attached below, you can do some copy and paste:
 
 * [Repo Link](https://link-to-your-repo)
 * (Briefly) Mentions features that you've completed. Especially those bells and whistles you want to highlight
@@ -264,13 +259,13 @@ The template of the comment section of your pull request is attached below, you 
 
 ## Algorithm Examples
 
-* scan: 
+* scan:
   - goal: produce a prefix sum array of a given array (we only care about exclusive scan here)
   - input
     - [1 5 0 1 2 0 3]
   - output
     - [0 1 6 6 7 9 9]
-* compact: 
+* compact:
   - goal: closely and neatly packed the elements != 0
   - input
     - [1 5 0 1 2 0 3]

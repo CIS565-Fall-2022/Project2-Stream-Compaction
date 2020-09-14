@@ -1,17 +1,23 @@
-set(SOURCE_FILES
+set(headers
     "common.h"
-    "common.cu"
     "cpu.h"
-    "cpu.cu"
     "naive.h"
-    "naive.cu"
     "efficient.h"
-    "efficient.cu"
     "thrust.h"
+    )
+
+set(sources
+    "common.cu"
+    "cpu.cu"
+    "naive.cu"
+    "efficient.cu"
     "thrust.cu"
     )
 
-cuda_add_library(stream_compaction
-    ${SOURCE_FILES}
-    OPTIONS -arch=sm_20
-    )
+list(SORT headers)
+list(SORT sources)
+
+source_group(Headers FILES ${headers})
+source_group(Sources FILES ${sources})
+
+cuda_add_library(stream_compaction ${sources} ${headers})

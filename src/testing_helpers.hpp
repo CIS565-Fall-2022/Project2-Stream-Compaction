@@ -44,9 +44,9 @@ void zeroArray(int n, int *a) {
 }
 
 void onesArray(int n, int *a) {
-	for (int i = 0; i < n; i++) {
-		a[i] = 1;
-	}
+    for (int i = 0; i < n; i++) {
+        a[i] = 1;
+    }
 }
 
 void genArray(int n, int *a, int maxval) {
@@ -72,5 +72,5 @@ void printArray(int n, int *a, bool abridged = false) {
 template<typename T>
 void printElapsedTime(T time, std::string note = "")
 {
-	std::cout << "   elapsed time: " << time << "ms    " << note << std::endl;
+    std::cout << "   elapsed time: " << time << "ms    " << note << std::endl;
 }
