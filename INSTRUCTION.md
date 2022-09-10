@@ -1,7 +1,7 @@
 Project 2 Stream Compaction Instructions
 ========================
 
-This is due **Tuesday, September 21 2021 at midnight**.
+This is due **Sunday, September 18 2022 at midnight**.
 
 **Summary:** In this project, you'll implement GPU stream compaction in CUDA,
 from scratch. This algorithm is widely used, and will be important for
