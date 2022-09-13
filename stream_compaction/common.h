@@ -2,6 +2,7 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 
 #include <cstdio>
 #include <cstring>
@@ -28,6 +29,17 @@ inline int ilog2(int x) {
 
 inline int ilog2ceil(int x) {
     return x == 1 ? 0 : ilog2(x - 1) + 1;
+}
+
+inline int lowBit(int x) {
+    return x & -x;
+}
+
+inline int minPow2(int x) {
+    while (x != lowBit(x)) {
+        x += lowBit(x);
+    }
+    return x;
 }
 
 namespace StreamCompaction {

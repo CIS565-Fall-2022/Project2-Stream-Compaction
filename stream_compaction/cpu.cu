@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+#define CPU_SIMUL_NAIVE_SCAN 0
+#define CPU_SIMUL_WEFF_SCAN 1
+
 namespace StreamCompaction {
     namespace CPU {
         using StreamCompaction::Common::PerformanceTimer;
@@ -17,9 +20,73 @@ namespace StreamCompaction {
          * For performance analysis, this is supposed to be a simple for loop.
          * (Optional) For better understanding before starting moving to GPU, you can simulate your GPU scan in this function first.
          */
+
+        void partialScan(int* out, const int* in, int n, int stride) {
+            for (int i = stride; i < n; i++) {
+                out[i] = in[i] + in[i - stride];
+            }
+        }
+
+        void upSweep(int* data, int n) {
+            for (int stride = 2; stride <= n; stride <<= 1) {
+                for (int i = stride; i <= n; i += stride) {
+                    data[i - 1] += data[i - stride / 2 - 1];
+                }
+            }
+        }
+
+        void downSweep(int* data, int n) {
+            int sum = data[n - 1];
+            data[n - 1] = 0;
+
+            for (int stride = n; stride > 1; stride >>= 1) {
+                for (int i = stride; i <= n; i += stride) {
+                    data[i - stride / 2 - 1] += data[i - 1];
+                    std::swap(data[i - stride / 2 - 1], data[i - 1]);
+                }
+            }
+        }
+
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+
+#if CPU_SIMUL_NAIVE_SCAN
+            // simulates naive parallel scan
+            int* buf = new int[n];
+            buf[0] = idata[0];
+            memcpy(odata, idata, n * sizeof(int));
+
+            int stride = 1;
+            while (stride < n) {
+                partialScan(buf, odata, n, stride);
+                memcpy(odata + stride, buf + stride, (n - stride) * sizeof(int));
+                stride <<= 1;
+            }
+            delete[] buf;
+
+            for (int i = n - 1; i > 0; i--) {
+                odata[i] = odata[i - 1];
+            }
+            odata[0] = 0;
+#elif CPU_SIMUL_WEFF_SCAN
+            // simulates work-efficient parallel scan
+            int size = minPow2(n);
+            int* buf = new int[size];
+            
+            memcpy(buf, idata, n * sizeof(int));
+            memset(buf + n, 0, (size - n) * sizeof(int));
+            upSweep(buf, size);
+            downSweep(buf, size);
+
+            memcpy(odata, buf, n * sizeof(int));
+            delete[] buf;
+#else
+            odata[0] = 0;
+            for (int i = 1; i < n; i++) {
+                odata[i] = odata[i - 1] + idata[i - 1];
+            }
+#endif
             timer().endCpuTimer();
         }
 
@@ -31,8 +98,15 @@ namespace StreamCompaction {
         int compactWithoutScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+            int ptr = 0;
+            for (int i = 0; i < n; i++) {
+                if (idata[ptr]) {
+                    odata[ptr] = idata[ptr];
+                    ptr++;
+                }
+            }
             timer().endCpuTimer();
-            return -1;
+            return ptr;
         }
 
         /**
@@ -43,6 +117,13 @@ namespace StreamCompaction {
         int compactWithScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+            int* indices = new int[n];
+            for (int i = 0; i < n; i++) {
+                indices[i] = (idata[i] != 0);
+            }
+
+            scan(n, indices, indices);
+
             timer().endCpuTimer();
             return -1;
         }
