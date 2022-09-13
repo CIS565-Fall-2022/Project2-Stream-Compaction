@@ -46,6 +46,7 @@ namespace StreamCompaction {
             if (oddEvenCount % 2 != 0) {
                 std::swap(odata, odataReplacement);
             }
+
             timer().endGpuTimer();
         }
     }
