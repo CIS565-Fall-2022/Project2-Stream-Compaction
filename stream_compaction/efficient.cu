@@ -111,10 +111,10 @@ namespace StreamCompaction {
 
             int blockSize = Common::getDynamicBlockSizeEXT(n);
             int blockNum = (n + blockSize - 1) / blockSize;
-            Common::kernMapToBoolean<<<blockSize, blockNum>>>(n, indices, in);
+            Common::kernMapToBoolean<<<blockNum, blockSize>>>(n, indices, in);
 
             devScanInPlace(indices, size);
-            Common::kernScatter<<<blockSize, blockNum>>>(n, out, in, in, indices);
+            Common::kernScatter<<<blockNum, blockSize>>>(n, out, in, in, indices);
 
             int compactedSize;
             cudaMemcpy(&compactedSize, indices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
