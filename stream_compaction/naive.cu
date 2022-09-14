@@ -57,6 +57,7 @@ namespace StreamCompaction {
                 }
             }
 
+            // Inclusive to exclusive
             odata[0] = 0;
             cudaMemcpy(odata + 1, dev_odata1, sizeof(int) * (n - 1), cudaMemcpyDeviceToHost);
             timer().endGpuTimer();
