@@ -4,7 +4,7 @@
 #include "naive.h"
 
 namespace StreamCompaction {
-    namespace Naive {
+    namespace Naive { 
         using StreamCompaction::Common::PerformanceTimer;
         PerformanceTimer& timer()
         {
@@ -13,7 +13,7 @@ namespace StreamCompaction {
         }
         // TODO: __global__
 
-        __global__ void kernPartialScan(int* out, const int* in, int n, int stride) {
+        __global__ void kernPartialScan(int* out, int* in, int n, int stride) {
             int idx = blockDim.x * blockIdx.x + threadIdx.x;
             if (idx >= n) {
                 return;
