@@ -27,8 +27,6 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata) {
             timer().startGpuTimer();
             // TODO
-            const int BlockSize = 128;
-
             size_t bytes = n * sizeof(int);
             int* buf, * tmp;
             cudaMalloc(&buf, bytes);
@@ -38,8 +36,9 @@ namespace StreamCompaction {
             int stride = 1;
             while (stride < n) {
                 int num = n - stride;
-                int blockNum = (num + BlockSize - 1) / BlockSize;
-                kernPartialScan<<<blockNum, BlockSize>>>(tmp + stride, buf + stride, n - stride, stride);
+                int blockSize = Common::getDynamicBlockSizeEXT(num);
+                int blockNum = (num + blockSize - 1) / blockSize;
+                kernPartialScan<<<blockNum, blockSize>>>(tmp + stride, buf + stride, n - stride, stride);
                 cudaMemcpy(buf + stride, tmp + stride, num * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
                 stride <<= 1;
             }

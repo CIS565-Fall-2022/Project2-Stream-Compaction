@@ -36,15 +36,28 @@ inline int lowBit(int x) {
     return x & -x;
 }
 
-inline int minPow2(int x) {
+inline int ceilPow2(int x) {
     while (x != lowBit(x)) {
         x += lowBit(x);
     }
     return x;
 }
 
+inline int floorPow2(int x) {
+    return ceilPow2(x) >> 1;
+}
+
 namespace StreamCompaction {
     namespace Common {
+        int numSM();
+        int warpSize();
+        int maxBlockSize();
+        void initCudaProperties();
+
+        inline int getDynamicBlockSizeEXT(int n) {
+            return std::max(warpSize(), std::min(maxBlockSize(), floorPow2(n / numSM())));
+        }
+
         __global__ void kernMapToBoolean(int n, int *bools, const int *idata);
 
         __global__ void kernScatter(int n, int *odata,

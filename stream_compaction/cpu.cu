@@ -68,7 +68,7 @@ namespace StreamCompaction {
             odata[0] = 0;
 #elif CPU_SIMUL_WEFF_SCAN
             // simulates work-efficient parallel scan
-            int size = minPow2(n);
+            int size = ceilPow2(n);
             int* buf = new int[size];
 
             memcpy(buf, idata, n * sizeof(int));

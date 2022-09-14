@@ -14,9 +14,32 @@ void checkCUDAErrorFn(const char *msg, const char *file, int line) {
     exit(EXIT_FAILURE);
 }
 
-
 namespace StreamCompaction {
     namespace Common {
+        static int NumSM;
+        static int WarpSize;
+        static int MaxBlockSize;
+
+        int numSM() {
+            return NumSM;
+        }
+
+        int warpSize() {
+            return WarpSize;
+        }
+
+        int maxBlockSize() {
+            return MaxBlockSize;
+        }
+
+        void initCudaProperties() {
+            // Get SM count, warp size and max block size for dynamic block size
+            cudaDeviceProp prop;
+            cudaGetDeviceProperties(&prop, 0);
+            NumSM = prop.multiProcessorCount;
+            WarpSize = prop.warpSize;
+            MaxBlockSize = prop.maxThreadsPerBlock;
+        }
 
         /**
          * Maps an array to an array of 0s and 1s for stream compaction. Elements
