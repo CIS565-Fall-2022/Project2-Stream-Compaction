@@ -40,7 +40,7 @@ namespace StreamCompaction {
             cudaMalloc((void**)&dev_odata1, n * sizeof(int));
             checkCUDAError("cudaMalloc dev_odata1 failed!");
             cudaMalloc((void**)&dev_odata2, n * sizeof(int));
-            checkCUDAError("cudaMalloc dev_odata1 failed!");
+            checkCUDAError("cudaMalloc dev_odata2 failed!");
 
             cudaMemcpy(dev_odata1, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
 
