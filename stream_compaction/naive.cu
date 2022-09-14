@@ -47,10 +47,14 @@ namespace StreamCompaction {
             timer().startGpuTimer();
             for (int d = 1; d <= ilog2ceil(n); ++d)
             {
-                KernNaiveScanIteration<< <fullBlocksPerGrid, blockSize >> > (n, d, dev_odata2, dev_odata1);
-                // Buffer swapping
-                cudaMemcpy(dev_odata1, dev_odata2, sizeof(int) * n, cudaMemcpyDeviceToDevice);
-
+                if (d % 2 == 1)
+                {
+                    KernNaiveScanIteration << <fullBlocksPerGrid, blockSize >> > (n, d, dev_odata2, dev_odata1);
+                }
+                else
+                {
+                    KernNaiveScanIteration << <fullBlocksPerGrid, blockSize >> > (n, d, dev_odata1, dev_odata2);
+                }
             }
 
             odata[0] = 0;
