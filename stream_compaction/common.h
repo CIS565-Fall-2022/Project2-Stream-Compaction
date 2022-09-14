@@ -9,9 +9,36 @@
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
+#include <iostream>
+#include "intellisense.h"
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
+
+#define blockSize 32
+// convenience macro
+#define ALLOC(name, size) if(cudaMalloc((void**)&name, (size) * sizeof(*name)) != cudaSuccess) checkCUDAError("cudaMalloc " ## #name ## " failed!")
+#define MEMSET(name, val, size) if(cudaMemset(name, val, size) != cudaSuccess) checkCUDAError("cudaMemset " ## #name ## " failed!")
+#define FREE(name) if(cudaFree(name) != cudaSuccess) checkCUDAError("cudaFree " ## #name ## " failed!")
+#define H2D(dev_name, name, size) if(cudaMemcpy(dev_name, name, (size) * sizeof(*name), cudaMemcpyHostToDevice) != cudaSuccess) checkCUDAError("cudaMemcpy from " ## #name ## " failed!")
+#define D2H(name, dev_name, size) if(cudaMemcpy(name, dev_name, (size) * sizeof(*name), cudaMemcpyDeviceToHost) != cudaSuccess) checkCUDAError("cudaMemcpy to " ## #name ## " failed!")
+#define D2D(dev_name1, dev_name2, size) if(cudaMemcpy(dev_name1, dev_name2, (size) * sizeof(*dev_name1), cudaMemcpyDeviceToDevice) != cudaSuccess) checkCUDAError("cudaMemcpy to " ## #dev_name1 ## " failed!")
+
+// debug helpers
+#ifndef NDEBUG
+#define PRINT_GPU(...) printGPU(__VA_ARGS__)
+#else
+#define PRINT_GPU(...)
+#endif // !NDEBUG
+
+template<typename T>
+static inline void printGPU(T* dev, int n) {
+    T* tmp = new T[n];
+    D2H(tmp, dev, n);
+    for (int i = 0; i < n; ++i)
+        std::cout << tmp[i] << " \n"[i<n-1?0:1];
+    delete[] tmp;
+}
 
 /**
  * Check for CUDA errors; print and exit if there was a problem.

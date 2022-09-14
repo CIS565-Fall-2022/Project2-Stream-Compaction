@@ -19,7 +19,28 @@ int *a = new int[SIZE];
 int *b = new int[SIZE];
 int *c = new int[SIZE];
 
+void small_test() {
+    constexpr int SMALL_SIZE = 8;
+    int a[SMALL_SIZE], b[SMALL_SIZE];
+    for (int i = 0; i < SMALL_SIZE; ++i)
+        a[i] = i;
+
+    StreamCompaction::CPU::scan(SMALL_SIZE, b, a);
+    std::cout << "expected:\n";
+    for (int i : b)
+        std::cout << i << " ";
+    std::cout << std::endl;
+
+    std::cout << "got:\n";
+    StreamCompaction::Efficient::scan(SMALL_SIZE, b, a);
+    for (int i : b)
+        std::cout << i << " ";
+    std::cout << std::endl;
+}
+
 int main(int argc, char* argv[]) {
+    //small_test();
+    //return 0;
     // Scan tests
 
     printf("\n");
