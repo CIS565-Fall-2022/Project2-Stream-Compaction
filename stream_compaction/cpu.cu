@@ -47,10 +47,7 @@ namespace StreamCompaction {
             }
         }
 
-        void scan(int n, int *odata, const int *idata) {
-            timer().startCpuTimer();
-            // TODO
-
+        void scanNoTimer(int n, int* odata, const int* idata) {
 #if CPU_SIMUL_NAIVE_SCAN
             // simulates naive parallel scan
             int* buf = new int[n];
@@ -73,7 +70,7 @@ namespace StreamCompaction {
             // simulates work-efficient parallel scan
             int size = minPow2(n);
             int* buf = new int[size];
-            
+
             memcpy(buf, idata, n * sizeof(int));
             memset(buf + n, 0, (size - n) * sizeof(int));
             upSweep(buf, size);
@@ -87,6 +84,12 @@ namespace StreamCompaction {
                 odata[i] = odata[i - 1] + idata[i - 1];
             }
 #endif
+        }
+
+        void scan(int n, int *odata, const int *idata) {
+            timer().startCpuTimer();
+            // TODO
+            scanNoTimer(n, odata, idata);
             timer().endCpuTimer();
         }
 
@@ -100,9 +103,8 @@ namespace StreamCompaction {
             // TODO
             int ptr = 0;
             for (int i = 0; i < n; i++) {
-                if (idata[ptr]) {
-                    odata[ptr] = idata[ptr];
-                    ptr++;
+                if (idata[i]) {
+                    odata[ptr++] = idata[i];
                 }
             }
             timer().endCpuTimer();
@@ -122,10 +124,19 @@ namespace StreamCompaction {
                 indices[i] = (idata[i] != 0);
             }
 
-            scan(n, indices, indices);
+            scanNoTimer(n, indices, indices);
+
+            for (int i = 0; i < n; i++) {
+                if (idata[i]) {
+                    odata[indices[i]] = idata[i];
+                }
+            }
+
+            int size = indices[n - 1] + (idata[n - 1] != 0);
+            delete[] indices;
 
             timer().endCpuTimer();
-            return -1;
+            return size;
         }
     }
 }
