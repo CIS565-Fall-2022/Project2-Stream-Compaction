@@ -43,9 +43,8 @@ namespace StreamCompaction {
                     count++;
                 }
             }
-            return count;
             timer().endCpuTimer();
-            return -1;
+            return count;
         }
 
         /**
@@ -76,9 +75,8 @@ namespace StreamCompaction {
                     odataScatter[&odataScan[i]] = idata[i];
                 }
             }
-            return odataCount;
             timer().endCpuTimer();
-            return -1;
+            return odataCount;
         }
     }
 }

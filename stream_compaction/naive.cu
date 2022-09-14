@@ -14,18 +14,15 @@ namespace StreamCompaction {
             return timer;
         }
         // TODO: __global__
-        __device__ void switchArray(int* odata, int* idata) {
-            std::swap(odata, idata);
-            return;
-        }
-        __global__ void kernScan(int n, int depth, int* odata, int* odata2, const int* idata) {
+        __global__ void kernScan(int n, int depth, int* odata, const int* idata) {
             int index = threadIdx.x + (blockIdx.x * blockDim.x);
-            if (index < pow(2, depth) || index >= n) {
+            if (index >= n) {
                 return;
             }
-
-            odata2[index] = odata[index] + odata[index - int(pow(2, depth - 1))];
-            switchArray(odata, odata2);
+            odata[index] = idata[index];
+            if (index >= pow(2, depth - 1)) {
+                odata[index] += idata[index - int(pow(2, depth - 1))];
+            }
             return;
         }
 
@@ -33,21 +30,31 @@ namespace StreamCompaction {
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int *odata, const int *idata) {
+            dim3 blockDim((n + blockSize - 1) / blockSize);
+
+            int depth = ilog2ceil(n);
+            bool oddEvenCount = false;
+            int* input, * output;
+            cudaMalloc((void**)&input, n*sizeof(int));
+            cudaMalloc((void**)&output, n*sizeof(int));
+            cudaMemcpy(input, idata, n, cudaMemcpyHostToDevice);
             timer().startGpuTimer();
             // TODO
-            int depth = ilog2ceil(n);
-            int* odataReplacement;
-            int oddEvenCount = 0;
             for (int i = 0; i < depth; i++) {
-                dim3 blockDim((n + blockSize - 1) / blockSize);
-                kernScan(n, i, odata, odataReplacement, idata);
-                oddEvenCount += (n - pow(2, depth));
+                
+                kernScan<<<blockDim, blockSize>>>(n, i, output, input);
+                std::swap(output, input);
+                oddEvenCount = !oddEvenCount;
             }
-            if (oddEvenCount % 2 != 0) {
-                std::swap(odata, odataReplacement);
-            }
+            
 
             timer().endGpuTimer();
+            if (!oddEvenCount) {
+                std::swap(output, input);
+            }
+            cudaMemcpy(odata, output, n, cudaMemcpyDeviceToHost);
+            cudaFree(input);
+            cudaFree(output);
         }
     }
 }
