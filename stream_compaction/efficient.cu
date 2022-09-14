@@ -69,21 +69,22 @@ namespace StreamCompaction {
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int *odata, const int *idata) {
-            timer().startGpuTimer();
 
             // TODO
             int size = ceilPow2(n);
             int* data;
             cudaMalloc(&data, size * sizeof(int));
             cudaMemcpy(data, idata, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
-            cudaMemset(data + n, 0, (size - n) * sizeof(int));
 
+            timer().startGpuTimer();
+
+            cudaMemset(data + n, 0, (size - n) * sizeof(int));
             devScanInPlace(data, size);
+
+            timer().endGpuTimer();
             
             cudaMemcpy(odata, data, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
             cudaFree(data);
-
-            timer().endGpuTimer();
         }
 
         /**
@@ -96,7 +97,6 @@ namespace StreamCompaction {
          * @returns      The number of elements remaining after compaction.
          */
         int compact(int n, int *odata, const int *idata) {
-            timer().startGpuTimer();
             // TODO
             int* in, * out;
             int bytes = n * sizeof(int);
@@ -107,14 +107,18 @@ namespace StreamCompaction {
             int size = ceilPow2(n);
             int* indices;
             cudaMalloc(&indices, size * sizeof(int));
+
+            timer().startGpuTimer();
             cudaMemset(indices + n, 0, (size - n) * sizeof(int));
 
             int blockSize = Common::getDynamicBlockSizeEXT(n);
             int blockNum = (n + blockSize - 1) / blockSize;
-            Common::kernMapToBoolean<<<blockNum, blockSize>>>(n, indices, in);
 
+            Common::kernMapToBoolean<<<blockNum, blockSize>>>(n, indices, in);
             devScanInPlace(indices, size);
             Common::kernScatter<<<blockNum, blockSize>>>(n, out, in, in, indices);
+
+            timer().endGpuTimer();
 
             int compactedSize;
             cudaMemcpy(&compactedSize, indices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
@@ -126,7 +130,6 @@ namespace StreamCompaction {
             cudaFree(in);
             cudaFree(out);
 
-            timer().endGpuTimer();
             return compactedSize;
         }
     }
