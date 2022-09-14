@@ -5,6 +5,8 @@
 
 namespace StreamCompaction {
     namespace Efficient {
+        enum class ScanSource { Host, Device };
+
         using StreamCompaction::Common::PerformanceTimer;
         PerformanceTimer& timer()
         {
@@ -46,33 +48,38 @@ namespace StreamCompaction {
             data[mappedIdx - stride / 2] = data[mappedIdx] - data[mappedIdx - stride / 2];
         }
 
+        void devScanInPlace(int* devData, int size) {
+            for (int stride = 2; stride <= size; stride <<= 1) {
+                int num = size / stride;
+                int blockSize = Common::getDynamicBlockSizeEXT(num);
+                int blockNum = (num + blockSize - 1) / blockSize;
+                kernPartialUpSweep<<<blockNum, blockSize>>>(devData, num, stride);
+            }
+
+            cudaMemset(devData + size - 1, 0, sizeof(int));
+            for (int stride = size; stride >= 2; stride >>= 1) {
+                int num = size / stride;
+                int blockSize = Common::getDynamicBlockSizeEXT(num);
+                int blockNum = (num + blockSize - 1) / blockSize;
+                kernPartialDownSweep<<<blockNum, blockSize>>>(devData, num, stride);
+            }
+        }
+
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int *odata, const int *idata) {
             timer().startGpuTimer();
+
             // TODO
             int size = ceilPow2(n);
-
             int* data;
             cudaMalloc(&data, size * sizeof(int));
             cudaMemcpy(data, idata, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
             cudaMemset(data + n, 0, (size - n) * sizeof(int));
 
-            for (int stride = 2; stride <= size; stride <<= 1) {
-                int num = size / stride;
-                int blockSize = Common::getDynamicBlockSizeEXT(num);
-                int blockNum = (num + blockSize - 1) / blockSize;
-                kernPartialUpSweep<<<blockNum, blockSize>>>(data, num, stride);
-            }
-
-            cudaMemset(data + size - 1, 0, sizeof(int));
-            for (int stride = size; stride >= 2; stride >>= 1) {
-                int num = size / stride;
-                int blockSize = Common::getDynamicBlockSizeEXT(num);
-                int blockNum = (num + blockSize - 1) / blockSize;
-                kernPartialDownSweep<<<blockNum, blockSize>>>(data, num, stride);
-            }
+            devScanInPlace(data, size);
+            
             cudaMemcpy(odata, data, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
             cudaFree(data);
 
@@ -91,8 +98,36 @@ namespace StreamCompaction {
         int compact(int n, int *odata, const int *idata) {
             timer().startGpuTimer();
             // TODO
+            int* in, * out;
+            int bytes = n * sizeof(int);
+            cudaMalloc(&in, bytes);
+            cudaMalloc(&out, bytes);
+            cudaMemcpy(in, idata, bytes, cudaMemcpyKind::cudaMemcpyHostToDevice);
+
+            int size = ceilPow2(n);
+            int* indices;
+            cudaMalloc(&indices, size * sizeof(int));
+            cudaMemset(indices + n, 0, (size - n) * sizeof(int));
+
+            int blockSize = Common::getDynamicBlockSizeEXT(n);
+            int blockNum = (n + blockSize - 1) / blockSize;
+            Common::kernMapToBoolean<<<blockSize, blockNum>>>(n, indices, in);
+
+            devScanInPlace(indices, size);
+            Common::kernScatter<<<blockSize, blockNum>>>(n, out, in, in, indices);
+
+            int compactedSize;
+            cudaMemcpy(&compactedSize, indices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+            compactedSize += (idata[n - 1] != 0);
+
+            cudaMemcpy(odata, out, compactedSize * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+
+            cudaFree(indices);
+            cudaFree(in);
+            cudaFree(out);
+
             timer().endGpuTimer();
-            return -1;
+            return compactedSize;
         }
     }
 }
