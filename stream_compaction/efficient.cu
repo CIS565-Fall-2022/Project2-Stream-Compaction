@@ -65,7 +65,7 @@ namespace StreamCompaction {
                 //cudaDeviceSynchronize();
             }
 
-            cudaMemset(dev_data + n - 1, 0, sizeof(int));
+            cudaMemset(dev_data + intermArraySize - 1, 0, sizeof(int));
             checkCUDAError("cudaMemset failed!");
 
 
