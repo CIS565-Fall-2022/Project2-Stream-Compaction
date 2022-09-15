@@ -18,9 +18,16 @@ namespace StreamCompaction {
          * (Optional) For better understanding before starting moving to GPU, you can simulate your GPU scan in this function first.
          */
         void scan(int n, int *odata, const int *idata) {
-            timer().startCpuTimer();
+            //timer().startCpuTimer();
             // TODO
-            timer().endCpuTimer();
+            int identity = 0;
+
+            odata[0] = identity;
+            for (int i = 1; i < n; i++) {
+                odata[i] = odata[i - 1] + idata[i - 1];     // exclusive scan
+            }
+
+            //timer().endCpuTimer();
         }
 
         /**
@@ -31,8 +38,22 @@ namespace StreamCompaction {
         int compactWithoutScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+            int nonZeroIdx = 0;
+            for (int i = 0; i < n; i++) {
+                if (idata[i] != 0) {
+                    odata[nonZeroIdx] = idata[i];
+                    nonZeroIdx++;
+                }
+            }
+
             timer().endCpuTimer();
-            return -1;
+            return nonZeroIdx;
+        }
+
+        void map(int n, int* odata, const int* idata) {
+            for (int i = 0; i < n; i++) {
+                odata[i] = (idata[i] == 0) ? 0 : 1;
+            }
         }
 
         /**
@@ -43,8 +64,22 @@ namespace StreamCompaction {
         int compactWithScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+
+            int* mapped = new int[n];
+            int* scanned = new int[n];
+            map(n, mapped, idata);
+            scan(n, scanned, mapped);
+            int count = 0;
+            for (int i = 0; i < n; i++) {
+                if (mapped[i] == 1) {
+                    int index = scanned[i];
+                    odata[index] = idata[i];
+                    count++;
+                }
+            }
+
             timer().endCpuTimer();
-            return -1;
+            return count;
         }
     }
 }
