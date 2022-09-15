@@ -3,6 +3,8 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include <thrust/scan.h>
+#include <thrust/remove.h>
+#include <thrust/execution_policy.h>
 #include "common.h"
 #include "thrust.h"
 
@@ -14,6 +16,12 @@ namespace StreamCompaction {
             static PerformanceTimer timer;
             return timer;
         }
+        struct Pred {
+            __device__ bool operator()(int x) const {
+                return !x;
+            }
+        };
+
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
@@ -29,6 +37,15 @@ namespace StreamCompaction {
             timer().endGpuTimer();
             
             thrust::copy(dev_out.begin(), dev_out.end(), out);
+        }
+
+        int compact(int n, int* out, const int* in) {
+            thrust::device_vector<int> dev_in(in, in + n);
+            auto it = thrust::remove_if(dev_in.begin(), dev_in.end(), Pred());
+
+            int ret = thrust::distance(dev_in.begin(), it);
+            thrust::copy(dev_in.begin(), it, out);
+            return ret;
         }
     }
 }

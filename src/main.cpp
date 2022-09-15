@@ -168,6 +168,20 @@ int main(int argc, char* argv[]) {
     //printArray(count, c, true);
     printCmpLenResult(count, expectedNPOT, b, c);
 
+    zeroArray(SIZE, c);
+    printDesc("thrust compact, power-of-two");
+    count = StreamCompaction::Thrust::compact(SIZE, c, a);
+    printElapsedTime(StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    //printArray(count, c, true);
+    printCmpLenResult(count, expectedCount, b, c);
+
+    zeroArray(SIZE, c);
+    printDesc("thrust compact, non-power-of-two");
+    count = StreamCompaction::Thrust::compact(NPOT, c, a);
+    printElapsedTime(StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    //printArray(count, c, true);
+    printCmpLenResult(count, expectedNPOT, b, c);
+
     system("pause"); // stop Win32 console from closing on exit
     delete[] a;
     delete[] b;
