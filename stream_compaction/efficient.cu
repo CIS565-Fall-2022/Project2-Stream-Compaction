@@ -20,8 +20,11 @@ namespace StreamCompaction {
             if (index >= n) {
                 return;
             }
+            if (index % (int)pow(2, d+1) == 0) 
+            {
 
-            x[index + (int)pow(2, d + 1) - 1] += x[index + (int)pow(2, d) - 1];
+                x[index + (int)pow(2, d + 1) - 1] += x[index + (int)pow(2, d) - 1];
+            }
         }
 
         __global__ void kernDownSweep(int n, int d, int* x)
@@ -31,32 +34,45 @@ namespace StreamCompaction {
                 return;
             }
 
-            int t = x[index + (int)pow(2, d) - 1];
-            x[index + (int)pow(2, d) - 1] = x[index + (int)pow(2, d + 1) - 1];
-            x[index + (int)pow(2, d + 1) - 1] += t;
+            if (index % (int)pow(2, d + 1) == 0)
+            {
+
+                int t = x[index + (int)pow(2, d) - 1];
+                x[index + (int)pow(2, d) - 1] = x[index + (int)pow(2, d + 1) - 1];
+                x[index + (int)pow(2, d + 1) - 1] += t;
+            }
         }
 
 
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
-        void scan(int n, int *odata, const int *idata) {
+        void scan(int n, int* odata, const int* idata) {
             dim3 fullBlocksPerGrid((n + blockSize - 1) / blockSize);
 
 
-            int intermArraySize = 2 * ilog2ceil(n);
+            //int intermArraySize = n;
+            int intermArraySize = 1 << ilog2ceil(n);
+
+
             int* dev_data;
             cudaMalloc((void**)&dev_data, intermArraySize * sizeof(int));
             checkCUDAError("cudaMalloc dev_data failed!");
             cudaMemcpy(dev_data, idata, sizeof(int) * intermArraySize, cudaMemcpyHostToDevice);
 
             timer().startGpuTimer();
-            for (int d = 0; d <= ilog2ceil(intermArraySize) - 1; d++) {
-                kernUpSweep << < fullBlocksPerGrid, blockSize >> > (d, intermArraySize, dev_data);
+            for (int d = 0; d <= ilog2ceil(intermArraySize) - 1; ++d) {
+                kernUpSweep << < fullBlocksPerGrid, blockSize >> > (intermArraySize, d, dev_data);
+                cudaDeviceSynchronize();
             }
 
-            for (int d = ilog2ceil(intermArraySize) - 1; d >= 0; d--) {
-                kernDownSweep << < fullBlocksPerGrid, blockSize >> > (d, intermArraySize, dev_data);
+
+            cudaMemset(dev_data + n - 1, 0, sizeof(int));
+
+
+            for (int d = ilog2ceil(intermArraySize) - 1; d >= 0; --d) {
+                kernDownSweep << < fullBlocksPerGrid, blockSize >> > (intermArraySize, d, dev_data);
+                cudaDeviceSynchronize();
             }
 
 
@@ -65,6 +81,8 @@ namespace StreamCompaction {
             cudaFree(dev_data);
 
         }
+
+
 
         /**
          * Performs stream compaction on idata, storing the result into odata.
@@ -75,7 +93,7 @@ namespace StreamCompaction {
          * @param idata  The array of elements to compact.
          * @returns      The number of elements remaining after compaction.
          */
-        int compact(int n, int *odata, const int *idata) {
+        int compact(int n, int* odata, const int* idata) {
             timer().startGpuTimer();
             // TODO
             timer().endGpuTimer();
