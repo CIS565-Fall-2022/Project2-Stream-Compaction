@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
+#include <vector>
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
@@ -62,6 +63,23 @@ namespace StreamCompaction {
 
         __global__ void kernScatter(int n, int *odata,
                 const int *idata, const int *bools, const int *indices);
+
+        template<typename T>
+        void printDevice(const T* devData, size_t n, const std::string& msg = "") {
+            T* data = new T[n];
+            cudaMemcpy(data, devData, n * sizeof(T), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+
+            if (msg != "") {
+                std::cout << msg << std::endl;
+            }
+
+            for (size_t i = 0; i < n; i++) {
+                std::cout << data[i] << " ";
+            }
+            std::cout << std::endl;
+
+            delete[] data;
+        }
 
         /**
         * This class is used for timing the performance

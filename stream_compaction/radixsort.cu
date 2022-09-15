@@ -13,24 +13,24 @@ namespace StreamCompaction {
             if (idx >= n) {
                 return;
             }
-            out[idx] = (in[idx] & filter == 0);
+            out[idx] = (in[idx] & filter) == 0;
         }
 
-        __global__ void kernScatter(int* out, const int* data, const int* indices, int n, int numZero) {
+        __global__ void kernScatter(int* out, const int* data, const int* indices, int n, int filter, int numZero) {
             int idx = blockDim.x * blockIdx.x + threadIdx.x;
             if (idx >= n) {
                 return;
             }
             int val = data[idx];
             int pos = indices[idx];
-            out[val ? pos : numZero + idx - pos] = val;
+            out[!(val & filter) ? pos : numZero + idx - pos] = val;
         }
 
         void sort(int* out, const int* in, int n) {
             int* data, * buf;
             cudaMalloc(&data, n * sizeof(int));
             cudaMalloc(&buf, n * sizeof(int));
-            cudaMemcpy(data, in, n * sizeof(int));
+            cudaMemcpy(data, in, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
 
             int* indices;
             int size = ceilPow2(n);
@@ -47,12 +47,14 @@ namespace StreamCompaction {
 
                 int numZero;
                 cudaMemcpy(&numZero, indices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-                cudaMemcpy(&numZero, data + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+                int dataN;
+                cudaMemcpy(&dataN, data + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+                numZero += (dataN & bit) == 0;
 
-                kernScatter<<<blockNum, blockSize>>>(buf, data, indices, n, numZero);
-
+                kernScatter<<<blockNum, blockSize>>>(buf, data, indices, n, bit, numZero);
                 std::swap(data, buf);
             }
+            cudaMemcpy(out, data, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
 
             cudaFree(data);
             cudaFree(buf);
