@@ -20,10 +20,10 @@ namespace StreamCompaction {
             if (index >= n) {
                 return;
             }
-            if (index % (int)pow(2, d+1) == 0) 
+            if (index % (1 << (d+1)) == 0) 
             {
 
-                x[index + (int)pow(2, d + 1) - 1] += x[index + (int)pow(2, d) - 1];
+                x[index + (1 << (d + 1)) - 1] += x[index + (1 << d ) - 1];
             }
         }
 
@@ -34,12 +34,12 @@ namespace StreamCompaction {
                 return;
             }
 
-            if (index % (int)pow(2, d + 1) == 0)
+            if (index % (1 << (d + 1)) == 0)
             {
 
-                int t = x[index + (int)pow(2, d) - 1];
-                x[index + (int)pow(2, d) - 1] = x[index + (int)pow(2, d + 1) - 1];
-                x[index + (int)pow(2, d + 1) - 1] += t;
+                int t = x[index + (1 << d) - 1];
+                x[index + (1 << d) - 1] = x[index + (1 << (d + 1)) - 1];
+                x[index + (1 << (d + 1)) - 1] += t;
             }
         }
 
@@ -48,31 +48,30 @@ namespace StreamCompaction {
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int* odata, const int* idata) {
-            dim3 fullBlocksPerGrid((n + blockSize - 1) / blockSize);
 
 
-            //int intermArraySize = n;
             int intermArraySize = 1 << ilog2ceil(n);
+            dim3 fullBlocksPerGrid((n + intermArraySize - 1) / blockSize);
 
 
             int* dev_data;
             cudaMalloc((void**)&dev_data, intermArraySize * sizeof(int));
             checkCUDAError("cudaMalloc dev_data failed!");
-            cudaMemcpy(dev_data, idata, sizeof(int) * intermArraySize, cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_data, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
 
             timer().startGpuTimer();
             for (int d = 0; d <= ilog2ceil(intermArraySize) - 1; ++d) {
                 kernUpSweep << < fullBlocksPerGrid, blockSize >> > (intermArraySize, d, dev_data);
-                cudaDeviceSynchronize();
+                //cudaDeviceSynchronize();
             }
 
-
             cudaMemset(dev_data + n - 1, 0, sizeof(int));
+            checkCUDAError("cudaMemset failed!");
 
 
             for (int d = ilog2ceil(intermArraySize) - 1; d >= 0; --d) {
                 kernDownSweep << < fullBlocksPerGrid, blockSize >> > (intermArraySize, d, dev_data);
-                cudaDeviceSynchronize();
+                //cudaDeviceSynchronize();
             }
 
 
