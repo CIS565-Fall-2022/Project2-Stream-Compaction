@@ -86,6 +86,7 @@ namespace StreamCompaction {
             for (int d = 0; d <= ilog2ceil(n) - 1; ++d) {
                 kernUpSweep << < blockPerGrid, blockSize >> > (n, d, data);
             }
+            cudaDeviceSynchronize();
 
             cudaMemset(data + n - 1, 0, sizeof(int));
             checkCUDAError("cudaMemset failed!");
@@ -94,7 +95,7 @@ namespace StreamCompaction {
             for (int d = ilog2ceil(n) - 1; d >= 0; --d) {
                 kernDownSweep << < blockPerGrid, blockSize >> > (n, d, data);
             }
-
+            cudaDeviceSynchronize();
         }
 
 
@@ -111,36 +112,77 @@ namespace StreamCompaction {
          */
         int compact(int n, int* odata, const int* idata) {
             dim3 fullBlocksPerGrid((n + blockSize - 1) / blockSize);
+            int arraySize = 1 << ilog2ceil(n);
 
-            int* dev_data;
+            int* dev_indices;
             int* dev_bool;
-            cudaMalloc((void**)&dev_data, n * sizeof(int));
-            checkCUDAError("cudaMalloc dev_data failed!");
-            cudaMalloc((void**)&dev_bool, n * sizeof(int));
-            checkCUDAError("cudaMalloc dev_data failed!");
+            int* dev_idata;
+            int* dev_odata;
+            cudaMalloc((void**)&dev_indices, arraySize * sizeof(int));
+            checkCUDAError("cudaMalloc dev_indices failed!");
+            cudaMalloc((void**)&dev_bool, arraySize * sizeof(int));
+            checkCUDAError("cudaMalloc dev_bool failed!");
+            cudaMalloc((void**)&dev_idata, arraySize * sizeof(int));
+            checkCUDAError("cudaMalloc dev_idata failed!");
+
+            cudaMemcpy(dev_idata, idata, n * sizeof(int), cudaMemcpyHostToDevice);
+            checkCUDAError("cudaMemcpy dev_bool to dev_data failed!");
+
 
             timer().startGpuTimer();
             // Step 1
-            StreamCompaction::Common::kernMapToBoolean << <fullBlocksPerGrid, blockSize >> > (n, dev_bool, idata);
-            cudaDeviceSynchronize();
+            StreamCompaction::Common::kernMapToBoolean << <fullBlocksPerGrid, blockSize >> > (n, dev_bool, dev_idata);
+            //cudaDeviceSynchronize();
             
-            cudaMemcpy(dev_data, dev_bool, sizeof(int) * n, cudaMemcpyDeviceToDevice);
+            cudaMemcpy(dev_indices, dev_bool, n * sizeof(int), cudaMemcpyDeviceToDevice);
+            checkCUDAError("cudaMemcpy dev_bool to dev_data failed!");
+
 
             // Step 2
-            scanRecursion(1 << ilog2ceil(n), dev_data, fullBlocksPerGrid);
+            //scanRecursion(1 << ilog2ceil(n), dev_indices, fullBlocksPerGrid);
+
+            for (int d = 0; d <= ilog2ceil(arraySize) - 1; ++d) {
+                kernUpSweep << < fullBlocksPerGrid, blockSize >> > (arraySize, d, dev_indices);
+            }
+            cudaDeviceSynchronize();
+
+            int returnSize = 0;
+            cudaMemcpy(&returnSize, dev_indices + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            checkCUDAError("cudaMemcpy dev_indices to host failed!");
+
+            cudaMalloc((void**)&dev_odata, returnSize * sizeof(int));
+            checkCUDAError("cudaMalloc dev_odata failed!");
+
+            cudaMemset(dev_indices + arraySize - 1, 0, sizeof(int));
+            checkCUDAError("cudaMemset failed!");
+
+
+            for (int d = ilog2ceil(arraySize) - 1; d >= 0; --d) {
+                kernDownSweep << < fullBlocksPerGrid, blockSize >> > (arraySize, d, dev_indices);
+            }
+            cudaDeviceSynchronize();
+
+
 
             // Step 3
-             StreamCompaction::Common::kernScatter <<<fullBlocksPerGrid, blockSize >>>(n, odata,
-                idata, dev_bool, dev_data);
+             StreamCompaction::Common::kernScatter <<<fullBlocksPerGrid, blockSize >>>(arraySize, dev_odata,
+                 dev_idata, dev_bool, dev_indices);
 
 
             timer().endGpuTimer();
-            int returnSize = 0;
-            cudaMemcpy(&returnSize, dev_data + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            cudaDeviceSynchronize();
 
 
-            cudaFree(dev_data);
+
+            cudaMemcpy(odata, dev_odata, returnSize * sizeof(int), cudaMemcpyDeviceToHost);
+            checkCUDAError("cudaMemcpy dev_odata to host failed!");
+
+            
+            cudaFree(dev_indices);
+            cudaFree(dev_odata);
+            cudaFree(dev_idata);
             cudaFree(dev_bool);
+
 
             return returnSize;
         }
