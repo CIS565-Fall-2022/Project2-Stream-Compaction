@@ -37,7 +37,7 @@ namespace StreamCompaction {
             int* input, * output;
             cudaMalloc((void**)&input, n*sizeof(int));
             cudaMalloc((void**)&output, n*sizeof(int));
-            cudaMemcpy(input, idata, n, cudaMemcpyHostToDevice);
+            cudaMemcpy(input, idata, n*sizeof(int), cudaMemcpyHostToDevice);
 
 
             timer().startGpuTimer();
@@ -56,7 +56,7 @@ namespace StreamCompaction {
             }
             //cudaMemcpy(odata, output, n, cudaMemcpyDeviceToHost);
             //change from inclusive to excluvise
-            cudaMemcpy(odata + 1, output, n - 1, cudaMemcpyDeviceToHost);
+            cudaMemcpy(odata + 1, output, (n - 1)*sizeof(int), cudaMemcpyDeviceToHost);
             odata[0] = 0;
             cudaFree(input);
             cudaFree(output);
