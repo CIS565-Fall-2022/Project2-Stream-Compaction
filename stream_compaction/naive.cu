@@ -20,8 +20,8 @@ namespace StreamCompaction {
                 return;
             }
             odata[index] = idata[index];
-            if (index >= pow(2, depth - 1)) {
-                odata[index] += idata[index - int(pow(2, depth - 1))];
+            if (index >= int(pow(2, depth))) {
+                odata[index] += idata[index - int(pow(2, depth ))];
             }
             return;
         }
@@ -30,16 +30,17 @@ namespace StreamCompaction {
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int *odata, const int *idata) {
-            dim3 blockDim((n + blockSize - 1) / blockSize);
 
+            dim3 blockDim((n + blockSize - 1) / blockSize);
             int depth = ilog2ceil(n);
             bool oddEvenCount = false;
             int* input, * output;
             cudaMalloc((void**)&input, n*sizeof(int));
             cudaMalloc((void**)&output, n*sizeof(int));
             cudaMemcpy(input, idata, n, cudaMemcpyHostToDevice);
+
+
             timer().startGpuTimer();
-            // TODO
             for (int i = 0; i < depth; i++) {
                 
                 kernScan<<<blockDim, blockSize>>>(n, i, output, input);
@@ -49,10 +50,14 @@ namespace StreamCompaction {
             
 
             timer().endGpuTimer();
+
             if (!oddEvenCount) {
-                std::swap(output, input);
+                std::swap(input, output);
             }
-            cudaMemcpy(odata, output, n, cudaMemcpyDeviceToHost);
+            //cudaMemcpy(odata, output, n, cudaMemcpyDeviceToHost);
+            //change from inclusive to excluvise
+            cudaMemcpy(odata + 1, output, n - 1, cudaMemcpyDeviceToHost);
+            odata[0] = 0;
             cudaFree(input);
             cudaFree(output);
         }

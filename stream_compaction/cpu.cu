@@ -55,24 +55,20 @@ namespace StreamCompaction {
         int compactWithScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+            int* odataCompact = new int[n];
+            int* odataScan = new int[n];
+            int odataCount = 0;
             for (int i = 0; i < n; i++) {
-                if (idata[i] != 0) {
-                    odata[i] = 1;
+                odataScan[i] = idata[i] ? 1 : 0;
+                if (i > 0 && odataScan[i-1]) {
+                    odataCompact[i] = odataCompact[i-1] + 1;
                 }
                 else {
-                    odata[i] = 0;
+                    odataCompact[i] = i > 0 ? odataCompact[i - 1] : 0;
                 }
-            }
-            int* odataScan, odataScatter;
-            int odataCount = 0;
-            odataScan[0] = 0;
-            for (int i = 1; i < n; i++) {
-                odataScan[i] = odata[i - 1] + odataScan[i - 1];
-            }
-            for (int i = 0; i < n; i++) {
-                if (odata[i] == 1) {
+                if (odataScan[i]) {
                     odataCount++;
-                    odataScatter[&odataScan[i]] = idata[i];
+                    odata[odataCompact[i]] = idata[i];
                 }
             }
             timer().endCpuTimer();

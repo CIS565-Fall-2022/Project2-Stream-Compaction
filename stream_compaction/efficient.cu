@@ -23,22 +23,22 @@ namespace StreamCompaction {
             return;
         }
 
-        __global__ void kernDownsweep(int n, int depth, int* odata) {
+        __global__ void kernDownsweep(int n, int depth, int maxDepth, int* odata) {
             int index = threadIdx.x + (blockIdx.x * blockDim.x);
             int path = pow(2, depth);
+            if (index == n - 1 && depth == maxDepth) {
+                odata[index] = 0;//have to do this here because cant do this in void directly
+                return;
+            }
             if (index >= n || index % (2 * path) != 0 || (index+2*path-1) >= n) {
                 return;
             }
             int saveVal = odata[index + path - 1];
             odata[index + path - 1] = odata[index + 2 * path - 1];
             odata[index + 2 * path - 1] += saveVal;
+            return;
         }
 
-        void fillArrayToPower2(int* odataMax, const int* idata, int maxN, int n) {
-            cudaMalloc((void**)&odataMax, maxN * sizeof(int));
-            cudaMemcpy(odataMax, idata, n * sizeof(int), cudaMemcpyHostToDevice);
-            cudaMemset(odataMax + n, 0, (maxN - n) * sizeof(int));
-        }
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
@@ -47,7 +47,9 @@ namespace StreamCompaction {
             int maxN = pow(2, ilog2ceil(n));
             dim3 blockDim((maxN + blockSize - 1) / blockSize);
             int* odataMax;
-            fillArrayToPower2(odataMax, idata, maxN, n);
+            cudaMalloc((void**)&odataMax, maxN * sizeof(int));
+            cudaMemcpy(odataMax, idata, n * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemset(odataMax + n, 0, (maxN - n) * sizeof(int));
 
             timer().startGpuTimer();
             // TODO
@@ -56,9 +58,8 @@ namespace StreamCompaction {
                 kernUpsweep <<<blockDim, blockSize >> > (n, i, odataMax);
             }
             //Downsweep
-            odataMax[maxN - 1] = 0;
             for (int i = ilog2ceil(n) - 1; i > 0; i--) {
-                kernDownsweep << <blockDim, blockSize >> > (n, i, odataMax);
+                kernDownsweep << <blockDim, blockSize >> > (n, i, maxN, odataMax);
             }
             timer().endGpuTimer();
 
@@ -80,7 +81,9 @@ namespace StreamCompaction {
             int maxN = pow(2, ilog2ceil(n));
             dim3 blockDim((n + blockSize - 1) / blockSize);
             int* odataMax, *oBoll, * oScan;
-            fillArrayToPower2(odataMax, idata, maxN, n);
+            cudaMalloc((void**)&odataMax, maxN * sizeof(int));
+            cudaMemcpy(odataMax, idata, n * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemset(odataMax + n, 0, (maxN - n) * sizeof(int));
             cudaMalloc((void**)&oBoll, maxN * sizeof(int));
             cudaMalloc((void**)&oScan, maxN * sizeof(int));
 
@@ -94,19 +97,20 @@ namespace StreamCompaction {
                 kernUpsweep << <blockDim, blockSize >> > (n, i, oScan);
             }
             //Downsweep
-            oScan[n - 1] = 0;
             for (int i = ilog2ceil(n) - 1; i > 0; i--) {
-                kernDownsweep << <blockDim, blockSize >> > (n, i, oScan);
+                kernDownsweep << <blockDim, blockSize >> > (n, i, maxN, oScan);
             }
             //scatter
             StreamCompaction::Common::kernScatter << <blockDim, blockSize >> > (n, odata, idata, odataMax, oScan);
             timer().endGpuTimer();
 
-
+            //now we get the last index of oScan to return;
+            int* lastIndex = new int[1];
+            cudaMemcpy(lastIndex, oScan + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
             cudaFree(oBoll);
             cudaFree(oScan);
             cudaFree(odataMax);
-            return -1;//how do we get the final index?
+            return lastIndex[0];//how do we get the final index?
         }
     }
 }

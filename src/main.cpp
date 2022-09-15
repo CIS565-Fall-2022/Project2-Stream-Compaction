@@ -51,11 +51,11 @@ int main(int argc, char* argv[]) {
     printDesc("naive scan, power-of-two");
     StreamCompaction::Naive::scan(SIZE, c, a);
     printElapsedTime(StreamCompaction::Naive::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
-    //printArray(SIZE, c, true);
+    printArray(SIZE, c, true);
     printCmpResult(SIZE, b, c);
 
-    /* For bug-finding only: Array of 1s to help find bugs in stream compaction or scan
-    onesArray(SIZE, c);
+    /* For bug-finding only: Array of 1s to help find bugs in stream compaction or scan */
+    /*onesArray(SIZE, c);
     printDesc("1s array for finding bugs");
     StreamCompaction::Naive::scan(SIZE, c, a);
     printArray(SIZE, c, true); */
