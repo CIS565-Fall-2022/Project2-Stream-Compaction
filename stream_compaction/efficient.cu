@@ -25,10 +25,7 @@ namespace StreamCompaction {
             int self = (blockIdx.x * blockDim.x) + threadIdx.x;
             int p0 = 1 << d;
             int p1 = 1 << (d + 1);
-            if (d == dlim - 1 && self == N - 1) {
-                out[self] = 0;
-                return;
-            } else if (self >= N || self % p1) {
+            if (self >= N || self % p1) {
                 return;
             }
             int left = self + p0 - 1;
@@ -40,10 +37,14 @@ namespace StreamCompaction {
 
         static inline void scan_impl(int n, int dlim, int* dev_in_out) {
             dim3 nblocks((n + blockSize - 1) / blockSize);
-
+            
             for (int d = 0; d < dlim; ++d) {
                 kernUpSweep KERN_PARAM(nblocks, blockSize) (n, d, dev_in_out);
             }
+            // set root to zero
+            int zero = 0;
+            H2D(dev_in_out + n - 1, &zero, 1);
+            
             for (int d = dlim - 1; d >= 0; --d) {
                 kernDownSweep KERN_PARAM(nblocks, blockSize) (n, d, dev_in_out, dlim);
             }
