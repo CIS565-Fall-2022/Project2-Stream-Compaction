@@ -138,5 +138,33 @@ namespace StreamCompaction {
             timer().endCpuTimer();
             return size;
         }
+
+        void radixSort(int* out, const int* in, int n) {
+            timer().startCpuTimer();
+            memcpy(out, in, n * sizeof(int));
+
+            for (uint32_t bit = 1; bit < 0x80000000u; bit <<= 1) {
+                int l = 0, r = n - 1;
+                while (l < r) {
+                    while (out[l] & bit) {
+                        l++;
+                    }
+                    while (!(out[r] & bit)) {
+                        r--;
+                    }
+                    if (l < r) {
+                        std::swap(out[l], out[r]);
+                    }
+                }
+            }
+            timer().endCpuTimer();
+        }
+
+        void sort(int* out, const int* in, int n) {
+            timer().startCpuTimer();
+            memcpy(out, in, n * sizeof(int));
+            std::sort(out, out + n);
+            timer().endCpuTimer();
+        }
     }
 }

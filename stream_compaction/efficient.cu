@@ -49,6 +49,10 @@ namespace StreamCompaction {
         }
 
         void devScanInPlace(int* devData, int size) {
+            if (size != ceilPow2(size)) {
+                throw std::runtime_error("devScanInPlace:: size not pow of 2");
+            }
+
             for (int stride = 2; stride <= size; stride <<= 1) {
                 int num = size / stride;
                 int blockSize = Common::getDynamicBlockSizeEXT(num);
@@ -78,7 +82,6 @@ namespace StreamCompaction {
 
             timer().startGpuTimer();
 
-            cudaMemset(data + n, 0, (size - n) * sizeof(int));
             devScanInPlace(data, size);
 
             timer().endGpuTimer();
@@ -109,7 +112,6 @@ namespace StreamCompaction {
             cudaMalloc(&indices, size * sizeof(int));
 
             timer().startGpuTimer();
-            cudaMemset(indices + n, 0, (size - n) * sizeof(int));
 
             int blockSize = Common::getDynamicBlockSizeEXT(n);
             int blockNum = (n + blockSize - 1) / blockSize;

@@ -6,8 +6,7 @@
 namespace StreamCompaction {
     namespace Naive { 
         using StreamCompaction::Common::PerformanceTimer;
-        PerformanceTimer& timer()
-        {
+        PerformanceTimer& timer() {
             static PerformanceTimer timer;
             return timer;
         }
