@@ -51,7 +51,7 @@ namespace StreamCompaction {
 
 
             int intermArraySize = 1 << ilog2ceil(n);
-            dim3 fullBlocksPerGrid((n + intermArraySize - 1) / blockSize);
+            dim3 fullBlocksPerGrid((blockSize + intermArraySize - 1) / blockSize);
 
 
             int* dev_data;
@@ -81,6 +81,23 @@ namespace StreamCompaction {
 
         }
 
+        void scanRecursion(int n, int* data, dim3 blockPerGrid)
+        {
+            for (int d = 0; d <= ilog2ceil(n) - 1; ++d) {
+                kernUpSweep << < blockPerGrid, blockSize >> > (n, d, data);
+            }
+
+            cudaMemset(data + n - 1, 0, sizeof(int));
+            checkCUDAError("cudaMemset failed!");
+
+
+            for (int d = ilog2ceil(n) - 1; d >= 0; --d) {
+                kernDownSweep << < blockPerGrid, blockSize >> > (n, d, data);
+            }
+
+        }
+
+
 
 
         /**
@@ -93,10 +110,39 @@ namespace StreamCompaction {
          * @returns      The number of elements remaining after compaction.
          */
         int compact(int n, int* odata, const int* idata) {
+            dim3 fullBlocksPerGrid((n + blockSize - 1) / blockSize);
+
+            int* dev_data;
+            int* dev_bool;
+            cudaMalloc((void**)&dev_data, n * sizeof(int));
+            checkCUDAError("cudaMalloc dev_data failed!");
+            cudaMalloc((void**)&dev_bool, n * sizeof(int));
+            checkCUDAError("cudaMalloc dev_data failed!");
+
             timer().startGpuTimer();
-            // TODO
+            // Step 1
+            StreamCompaction::Common::kernMapToBoolean << <fullBlocksPerGrid, blockSize >> > (n, dev_bool, idata);
+            cudaDeviceSynchronize();
+            
+            cudaMemcpy(dev_data, dev_bool, sizeof(int) * n, cudaMemcpyDeviceToDevice);
+
+            // Step 2
+            scanRecursion(1 << ilog2ceil(n), dev_data, fullBlocksPerGrid);
+
+            // Step 3
+             StreamCompaction::Common::kernScatter <<<fullBlocksPerGrid, blockSize >>>(n, odata,
+                idata, dev_bool, dev_data);
+
+
             timer().endGpuTimer();
-            return -1;
+            int returnSize = 0;
+            cudaMemcpy(&returnSize, dev_data + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+
+
+            cudaFree(dev_data);
+            cudaFree(dev_bool);
+
+            return returnSize;
         }
     }
 }

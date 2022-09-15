@@ -8,6 +8,9 @@ namespace StreamCompaction {
 
         void scan(int n, int *odata, const int *idata);
 
+        void scanRecursion(int n, int* data, dim3 blockPerGrid);
+
+
         int compact(int n, int *odata, const int *idata);
     }
 }
