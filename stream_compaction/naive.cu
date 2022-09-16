@@ -76,15 +76,16 @@ namespace StreamCompaction {
             cudaMalloc((void**)&dev_buffer2, sizeof(int) * n);
             checkCUDAError("cudaMalloc dev_odata failed!");
             cudaMemcpy(dev_buffer1, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
-
-            for (int d = 1; d < ilog2ceil(n); d++) {    // where d is depth of iteration
+            
+            int maxDepth = ilog2ceil(n);
+            for (int d = 1; d <= maxDepth; d++) {    // where d is depth of iteration
                 kernNaiveScan << <gridSize, blockSize >> > (n, d, dev_buffer2, dev_buffer1);
                 cudaMemcpy(dev_buffer1, dev_buffer2, sizeof(int) * n, cudaMemcpyDeviceToDevice);
             }
 
             // converting from inclusive to exclusive scan using same buffers
             kernInclusiveToExclusive << <gridSize, blockSize >> > (n, dev_buffer1, dev_buffer2);
-            cudaMemcpy(odata, dev_buffer1, sizeof(int) * (n - 1), cudaMemcpyDeviceToHost);
+            cudaMemcpy(odata, dev_buffer1, sizeof(int) * (n), cudaMemcpyDeviceToHost);
             
             cudaFree(dev_buffer1);
             cudaFree(dev_buffer2);
