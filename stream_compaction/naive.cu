@@ -37,7 +37,7 @@ namespace StreamCompaction {
             while (stride < n) {
                 int num = n - stride;
                 int blockSize = Common::getDynamicBlockSizeEXT(num);
-                int blockNum = (num + blockSize - 1) / blockSize;
+                int blockNum = ceilDiv(num, blockSize);
                 kernPartialScan<<<blockNum, blockSize>>>(tmp + stride, buf + stride, n - stride, stride);
                 cudaMemcpy(buf + stride, tmp + stride, num * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
                 stride <<= 1;

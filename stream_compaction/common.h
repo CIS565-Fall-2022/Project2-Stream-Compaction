@@ -49,6 +49,10 @@ inline int floorPow2(int x) {
     return ceilPow2(x) >> 1;
 }
 
+inline int ceilDiv(int x, int y) {
+    return (x + y - 1) / y;
+}
+
 namespace StreamCompaction {
     namespace Common {
         int numSM();

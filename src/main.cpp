@@ -14,7 +14,7 @@
 #include <stream_compaction/radixsort.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 7; // feel free to change the size of array
+const int SIZE = 1 << 26; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
@@ -86,14 +86,15 @@ int main(int argc, char* argv[]) {
     zeroArray(SIZE, c);
     printDesc("work-efficient scan with shared memory");
 
-    int test[64] = { 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, 1, 2, 1, 16,
+    /*int test[128] = { 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, 1, 2, 1, 16,
         1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, 1, 2, 1, 32 };
-    memcpy(test + 32, test, 128);
-    for (int i = 0; i < 64; i++)
+    memcpy(test + 32, test, 32 * sizeof(int));
+    for (int i = 0; i < 128; i++)
         test[i] = 1;
     
-    memcpy(a, test, 64 * sizeof(int));
-    StreamCompaction::Efficient::scanWithSharedMemory(c, a, NPOT);
+    memcpy(a, test, 128 * sizeof(int));*/
+    StreamCompaction::Efficient::scanWithSharedMemory(c, a, NPOT, 128);
+    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printCmpResult(NPOT, b, c);
 
     zeroArray(SIZE, c);
@@ -190,7 +191,12 @@ int main(int argc, char* argv[]) {
     printElapsedTime(StreamCompaction::RadixSort::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printCmpResult(NPOT, c, b);
 
-    system("pause"); // stop Win32 console from closing on exit
+    zeroArray(NPOT, c);
+    printDesc("gpu radix sort with shared memory");
+    StreamCompaction::RadixSort::sortShared(c, a, NPOT);
+    printElapsedTime(StreamCompaction::RadixSort::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    printCmpResult(NPOT, c, b);
+
     delete[] a;
     delete[] b;
     delete[] c;
