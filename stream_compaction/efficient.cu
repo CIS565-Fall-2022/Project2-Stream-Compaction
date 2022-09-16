@@ -135,6 +135,10 @@ namespace StreamCompaction {
             //cudaDeviceSynchronize();
             
             cudaMemcpy(dev_indices, dev_bool, n * sizeof(int), cudaMemcpyDeviceToDevice);
+            int* indices = new int[n];
+            cudaMemcpy(indices, dev_indices, n * sizeof(int), cudaMemcpyDeviceToHost);
+
+
             checkCUDAError("cudaMemcpy dev_bool to dev_data failed!");
 
 
@@ -146,12 +150,6 @@ namespace StreamCompaction {
             }
             cudaDeviceSynchronize();
 
-            int returnSize = 0;
-            cudaMemcpy(&returnSize, dev_indices + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
-            checkCUDAError("cudaMemcpy dev_indices to host failed!");
-
-            cudaMalloc((void**)&dev_odata, returnSize * sizeof(int));
-            checkCUDAError("cudaMalloc dev_odata failed!");
 
             cudaMemset(dev_indices + arraySize - 1, 0, sizeof(int));
             checkCUDAError("cudaMemset failed!");
@@ -162,6 +160,20 @@ namespace StreamCompaction {
             }
             cudaDeviceSynchronize();
 
+            cudaMemcpy(indices, dev_indices, n * sizeof(int), cudaMemcpyDeviceToHost);
+
+
+            int returnSize = 0;
+            cudaMemcpy(&returnSize, dev_indices + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            checkCUDAError("cudaMemcpy dev_indices to host failed!");
+
+            //int returnSize2 = 0;
+            //cudaMemcpy(&returnSize2, dev_bool + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            //returnSize += returnSize2;
+
+
+            cudaMalloc((void**)&dev_odata, returnSize * sizeof(int));
+            checkCUDAError("cudaMalloc dev_odata failed!");
 
 
             // Step 3

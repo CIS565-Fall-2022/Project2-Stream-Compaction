@@ -27,7 +27,7 @@ namespace StreamCompaction {
             if (index >= n) {
                 return;
             }
-            bools[index] = idata[index] == 0 ? 1 : 0;
+            bools[index] = idata[index] == 0 ? 0 : 1;
         }
 
         /**
