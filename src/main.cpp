@@ -13,7 +13,9 @@
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 8; // feel free to change the size of array
+// const int SIZE = 1 << 8; // feel free to change the size of array
+// todo bring back
+const int SIZE = 1 << 3;
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
