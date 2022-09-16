@@ -93,7 +93,6 @@ namespace StreamCompaction {
                 int blockNum = ceilDiv(n, blockSize);
 
                 kernMapToBool<<<blockNum, blockSize>>>(devIndices, devData, n, bit);
-
                 cudaMemcpy(sums[0].ptr, devIndices, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
 
                 for (int i = 0; i + 1 < sums.size(); i++) {
@@ -104,9 +103,8 @@ namespace StreamCompaction {
                 }
                 cudaMemcpy(devIndices, sums[0].ptr, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
 
-                int numZero;
+                int numZero, dataN;
                 cudaMemcpy(&numZero, devIndices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-                int dataN;
                 cudaMemcpy(&dataN, devData + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
                 numZero += (dataN & bit) == 0;
 

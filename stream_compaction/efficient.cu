@@ -3,6 +3,9 @@
 #include "common.h"
 #include "efficient.h"
 
+
+#define SCAN_EFFI_REDUCE_BANK_CONFLICT 1
+
 namespace StreamCompaction {
     namespace Efficient {
         enum class ScanSource { Host, Device };
@@ -14,8 +17,15 @@ namespace StreamCompaction {
             return timer;
         }
 
-        __device__ inline int bankOffset(int idx, int stride) {
-            return ((idx & 0b11111) * stride) >> 5;
+        __device__ inline int bankOffset(int idx) {
+            return idx >> 5;
+        }
+        __device__ inline int offsetAddr(int idx) {
+#if SCAN_EFFI_REDUCE_BANK_CONFLICT
+            return idx + bankOffset(idx);
+#else
+            return idx;
+#endif
         }
 
         __global__ void kernPartialUpSweep(int* data, int n, int stride) {
@@ -39,6 +49,7 @@ namespace StreamCompaction {
 
         __global__ void kernBlockScanShared(int* data, int* blockSum, int n) {
             extern __shared__ int shared[];
+            extern __shared__ int last;
 
             int idx = threadIdx.x + 1;
             int globalIdx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -47,37 +58,39 @@ namespace StreamCompaction {
                 return;
             }
 
-            shared[idx - 1] = data[globalIdx];
+            shared[offsetAddr(idx - 1)] = data[globalIdx];
             if (idx == blockDim.x) {
-                shared[idx] = shared[idx - 1];
+                last = shared[offsetAddr(blockDim.x - 1)];
             }
             __syncthreads();
 #pragma unroll
             for (int stride = 1, active = blockDim.x >> 1; stride < blockDim.x; stride <<= 1, active >>= 1) {
                 if (idx <= active) {
-                    int mappedIdx = idx * stride * 2 - 1;
-                    shared[mappedIdx] += shared[mappedIdx - stride];
+                    int idxPa = offsetAddr(idx * stride * 2 - 1);
+                    int idxCh = offsetAddr(idx * stride * 2 - 1 - stride);
+                    shared[idxPa] += shared[idxCh];
                 }
                 __syncthreads();
             }
 
             if (idx == 1) {
-                shared[blockDim.x - 1] = 0;
+                shared[offsetAddr(blockDim.x - 1)] = 0;
             }
             __syncthreads();
 #pragma unroll
             for (int stride = blockDim.x >> 1, active = 1; stride >= 1; stride >>= 1, active <<= 1) {
                 if (idx <= active) {
-                    int mappedIdx = idx * stride * 2 - 1;
-                    shared[mappedIdx] += shared[mappedIdx - stride];
-                    shared[mappedIdx - stride] = shared[mappedIdx] - shared[mappedIdx - stride];
+                    int idxPa = offsetAddr(idx * stride * 2 - 1);
+                    int idxCh = offsetAddr(idx * stride * 2 - 1 - stride);
+                    shared[idxPa] += shared[idxCh];
+                    shared[idxCh] = shared[idxPa] - shared[idxCh];
                 }
                 __syncthreads();
             }
-            data[globalIdx] = shared[idx - 1];
+            data[globalIdx] = shared[offsetAddr(idx - 1)];
 
             if (idx == 1) {
-                blockSum[blockIdx.x] = shared[blockDim.x - 1] + shared[blockDim.x];
+                blockSum[blockIdx.x] = shared[offsetAddr(blockDim.x - 1)] + last;
             }
         }
 
@@ -296,7 +309,6 @@ namespace StreamCompaction {
 
             int blockSize = Common::getDynamicBlockSizeEXT(n);
             int blockNum = ceilDiv(n, blockSize);
-
             Common::kernMapToBoolean<<<blockNum, blockSize>>>(n, devIndices, devIn);
             cudaMemcpy(sums[0].ptr, devIndices, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
 
@@ -310,7 +322,6 @@ namespace StreamCompaction {
 
             cudaMemcpy(devIndices, sums[0].ptr, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
             Common::kernScatter<<<blockNum, blockSize>>>(n, devOut, devIn, devIn, devIndices);
-
             timer().endGpuTimer();
 
             int compactedSize;
