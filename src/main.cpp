@@ -11,6 +11,7 @@
 #include <stream_compaction/naive.h>
 #include <stream_compaction/efficient.h>
 #include <stream_compaction/thrust.h>
+#include <stream_compaction/rsort.h>
 #include "testing_helpers.hpp"
 
 const int SIZE = 1 << 8; // feel free to change the size of array
@@ -38,11 +39,43 @@ void small_test() {
     std::cout << std::endl;
 }
 
-int main(int argc, char* argv[]) {
-    //small_test();
-    //return 0;
-    // Scan tests
+void sort_test() {
+    constexpr int SMALL_SIZE = 8;
 
+    int in[SIZE], out[SIZE], correct_out[SIZE];
+    int i = 0;
+    for (int x : {4, 7, 2, 6, 3, 5, 1, 0}) {
+        in[i++] = x;
+    }
+
+    printDesc("gpu sort, power-of-two, small");
+    StreamCompaction::Thrust::sort(SMALL_SIZE, correct_out, in);
+    StreamCompaction::RadixSort::sort(SMALL_SIZE, out, in);
+    printElapsedTime(StreamCompaction::RadixSort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    printArray(SMALL_SIZE, out);
+    printCmpResult(SMALL_SIZE, out, correct_out);
+
+    printDesc("gpu sort, non-power-of-two, small");
+    in[i++] = 11;
+    printArray(SMALL_SIZE + 1, in);
+    StreamCompaction::Thrust::sort(SMALL_SIZE+1, correct_out, in);
+    StreamCompaction::RadixSort::sort(SMALL_SIZE+1, out, in);
+    printElapsedTime(StreamCompaction::RadixSort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    printArray(SMALL_SIZE + 1, out);
+    printCmpResult(SMALL_SIZE+1, out, correct_out);
+
+    printDesc("gpu sort, power-of-two, large");
+    genArray(SIZE, in, 0x3f3f3f3f);
+    StreamCompaction::Thrust::sort(SIZE, correct_out, in);
+    StreamCompaction::RadixSort::sort(SIZE, out, in);
+    printElapsedTime(StreamCompaction::RadixSort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    printCmpResult(SIZE, out, correct_out);
+}
+
+int main(int argc, char* argv[]) {
+    //sort_test();
+    //small_test();
+    // Scan tests
     printf("\n");
     printf("****************\n");
     printf("** SCAN TESTS **\n");

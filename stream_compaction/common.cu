@@ -17,6 +17,30 @@ void checkCUDAErrorFn(const char *msg, const char *file, int line) {
 
 namespace StreamCompaction {
     namespace Common {
+        /**
+         * makes an array have length that is a power of two
+         * returns the new length and puts the result in *out
+         */
+        int makePowerTwoLength(int n, int const* in, int** out, MakePowerTwoLengthMode mode) {
+            int old_len = n;
+            if (n == 1 || (n & -n != n)) {
+                // n is not a power of two
+                n = 1 << ilog2ceil(n);
+            }
+            // don't alloc if the buffer is not null
+            if (!*out) {
+                cudaMalloc(out, n * sizeof(int));
+            }
+            if (mode == HostToDevice) {
+                cudaMemcpy(*out, in, old_len * sizeof(int), cudaMemcpyHostToDevice);
+            } else if (mode == DeviceToDevice) {
+                cudaMemcpy(*out, in, old_len * sizeof(int), cudaMemcpyDeviceToDevice);
+            }
+            if (n != old_len) {
+                cudaMemset(*out + old_len, 0, (n - old_len) * sizeof(int));
+            }
+            return n;
+        }
 
         /**
          * Maps an array to an array of 0s and 1s for stream compaction. Elements

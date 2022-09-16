@@ -26,18 +26,26 @@
 
 // debug helpers
 #ifndef NDEBUG
-#define PRINT_GPU(...) printGPU(__VA_ARGS__)
+#define PRINT_GPU(arr, ...) printGPU(#arr, arr, __VA_ARGS__)
 #else
 #define PRINT_GPU(...)
 #endif // !NDEBUG
 
 template<typename T>
-static inline void printGPU(T* dev, int n) {
+static inline void printGPU(char const* name, T* dev, int n) {
     T* tmp = new T[n];
+    std::cout << name << "\n";
     D2H(tmp, dev, n);
     for (int i = 0; i < n; ++i)
         std::cout << tmp[i] << " \n"[i<n-1?0:1];
     delete[] tmp;
+}
+
+template<typename T>
+static inline T getGPU(T* dev, int n, int i) {
+    T tmp;
+    D2H(&tmp, dev+i, 1);
+    return tmp;
 }
 
 /**
@@ -63,6 +71,9 @@ namespace StreamCompaction {
 
         __global__ void kernScatter(int n, int *odata,
                 const int *idata, const int *bools, const int *indices);
+
+        enum MakePowerTwoLengthMode { HostToDevice, DeviceToDevice };
+        int makePowerTwoLength(int n, int const* in, int** out, MakePowerTwoLengthMode mode);
 
         /**
         * This class is used for timing the performance

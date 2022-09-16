@@ -5,6 +5,7 @@
 #include <thrust/scan.h>
 #include <thrust/remove.h>
 #include <thrust/execution_policy.h>
+#include <thrust/sort.h>
 #include "common.h"
 #include "thrust.h"
 
@@ -46,6 +47,12 @@ namespace StreamCompaction {
             int ret = thrust::distance(dev_in.begin(), it);
             thrust::copy(dev_in.begin(), it, out);
             return ret;
+        }
+
+        void sort(int n, int* out, const int* in) {
+            thrust::device_vector<int> dev_in(in, in + n);
+            thrust::sort(dev_in.begin(), dev_in.end());
+            thrust::copy(dev_in.begin(), dev_in.end(), out);
         }
     }
 }
