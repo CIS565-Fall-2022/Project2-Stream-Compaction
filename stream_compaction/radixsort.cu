@@ -27,14 +27,14 @@ namespace StreamCompaction {
         }
 
         void sort(int* out, const int* in, int n) {
-            int* data, * buf;
-            cudaMalloc(&data, n * sizeof(int));
-            cudaMalloc(&buf, n * sizeof(int));
-            cudaMemcpy(data, in, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
+            int* devData, * devBuf;
+            cudaMalloc(&devData, n * sizeof(int));
+            cudaMalloc(&devBuf, n * sizeof(int));
+            cudaMemcpy(devData, in, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
 
-            int* indices;
+            int* devInidices;
             int size = ceilPow2(n);
-            cudaMalloc(&indices, size * sizeof(int));
+            cudaMalloc(&devInidices, size * sizeof(int));
 
             timer().startGpuTimer();
 
@@ -42,36 +42,36 @@ namespace StreamCompaction {
                 int blockSize = Common::getDynamicBlockSizeEXT(n);
                 int blockNum = ceilDiv(n, blockSize);
 
-                kernMapToBool<<<blockNum, blockSize>>>(indices, data, n, bit);
-                Efficient::devScanInPlace(indices, size);
+                kernMapToBool<<<blockNum, blockSize>>>(devInidices, devData, n, bit);
+                Efficient::devScanInPlace(devInidices, size);
 
                 int numZero;
-                cudaMemcpy(&numZero, indices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+                cudaMemcpy(&numZero, devInidices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
                 int dataN;
-                cudaMemcpy(&dataN, data + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+                cudaMemcpy(&dataN, devData + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
                 numZero += (dataN & bit) == 0;
 
-                kernScatter<<<blockNum, blockSize>>>(buf, data, indices, n, bit, numZero);
-                std::swap(data, buf);
+                kernScatter<<<blockNum, blockSize>>>(devBuf, devData, devInidices, n, bit, numZero);
+                std::swap(devData, devBuf);
             }
             timer().endGpuTimer();
 
-            cudaMemcpy(out, data, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-            cudaFree(data);
-            cudaFree(buf);
-            cudaFree(indices);
+            cudaMemcpy(out, devData, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+            cudaFree(devData);
+            cudaFree(devBuf);
+            cudaFree(devInidices);
         }
 
         void sortShared(int* out, const int* in, int n)
         {
-            int* data, * buf;
-            cudaMalloc(&data, n * sizeof(int));
-            cudaMalloc(&buf, n * sizeof(int));
-            cudaMemcpy(data, in, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
+            int* devData, * devBuf;
+            cudaMalloc(&devData, n * sizeof(int));
+            cudaMalloc(&devBuf, n * sizeof(int));
+            cudaMemcpy(devData, in, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
 
-            int* indices;
+            int* devIndices;
             int size = ceilPow2(n);
-            cudaMalloc(&indices, size * sizeof(int));
+            cudaMalloc(&devIndices, size * sizeof(int));
 
             timer().startGpuTimer();
 
@@ -79,24 +79,24 @@ namespace StreamCompaction {
                 int blockSize = Common::getDynamicBlockSizeEXT(n);
                 int blockNum = ceilDiv(n, blockSize);
 
-                kernMapToBool<<<blockNum, blockSize>>>(indices, data, n, bit);
-                Efficient::devScanInPlaceShared(indices, size);
+                kernMapToBool<<<blockNum, blockSize>>>(devIndices, devData, n, bit);
+                Efficient::devScanInPlaceShared(devIndices, size);
 
                 int numZero;
-                cudaMemcpy(&numZero, indices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+                cudaMemcpy(&numZero, devIndices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
                 int dataN;
-                cudaMemcpy(&dataN, data + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+                cudaMemcpy(&dataN, devData + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
                 numZero += (dataN & bit) == 0;
 
-                kernScatter<<<blockNum, blockSize>>>(buf, data, indices, n, bit, numZero);
-                std::swap(data, buf);
+                kernScatter<<<blockNum, blockSize>>>(devBuf, devData, devIndices, n, bit, numZero);
+                std::swap(devData, devBuf);
             }
             timer().endGpuTimer();
 
-            cudaMemcpy(out, data, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-            cudaFree(data);
-            cudaFree(buf);
-            cudaFree(indices);
+            cudaMemcpy(out, devData, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+            cudaFree(devData);
+            cudaFree(devBuf);
+            cudaFree(devIndices);
         }
     }
 }

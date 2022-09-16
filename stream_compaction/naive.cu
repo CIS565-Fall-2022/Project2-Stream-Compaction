@@ -26,10 +26,10 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata) {
             // TODO
             size_t bytes = n * sizeof(int);
-            int* buf, * tmp;
-            cudaMalloc(&buf, bytes);
-            cudaMalloc(&tmp, bytes);
-            cudaMemcpy(buf, idata, bytes, cudaMemcpyKind::cudaMemcpyHostToDevice);
+            int* devBuf, * devTmp;
+            cudaMalloc(&devBuf, bytes);
+            cudaMalloc(&devTmp, bytes);
+            cudaMemcpy(devBuf, idata, bytes, cudaMemcpyKind::cudaMemcpyHostToDevice);
 
             timer().startGpuTimer();
 
@@ -38,16 +38,16 @@ namespace StreamCompaction {
                 int num = n - stride;
                 int blockSize = Common::getDynamicBlockSizeEXT(num);
                 int blockNum = ceilDiv(num, blockSize);
-                kernPartialScan<<<blockNum, blockSize>>>(tmp + stride, buf + stride, n - stride, stride);
-                cudaMemcpy(buf + stride, tmp + stride, num * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
+                kernPartialScan<<<blockNum, blockSize>>>(devTmp + stride, devBuf + stride, n - stride, stride);
+                cudaMemcpy(devBuf + stride, devTmp + stride, num * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
                 stride <<= 1;
             }
             timer().endGpuTimer();
 
             odata[0] = 0;
-            cudaMemcpy(odata + 1, buf, (n - 1) * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-            cudaFree(buf);
-            cudaFree(tmp);
+            cudaMemcpy(odata + 1, devBuf, (n - 1) * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+            cudaFree(devBuf);
+            cudaFree(devTmp);
         }
     }
 }

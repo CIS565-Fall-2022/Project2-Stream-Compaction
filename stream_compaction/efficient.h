@@ -10,8 +10,9 @@ namespace StreamCompaction {
         void devScanInPlaceShared(int* devData, int size);
 
         void scan(int n, int *odata, const int *idata);
-        void scanWithSharedMemory(int* out, const int* in, int n, int blockSize);
+        void scanShared(int* out, const int* in, int n, int blockSize);
 
         int compact(int n, int *odata, const int *idata);
+        int compactShared(int* out, const int* in, int n);
     }
 }
