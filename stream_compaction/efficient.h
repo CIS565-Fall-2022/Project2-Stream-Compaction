@@ -7,7 +7,7 @@ namespace StreamCompaction {
         StreamCompaction::Common::PerformanceTimer& timer();
 
         void scan(int n, int *odata, const int *idata);
-        void scan_impl(int n, int* dev_in_out);
+        void scan_impl(int n, int* dev_in_out, bool inclusive = false);
         int compact(int n, int *odata, const int *idata);
     }
 }

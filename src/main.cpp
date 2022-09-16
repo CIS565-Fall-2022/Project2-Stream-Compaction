@@ -14,14 +14,14 @@
 #include <stream_compaction/rsort.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 8; // feel free to change the size of array
+const int SIZE = 1 << 14; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
 int *c = new int[SIZE];
 
 void small_test() {
-    constexpr int SMALL_SIZE = 8;
+    constexpr int SMALL_SIZE = 256;
     int a[SMALL_SIZE], b[SMALL_SIZE];
     for (int i = 0; i < SMALL_SIZE; ++i)
         a[i] = i;
@@ -41,8 +41,9 @@ void small_test() {
 
 void sort_test() {
     constexpr int SMALL_SIZE = 8;
-
-    int in[SIZE], out[SIZE], correct_out[SIZE];
+#define in a
+#define out b
+#define correct_out c
     int i = 0;
     for (int x : {4, 7, 2, 6, 3, 5, 1, 0}) {
         in[i++] = x;
@@ -70,11 +71,12 @@ void sort_test() {
     StreamCompaction::RadixSort::sort(SIZE, out, in);
     printElapsedTime(StreamCompaction::RadixSort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     printCmpResult(SIZE, out, correct_out);
+#undef in,out,correct_out
 }
 
 int main(int argc, char* argv[]) {
-    //sort_test();
-    //small_test();
+    small_test();
+    sort_test();
     // Scan tests
     printf("\n");
     printf("****************\n");

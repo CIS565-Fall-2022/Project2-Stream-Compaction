@@ -84,7 +84,7 @@ namespace StreamCompaction {
                 pow2len = Common::makePowerTwoLength(n, dev_e, &dev_f, Common::MakePowerTwoLengthMode::DeviceToDevice);
                 Efficient::scan_impl(pow2len, dev_f);
                 
-                int total_falses = getGPU(dev_f, n, n-1) + getGPU(dev_e, n, n-1);
+                int total_falses = getGPU(dev_f, n-1) + getGPU(dev_e, n-1);
                 kernComputeIndices KERN_PARAM(nblocks, blockSize) (n, total_falses, dev_f, dev_bool, dev_d);
                 kernShuffle        KERN_PARAM(nblocks, blockSize) (n, dev_in, dev_d, dev_out);
                 

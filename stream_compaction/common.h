@@ -27,6 +27,7 @@
 // debug helpers
 #ifndef NDEBUG
 #define PRINT_GPU(arr, ...) printGPU(#arr, arr, __VA_ARGS__)
+#define BOUND_CHECK(arr, n, expr) do { if((expr) < 0 || (expr) >= n) { std::cout << #expr << " " << (expr) << std::endl; assert(!"bound check fail"); } } while(0)
 #else
 #define PRINT_GPU(...)
 #endif // !NDEBUG
@@ -42,12 +43,15 @@ static inline void printGPU(char const* name, T* dev, int n) {
 }
 
 template<typename T>
-static inline T getGPU(T* dev, int n, int i) {
+static inline T getGPU(T* dev, int i) {
     T tmp;
     D2H(&tmp, dev+i, 1);
     return tmp;
 }
-
+template<typename T>
+static inline void setGPU(T* dev, int i, T val) {
+    H2D(dev+i, &val, 1);
+}
 /**
  * Check for CUDA errors; print and exit if there was a problem.
  */

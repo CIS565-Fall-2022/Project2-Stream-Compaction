@@ -23,7 +23,7 @@ namespace StreamCompaction {
          */
         int makePowerTwoLength(int n, int const* in, int** out, MakePowerTwoLengthMode mode) {
             int old_len = n;
-            if (n == 1 || (n & -n != n)) {
+            if (n == 1 || ((n & -n) != n)) {
                 // n is not a power of two
                 n = 1 << ilog2ceil(n);
             }

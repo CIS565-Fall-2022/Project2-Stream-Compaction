@@ -45,15 +45,23 @@ namespace StreamCompaction {
         *  reference: GPU Gem3 Listing 39-2
         */
 #define SHARED_OPT
-#define SHARED_OPT_BLOCK_SIZE 1024
-        __global__ void kernSharedScan(int N, int* out, int const* in) {
-            __shared__ int temp[2 * SHARED_OPT_BLOCK_SIZE];
+#define SHARED_OPT_BSIZE 2 // how many threads per block in shared memory implementation
+#define SHARED_OPT_MAX_ARR_SIZE (2 * SHARED_OPT_BSIZE) // maximum array that can be processed by a block in shared memory implementation
+        __global__ void kernSharedScan(int N, int* out, int const* in, bool inclusive) {
+            __shared__ int temp[SHARED_OPT_MAX_ARR_SIZE];
+            int blkid = blockIdx.x;
             int thid = threadIdx.x;
             int offset = 1;
 
+            // pad input and output so we r/w to the correct chunk
+            out += blkid * SHARED_OPT_MAX_ARR_SIZE;
+            in += blkid * SHARED_OPT_MAX_ARR_SIZE;
+
             // up sweep
-            temp[2 * thid] = in[2 * thid];
-            temp[2 * thid + 1] = in[2 * thid + 1];
+            int saves[2];
+            saves[0] = temp[2 * thid] = in[2 * thid];
+            saves[1] = temp[2 * thid + 1] = in[2 * thid + 1];
+
             for (int d = N >> 1; d > 0; d >>= 1) {
                 __syncthreads();
                 if (thid < d) {
@@ -84,21 +92,93 @@ namespace StreamCompaction {
 
             out[2 * thid] = temp[2 * thid];
             out[2 * thid + 1] = temp[2 * thid + 1];
+            if (inclusive) {
+                out[2 * thid] += saves[0];
+                out[2 * thid + 1] += saves[1];
+            }
         }
 
+        __global__ void kernOffset(int N, int* in, int* out, bool plus) {
+            int self = (blockIdx.x * blockDim.x) + threadIdx.x;
+            if (self >= N) {
+                return;
+            }
+            if (plus) {
+                out[self] += in[self];
+            } else {
+                out[self] -= in[self];
+            }
+        }
+        /**
+        *  Compute block increments if the array was split into several blocks
+        */
+        __global__ void kernComputeStride(int N, int* in, int* out) {
+            int self = (blockIdx.x * blockDim.x) + threadIdx.x;
+            if (self >= N) {
+                return;
+            }
+            out[self] = (in + self * SHARED_OPT_MAX_ARR_SIZE)[SHARED_OPT_MAX_ARR_SIZE -1];
+        }
+        /**
+        *  Compute the final prefix sum based on block increments
+        */
+        __global__ void kernComputeFinalArray(int N, int* strides, int* out) {
+            int self = (blockIdx.x * blockDim.x) + threadIdx.x;
+            if (self >= N) {
+                return;
+            }
+            out[self] += strides[self / SHARED_OPT_MAX_ARR_SIZE];
+        }
 
         /** 
         * performs in-place exclusive scan on a GPU buffer
         * n must be a power of two
         */
-        inline void scan_impl(int n, int* dev_in_out) {
+        void scan_impl(int n, int* dev_in_out, bool inclusive) {
+            assert((n & -n) == n);
+            static_assert((SHARED_OPT_MAX_ARR_SIZE & -SHARED_OPT_MAX_ARR_SIZE) == SHARED_OPT_MAX_ARR_SIZE, "max array size must be pow of 2");
 #ifdef SHARED_OPT
-            if (n < 1024) {
-                kernSharedScan KERN_PARAM(1, SHARED_OPT_BLOCK_SIZE) (n, dev_in_out, dev_in_out);
+            if (n <= SHARED_OPT_MAX_ARR_SIZE) {
+                kernSharedScan KERN_PARAM(1, SHARED_OPT_BSIZE) (n, dev_in_out, dev_in_out, inclusive);
+                cudaDeviceSynchronize();
             } else {
-                assert(false);
-                //int nblocks = (n + SHARED_THREAD_NUM - 1) / SHARED_THREAD_NUM;
-                //kernSharedScan KERN_PARAM(nblocks, SHARED_THREAD_NUM) 
+                assert(n % SHARED_OPT_MAX_ARR_SIZE == 0);
+
+                // split into chunks if array cannot fit into shared memory
+                int nblocks = n / SHARED_OPT_MAX_ARR_SIZE;
+
+                // note: use SHARED_OPT_BSIZE because each thread is responsible for 2 values in the array
+                kernSharedScan KERN_PARAM(nblocks, SHARED_OPT_BSIZE) (SHARED_OPT_MAX_ARR_SIZE, dev_in_out, dev_in_out, true);
+                cudaDeviceSynchronize();
+
+                int* stride;
+                ALLOC(stride, nblocks);
+
+                // the dimensions here are arbitrary, as long as it covers the stride array
+                // which has a size of N / SHARED_OPT_MAX_ARR_SIZE
+                int nblocks2 = (nblocks + SHARED_OPT_BSIZE - 1) / SHARED_OPT_BSIZE;
+                kernComputeStride KERN_PARAM(nblocks2, SHARED_OPT_BSIZE) (nblocks, dev_in_out, stride);
+                cudaDeviceSynchronize();
+
+                // PRINT_GPU(dev_in_out, n);
+                scan_impl(nblocks, stride, false);
+                // PRINT_GPU(stride, nblocks);
+
+                kernComputeFinalArray KERN_PARAM(nblocks, SHARED_OPT_MAX_ARR_SIZE) (n, stride, dev_in_out);
+                // PRINT_GPU(dev_in_out, n);
+                cudaDeviceSynchronize();
+
+                if (!inclusive) {
+                    // inclusive to exclusive
+                    int* tmp;
+                    ALLOC(tmp, n);
+                    D2D(tmp+1, dev_in_out, n-1);
+                    setGPU(tmp, 0, 0);
+                    D2D(dev_in_out, tmp, n);
+                    FREE(tmp);
+                }
+
+                FREE(stride);
             }
 #else
             dim3 nblocks((n + blockSize - 1) / blockSize);
@@ -167,7 +247,7 @@ namespace StreamCompaction {
                 Common::kernScatter KERN_PARAM(nblocks, blockSize) (n, dev_out, dev_in, dev_bool, dev_indices);
             }
             timer().endGpuTimer();
-            int ret = getGPU(dev_indices, pow2len, pow2len - 1);
+            int ret = getGPU(dev_indices, pow2len - 1);
 
             D2H(out, dev_out, ret);
             FREE(dev_out);
