@@ -42,46 +42,7 @@ namespace StreamCompaction {
                 x[index + (1 << (d + 1)) - 1] += t;
             }
         }
-
-
-        /**
-         * Performs prefix-sum (aka scan) on idata, storing the result into odata.
-         */
-        void scan(int n, int* odata, const int* idata) {
-
-
-            int intermArraySize = 1 << ilog2ceil(n);
-            dim3 fullBlocksPerGrid((blockSize + intermArraySize - 1) / blockSize);
-
-
-            int* dev_data;
-            cudaMalloc((void**)&dev_data, intermArraySize * sizeof(int));
-            checkCUDAError("cudaMalloc dev_data failed!");
-            cudaMemcpy(dev_data, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
-
-            timer().startGpuTimer();
-            for (int d = 0; d <= ilog2ceil(intermArraySize) - 1; ++d) {
-                kernUpSweep << < fullBlocksPerGrid, blockSize >> > (intermArraySize, d, dev_data);
-                //cudaDeviceSynchronize();
-            }
-
-            cudaMemset(dev_data + intermArraySize - 1, 0, sizeof(int));
-            checkCUDAError("cudaMemset failed!");
-
-
-            for (int d = ilog2ceil(intermArraySize) - 1; d >= 0; --d) {
-                kernDownSweep << < fullBlocksPerGrid, blockSize >> > (intermArraySize, d, dev_data);
-                //cudaDeviceSynchronize();
-            }
-
-
-            timer().endGpuTimer();
-            cudaMemcpy(odata, dev_data, sizeof(int) * n, cudaMemcpyDeviceToHost);
-            cudaFree(dev_data);
-
-        }
-
-        void scanRecursion(int n, int* data, dim3 blockPerGrid)
+        void upDownSweep(int n, int* data, dim3 blockPerGrid)
         {
             for (int d = 0; d <= ilog2ceil(n) - 1; ++d) {
                 kernUpSweep << < blockPerGrid, blockSize >> > (n, d, data);
@@ -99,7 +60,27 @@ namespace StreamCompaction {
         }
 
 
+        /**
+         * Performs prefix-sum (aka scan) on idata, storing the result into odata.
+         */
+        void scan(int n, int* odata, const int* idata) {
+            int intermArraySize = 1 << ilog2ceil(n);
+            dim3 fullBlocksPerGrid((blockSize + intermArraySize - 1) / blockSize);
 
+            int* dev_data;
+            cudaMalloc((void**)&dev_data, intermArraySize * sizeof(int));
+            checkCUDAError("cudaMalloc dev_data failed!");
+            cudaMemcpy(dev_data, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
+
+            timer().startGpuTimer();
+
+            upDownSweep(intermArraySize, dev_data, fullBlocksPerGrid);
+            
+            timer().endGpuTimer();
+            cudaMemcpy(odata, dev_data, sizeof(int) * n, cudaMemcpyDeviceToHost);
+            cudaFree(dev_data);
+
+        }
 
         /**
          * Performs stream compaction on idata, storing the result into odata.
@@ -132,44 +113,18 @@ namespace StreamCompaction {
             timer().startGpuTimer();
             // Step 1
             StreamCompaction::Common::kernMapToBoolean << <fullBlocksPerGrid, blockSize >> > (n, dev_bool, dev_idata);
-            //cudaDeviceSynchronize();
+            cudaDeviceSynchronize();
             
             cudaMemcpy(dev_indices, dev_bool, n * sizeof(int), cudaMemcpyDeviceToDevice);
-            int* indices = new int[n];
-            cudaMemcpy(indices, dev_indices, n * sizeof(int), cudaMemcpyDeviceToHost);
-
-
             checkCUDAError("cudaMemcpy dev_bool to dev_data failed!");
 
 
             // Step 2
-            //scanRecursion(1 << ilog2ceil(n), dev_indices, fullBlocksPerGrid);
-
-            for (int d = 0; d <= ilog2ceil(arraySize) - 1; ++d) {
-                kernUpSweep << < fullBlocksPerGrid, blockSize >> > (arraySize, d, dev_indices);
-            }
-            cudaDeviceSynchronize();
-
-
-            cudaMemset(dev_indices + arraySize - 1, 0, sizeof(int));
-            checkCUDAError("cudaMemset failed!");
-
-
-            for (int d = ilog2ceil(arraySize) - 1; d >= 0; --d) {
-                kernDownSweep << < fullBlocksPerGrid, blockSize >> > (arraySize, d, dev_indices);
-            }
-            cudaDeviceSynchronize();
-
-            cudaMemcpy(indices, dev_indices, n * sizeof(int), cudaMemcpyDeviceToHost);
-
+            upDownSweep(arraySize, dev_indices, fullBlocksPerGrid);
 
             int returnSize = 0;
             cudaMemcpy(&returnSize, dev_indices + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
             checkCUDAError("cudaMemcpy dev_indices to host failed!");
-
-            //int returnSize2 = 0;
-            //cudaMemcpy(&returnSize2, dev_bool + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
-            //returnSize += returnSize2;
 
 
             cudaMalloc((void**)&dev_odata, returnSize * sizeof(int));
@@ -179,16 +134,13 @@ namespace StreamCompaction {
             // Step 3
              StreamCompaction::Common::kernScatter <<<fullBlocksPerGrid, blockSize >>>(arraySize, dev_odata,
                  dev_idata, dev_bool, dev_indices);
+             cudaDeviceSynchronize();
 
 
             timer().endGpuTimer();
-            cudaDeviceSynchronize();
-
-
 
             cudaMemcpy(odata, dev_odata, returnSize * sizeof(int), cudaMemcpyDeviceToHost);
             checkCUDAError("cudaMemcpy dev_odata to host failed!");
-
             
             cudaFree(dev_indices);
             cudaFree(dev_odata);
