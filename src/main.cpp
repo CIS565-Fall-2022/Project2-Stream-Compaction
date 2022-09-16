@@ -14,7 +14,7 @@
 #include <stream_compaction/radixsort.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 28; // feel free to change the size of array
+const int SIZE = 1 << 7; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
@@ -81,6 +81,19 @@ int main(int argc, char* argv[]) {
     StreamCompaction::Efficient::scan(NPOT, c, a);
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     //printArray(NPOT, c, true);
+    printCmpResult(NPOT, b, c);
+
+    zeroArray(SIZE, c);
+    printDesc("work-efficient scan with shared memory");
+
+    int test[64] = { 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, 1, 2, 1, 16,
+        1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, 1, 2, 1, 32 };
+    memcpy(test + 32, test, 128);
+    for (int i = 0; i < 64; i++)
+        test[i] = 1;
+    
+    memcpy(a, test, 64 * sizeof(int));
+    StreamCompaction::Efficient::scanWithSharedMemory(c, a, NPOT);
     printCmpResult(NPOT, b, c);
 
     zeroArray(SIZE, c);

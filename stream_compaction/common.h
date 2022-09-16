@@ -12,6 +12,7 @@
 #include <chrono>
 #include <stdexcept>
 #include <vector>
+#include <iomanip>
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
@@ -75,6 +76,26 @@ namespace StreamCompaction {
 
             for (size_t i = 0; i < n; i++) {
                 std::cout << data[i] << " ";
+            }
+            std::cout << std::endl;
+
+            delete[] data;
+        }
+
+        template<typename T>
+        void printDeviceInGroup(const T* devData, size_t n, int groupSize, const std::string& msg = "") {
+            T* data = new T[n];
+            cudaMemcpy(data, devData, n * sizeof(T), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+
+            if (msg != "") {
+                std::cout << msg << std::endl;
+            }
+
+            for (size_t i = 0; i < n; i++) {
+                std::cout << std::setw(4) << data[i] << " ";
+                if ((i + 1) % groupSize == 0) {
+                    std::cout << std::endl;
+                }
             }
             std::cout << std::endl;
 

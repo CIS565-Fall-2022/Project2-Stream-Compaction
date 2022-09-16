@@ -23,7 +23,7 @@ namespace StreamCompaction {
             }
             int val = data[idx];
             int pos = indices[idx];
-            out[!(val & filter) ? pos : numZero + idx - pos] = val;
+            out[(val & filter) ? numZero + idx - pos : pos] = val;
         }
 
         void sort(int* out, const int* in, int n) {
