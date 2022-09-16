@@ -29,8 +29,8 @@ on the implementation of scan and stream compaction.
 * The [slides on Parallel Algorithms](https://docs.google.com/presentation/d/1ETVONA7QDM-WqsEj4qVOGD6Kura5I6E9yqH-7krnwZ0/edit#slide=id.p126)
   for Scan, Stream Compaction, and Work-Efficient Parallel Scan.
 * GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html).
-    - This online version contains a few small errors (in superscripting, missing braces, bad indentation, etc.)
-    - We maintain a fix for this at [GPU Gem 3 Ch 39 Patch](https://github.com/CIS565-Fall-2017/Project2-Stream-Compaction/blob/master/INSTRUCTION.md#gpu-gem-3-ch-39-patch). If you find more errors in the chapter, welcome to open new pull requests to contribute.
+  - This online version contains a few small errors (in superscripting, missing braces, bad indentation, etc.)
+  - We maintain a fix for this at [GPU Gem 3 Ch 39 Patch](https://github.com/CIS565-Fall-2017/Project2-Stream-Compaction/blob/master/INSTRUCTION.md#gpu-gem-3-ch-39-patch). If you find more errors in the chapter, welcome to open new pull requests to contribute.
 * If you are still unclear after reading the steps, take a look at the last chapter - [Algorithm Examples](https://github.com/CIS565-Fall-2017/Project2-Stream-Compaction/blob/master/INSTRUCTION.md#algorithm-examples).
 * [Recitation slides](https://docs.google.com/presentation/d/1daOnWHOjMp1sIqMdVsNnvEU1UYynKcEMARc_W6bGnqE/edit?usp=sharing)
 
@@ -116,8 +116,9 @@ Most of the text in Part 2 applies.
 Since the work-efficient scan operates on a binary tree structure, it works
 best with arrays with power-of-two length. Make sure your implementation works
 on non-power-of-two sized arrays (see `ilog2ceil`). This requires extra memory
+
 - your intermediate array sizes will need to be rounded to the next power of
-two.
+  two.
 
 ### 3.2. Stream Compaction
 
@@ -159,6 +160,7 @@ Though it is totally acceptable for this assignment,
 In addition to explain the reason of this phenomena, you are encouraged to try to upgrade your work-efficient gpu scan.
 
 Thinking about these may lead you to an aha moment:
+
 - What is the occupancy at a deeper level in the upper/down sweep? Are most threads actually working?
 - Are you always launching the same number of blocks throughout each level of the upper/down sweep?
 - If some threads are being lazy, can we do an early termination on them?
@@ -199,11 +201,13 @@ Always profile with Release mode builds and run without debugging.
 
 * Roughly optimize the block sizes of each of your implementations for minimal
   run time on your GPU.
+  
   * (You shouldn't compare unoptimized implementations to each other!)
 
 * Compare all of these GPU Scan implementations (Naive, Work-Efficient, and
   Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
   (with array size on the independent axis).
+  
   * We wrapped up both CPU and GPU timing functions as a performance timer class for you to conveniently measure the time cost.
     * We use `std::chrono` to provide CPU high-precision timing and CUDA event to measure the CUDA performance.
     * For CPU, put your CPU code between `timer().startCpuTimer()` and `timer().endCpuTimer()`.
@@ -215,11 +219,13 @@ Always profile with Release mode builds and run without debugging.
     even looking at the code for the implementation.
 
 * Write a brief explanation of the phenomena you see here.
+  
   * Can you find the performance bottlenecks? Is it memory I/O? Computation? Is
     it different for each implementation?
 
 * Paste the output of the test program into a triple-backtick block in your
   README.
+  
   * If you add your own tests (e.g. for radix sort or to test additional corner
     cases), be sure to mention it explicitly.
 
@@ -238,24 +244,24 @@ The template of the comment section of your pull request is attached below, you 
 
 * [Repo Link](https://link-to-your-repo)
 * (Briefly) Mentions features that you've completed. Especially those bells and whistles you want to highlight
-    * Feature 0
-    * Feature 1
-    * ...
+  * Feature 0
+  * Feature 1
+  * ...
 * Feedback on the project itself, if any.
 
 ## GPU Gem 3 Ch 39 Patch
 
 * Example 1
-![](img/example-1.png)
+  ![](img/example-1.png)
 
 * Example 2
-![](img/example-2.jpg)
+  ![](img/example-2.jpg)
 
 * Figure-39-4
-![](img/figure-39-4.jpg)
+  ![](img/figure-39-4.jpg)
 
 * Figure-39-2. This image shows an naive inclusive scan. We should convert this to an exclusive one for compaction.
-![](img/figure-39-2.jpg)
+  ![](img/figure-39-2.jpg)
 
 ## Algorithm Examples
 
@@ -284,24 +290,24 @@ The template of the comment section of your pull request is attached below, you 
       + output
         - [1 1 0 1 1 0 1]
     - scan
-        + take the output of last step as input
-        + input
-          - [1 1 0 1 1 0 1]
-        + output
-          - [0 1 2 2 3 4 4]
+      + take the output of last step as input
+      + input
+        - [1 1 0 1 1 0 1]
+      + output
+        - [0 1 2 2 3 4 4]
     - scatter
-        + preserve non-zero elements and compact them into a new array
-        + input:
-          + original array
-            - [1 5 0 1 2 0 3]
-          + mapped array
-            - [1 1 0 1 1 0 1]
-          + scanned array
-            - [0 1 2 2 3 4 4]
-        + output:
-          - [1 5 1 2 3]
-        + This can be done in parallel on GPU
-        + You can try multi-threading on CPU if you want (not required and not our focus)
-        + for each element input[i] in original array
-          - if it's non-zero (given by mapped array)
-          - then put it at output[index], where index = scanned[i]
+      + preserve non-zero elements and compact them into a new array
+      + input:
+        + original array
+          - [1 5 0 1 2 0 3]
+        + mapped array
+          - [1 1 0 1 1 0 1]
+        + scanned array
+          - [0 1 2 2 3 4 4]
+      + output:
+        - [1 5 1 2 3]
+      + This can be done in parallel on GPU
+      + You can try multi-threading on CPU if you want (not required and not our focus)
+      + for each element input[i] in original array
+        - if it's non-zero (given by mapped array)
+        - then put it at output[index], where index = scanned[i]
