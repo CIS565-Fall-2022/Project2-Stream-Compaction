@@ -12,7 +12,6 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata);
         void scanShared(int* out, const int* in, int n, int blockSize);
 
-        int compact(int n, int *odata, const int *idata);
-        int compactShared(int* out, const int* in, int n);
+        int compact(int* out, const int* in, int n, ScanMethod method = ScanMethod::Shared);
     }
 }

@@ -54,6 +54,8 @@ inline int ceilDiv(int x, int y) {
 }
 
 namespace StreamCompaction {
+    enum class ScanMethod { Efficient, Shared };
+
     namespace Common {
         int numSM();
         int warpSize();

@@ -230,48 +230,12 @@ namespace StreamCompaction {
          * Performs stream compaction on idata, storing the result into odata.
          * All zeroes are discarded.
          *
+         * @param out    The array into which to store elements.
+         * @param in     The array of elements to compact.
          * @param n      The number of elements in idata.
-         * @param odata  The array into which to store elements.
-         * @param idata  The array of elements to compact.
          * @returns      The number of elements remaining after compaction.
          */
-        int compact(int n, int *odata, const int *idata) {
-            // TODO
-            int* devIn, * devOut;
-            int bytes = n * sizeof(int);
-            cudaMalloc(&devIn, bytes);
-            cudaMalloc(&devOut, bytes);
-            cudaMemcpy(devIn, idata, bytes, cudaMemcpyKind::cudaMemcpyHostToDevice);
-
-            int size = ceilPow2(n);
-            int* devIndices;
-            cudaMalloc(&devIndices, size * sizeof(int));
-
-            timer().startGpuTimer();
-
-            int blockSize = Common::getDynamicBlockSizeEXT(n);
-            int blockNum = ceilDiv(n, blockSize);
-
-            Common::kernMapToBoolean<<<blockNum, blockSize>>>(n, devIndices, devIn);
-            devScanInPlace(devIndices, size);
-            Common::kernScatter<<<blockNum, blockSize>>>(n, devOut, devIn, devIn, devIndices);
-
-            timer().endGpuTimer();
-
-            int compactedSize;
-            cudaMemcpy(&compactedSize, devIndices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-            compactedSize += (idata[n - 1] != 0);
-
-            cudaMemcpy(odata, devOut, compactedSize * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-
-            cudaFree(devIndices);
-            cudaFree(devIn);
-            cudaFree(devOut);
-
-            return compactedSize;
-        }
-
-        int compactShared(int* out, const int* in, int n)
+        int compact(int* out, const int* in, int n, ScanMethod method)
         {
             int* devIn, * devOut;
             cudaMalloc(&devIn, n * sizeof(int));
@@ -288,7 +252,12 @@ namespace StreamCompaction {
             int blockNum = ceilDiv(n, blockSize);
 
             Common::kernMapToBoolean<<<blockNum, blockSize>>>(n, devIndices, devIn);
-            devScanInPlaceShared(devIndices, size);
+            if (method == ScanMethod::Shared) {
+                devScanInPlaceShared(devIndices, size);
+            }
+            else {
+                devScanInPlace(devIndices, size);
+            }
             Common::kernScatter<<<blockNum, blockSize>>>(n, devOut, devIn, devIn, devIndices);
 
             timer().endGpuTimer();

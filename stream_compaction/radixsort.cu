@@ -26,43 +26,7 @@ namespace StreamCompaction {
             out[(val & filter) ? numZero + idx - pos : pos] = val;
         }
 
-        void sort(int* out, const int* in, int n) {
-            int* devData, * devBuf;
-            cudaMalloc(&devData, n * sizeof(int));
-            cudaMalloc(&devBuf, n * sizeof(int));
-            cudaMemcpy(devData, in, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
-
-            int* devInidices;
-            int size = ceilPow2(n);
-            cudaMalloc(&devInidices, size * sizeof(int));
-
-            timer().startGpuTimer();
-
-            for (uint32_t bit = 1; bit < 0x80000000u; bit <<= 1) {
-                int blockSize = Common::getDynamicBlockSizeEXT(n);
-                int blockNum = ceilDiv(n, blockSize);
-
-                kernMapToBool<<<blockNum, blockSize>>>(devInidices, devData, n, bit);
-                Efficient::devScanInPlace(devInidices, size);
-
-                int numZero;
-                cudaMemcpy(&numZero, devInidices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-                int dataN;
-                cudaMemcpy(&dataN, devData + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-                numZero += (dataN & bit) == 0;
-
-                kernScatter<<<blockNum, blockSize>>>(devBuf, devData, devInidices, n, bit, numZero);
-                std::swap(devData, devBuf);
-            }
-            timer().endGpuTimer();
-
-            cudaMemcpy(out, devData, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-            cudaFree(devData);
-            cudaFree(devBuf);
-            cudaFree(devInidices);
-        }
-
-        void sortShared(int* out, const int* in, int n)
+        void sort(int* out, const int* in, int n, ScanMethod method)
         {
             int* devData, * devBuf;
             cudaMalloc(&devData, n * sizeof(int));
@@ -80,7 +44,13 @@ namespace StreamCompaction {
                 int blockNum = ceilDiv(n, blockSize);
 
                 kernMapToBool<<<blockNum, blockSize>>>(devIndices, devData, n, bit);
-                Efficient::devScanInPlaceShared(devIndices, size);
+
+                if (method == ScanMethod::Shared) {
+                    Efficient::devScanInPlaceShared(devIndices, size);
+                }
+                else {
+                    Efficient::devScanInPlace(devIndices, size);
+                }
 
                 int numZero;
                 cudaMemcpy(&numZero, devIndices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
