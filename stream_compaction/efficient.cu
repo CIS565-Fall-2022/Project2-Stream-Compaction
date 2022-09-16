@@ -7,21 +7,15 @@ namespace StreamCompaction {
     namespace Efficient {
         enum class ScanSource { Host, Device };
 
-        template<typename T>
-        struct DevMemRec {
-            DevMemRec() = default;
-            DevMemRec(T* ptr, int size) : ptr(ptr), size(size) {}
-            DevMemRec(T* ptr, int size, int realSize) : ptr(ptr), size(size), realSize(realSize) {}
-            T* ptr;
-            int size;
-            int realSize;
-        };
-
         using StreamCompaction::Common::PerformanceTimer;
         PerformanceTimer& timer()
         {
             static PerformanceTimer timer;
             return timer;
+        }
+
+        __device__ inline int bankOffset(int idx, int stride) {
+            return ((idx & 0b11111) * stride) >> 5;
         }
 
         __global__ void kernPartialUpSweep(int* data, int n, int stride) {
@@ -155,13 +149,18 @@ namespace StreamCompaction {
             for (int i = sums.size() - 2; i > 0; i--) {
                 kernScannedBlockAdd<<<sums[i].size, blockSize>>>(sums[i - 1].ptr, sums[i].ptr, sums[i - 1].size);
             }
-
-            cudaDeviceSynchronize();
             cudaMemcpy(devData, sums[0].ptr, size * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
 
             for (auto& sum : sums) {
                 cudaFree(sum.ptr);
             }
+        }
+
+        void devScannedBlockAdd(int* devData, int* devBlockSum, int n, int blockSize) {
+            if (n % blockSize != 0) {
+                throw std::runtime_error("devScannedBlockAdd:: size not multiple of BlockSize");
+            }
+            kernScannedBlockAdd<<<n / blockSize, blockSize>>>(devData, devBlockSum, n);
         }
 
         /**
@@ -214,7 +213,7 @@ namespace StreamCompaction {
             }
 
             for (int i = sums.size() - 2; i > 0; i--) {
-                kernScannedBlockAdd<<<sums[i].size, blockSize>>>(sums[i - 1].ptr, sums[i].ptr, sums[i - 1].size);
+                devScannedBlockAdd(sums[i - 1].ptr, sums[i].ptr, sums[i - 1].size, blockSize);
             }
             timer().endGpuTimer();
 
@@ -235,7 +234,7 @@ namespace StreamCompaction {
          * @param n      The number of elements in idata.
          * @returns      The number of elements remaining after compaction.
          */
-        int compact(int* out, const int* in, int n, ScanMethod method)
+        int compact(int* out, const int* in, int n)
         {
             int* devIn, * devOut;
             cudaMalloc(&devIn, n * sizeof(int));
@@ -252,12 +251,7 @@ namespace StreamCompaction {
             int blockNum = ceilDiv(n, blockSize);
 
             Common::kernMapToBoolean<<<blockNum, blockSize>>>(n, devIndices, devIn);
-            if (method == ScanMethod::Shared) {
-                devScanInPlaceShared(devIndices, size);
-            }
-            else {
-                devScanInPlace(devIndices, size);
-            }
+            devScanInPlace(devIndices, size);
             Common::kernScatter<<<blockNum, blockSize>>>(n, devOut, devIn, devIn, devIndices);
 
             timer().endGpuTimer();
@@ -272,6 +266,65 @@ namespace StreamCompaction {
             cudaFree(devIn);
             cudaFree(devOut);
 
+            return compactedSize;
+        }
+
+        int compactShared(int* out, const int* in, int n)
+        {
+            const int ScanBlockSize = 128;
+            int* devIn, * devOut;
+            cudaMalloc(&devIn, n * sizeof(int));
+            cudaMalloc(&devOut, n * sizeof(int));
+            cudaMemcpy(devIn, in, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
+
+            int size = ceilPow2(n);
+            int* devIndices;
+            cudaMalloc(&devIndices, size * sizeof(int));
+
+            std::vector<DevMemRec<int>> sums;
+            for (int i = n; i >= 1; i = ceilDiv(i, ScanBlockSize)) {
+                int sz = ceilDiv(i, ScanBlockSize) * ScanBlockSize;
+                int* sum;
+                cudaMalloc(&sum, sz * sizeof(int));
+                sums.push_back({ sum, sz, i });
+
+                if (i == 1) {
+                    break;
+                }
+            }
+            timer().startGpuTimer();
+
+            int blockSize = Common::getDynamicBlockSizeEXT(n);
+            int blockNum = ceilDiv(n, blockSize);
+
+            Common::kernMapToBoolean<<<blockNum, blockSize>>>(n, devIndices, devIn);
+            cudaMemcpy(sums[0].ptr, devIndices, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
+
+            for (int i = 0; i + 1 < sums.size(); i++) {
+                devBlockScanInPlaceShared(sums[i].ptr, sums[i + 1].ptr, sums[i].size, ScanBlockSize);
+            }
+
+            for (int i = sums.size() - 2; i > 0; i--) {
+                devScannedBlockAdd(sums[i - 1].ptr, sums[i].ptr, sums[i - 1].size, ScanBlockSize);
+            }
+
+            cudaMemcpy(devIndices, sums[0].ptr, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
+            Common::kernScatter<<<blockNum, blockSize>>>(n, devOut, devIn, devIn, devIndices);
+
+            timer().endGpuTimer();
+
+            int compactedSize;
+            cudaMemcpy(&compactedSize, devIndices + n - 1, sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+            compactedSize += (in[n - 1] != 0);
+
+            cudaMemcpy(out, devOut, compactedSize * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+            cudaFree(devIndices);
+            cudaFree(devIn);
+            cudaFree(devOut);
+
+            for (auto& sum : sums) {
+                cudaFree(sum.ptr);
+            }
             return compactedSize;
         }
     }

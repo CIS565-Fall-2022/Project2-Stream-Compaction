@@ -6,6 +6,7 @@ namespace StreamCompaction {
     namespace RadixSort {
         StreamCompaction::Common::PerformanceTimer& timer();
 
-        void sort(int* out, const int* in, int n, ScanMethod method = ScanMethod::Shared);
+        void sort(int* out, const int* in, int n);
+        void sortShared(int* out, const int* in, int n);
     }
 }

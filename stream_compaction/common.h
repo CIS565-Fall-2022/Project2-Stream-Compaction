@@ -54,7 +54,15 @@ inline int ceilDiv(int x, int y) {
 }
 
 namespace StreamCompaction {
-    enum class ScanMethod { Efficient, Shared };
+    template<typename T>
+    struct DevMemRec {
+        DevMemRec() = default;
+        DevMemRec(T* ptr, int size) : ptr(ptr), size(size) {}
+        DevMemRec(T* ptr, int size, int realSize) : ptr(ptr), size(size), realSize(realSize) {}
+        T* ptr;
+        int size;
+        int realSize;
+    };
 
     namespace Common {
         int numSM();
