@@ -147,7 +147,6 @@ namespace StreamCompaction {
             cudaFree(dev_idata);
             cudaFree(dev_bool);
 
-
             return returnSize;
         }
     }
