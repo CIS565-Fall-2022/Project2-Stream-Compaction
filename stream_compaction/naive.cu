@@ -16,6 +16,7 @@ namespace StreamCompaction {
 
         int* dev_idata;
         int* dev_odata;
+        int* dev_buf;
 
         PerformanceTimer& timer()
         {
@@ -25,20 +26,25 @@ namespace StreamCompaction {
 
         // TODO: __global__
 
-        __global__ void kernScan(int N, const int* idata, int* odata, int depth) {
+        __global__ void kernScan(int N, int* idata, int* odata, int depth) {
             int k = threadIdx.x + (blockIdx.x * blockDim.x);
             if (k >= N) {
                 return;
             }
-            if (k >= 2^(depth-1)) {
-                odata[k-1] = idata[k - 2 ^ (depth - 1)] + idata[k-1];
+
+            if (k >= 1 << (depth - 1)) {
+                odata[k] = idata[k - (1 << (depth - 1))] + idata[k];
             }
-
-            //kernScan(int N, odata, new int[], depth++)
-            //Define a base case
-
-            //cudaDeviceSynchronize();
+            else {
+                odata[k] = idata[k];
+            }
             
+        }
+
+        void zeroArray(int n, int* a) {
+            for (int i = 0; i < n; i++) {
+                a[i] = 0;
+            }
         }
 
         /**
@@ -47,21 +53,46 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata) {
             timer().startGpuTimer();
 
-            dim3 threadsPerBlock(n/blockSize);
+            int arrLen;
+            int maxDepth = ilog2ceil(n);
+            maxDepth > ilog2(n) ? arrLen = pow(2, maxDepth) : arrLen = n;
+            zeroArray(arrLen, odata);
+
+            dim3 threadsPerBlock(arrLen/blockSize);
+
+            int* buf = new int[arrLen];
+
+            for (int i = 0; i < arrLen; i++) {
+                if (i < n) {
+                    buf[i] = idata[i];
+                }
+                else {
+                    buf[i] = 0;
+                }
+            }
+
             // TODO
             cudaMalloc((void**)&dev_idata, n * sizeof(int));
-            cudaMalloc((void**)&dev_odata, n * sizeof(int));
+            cudaMalloc((void**)&dev_odata, arrLen * sizeof(int));
+            cudaMalloc((void**)&dev_buf, arrLen * sizeof(int));
 
             cudaMemcpy(dev_idata, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
-            cudaMemcpy(dev_odata, odata, sizeof(int) * n, cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_odata, odata, sizeof(int) * arrLen, cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_buf, buf, sizeof(int) * arrLen, cudaMemcpyHostToDevice);
 
-            kernScan <<<threadsPerBlock, blockSize >>> (n, dev_idata, dev_odata, 1);
-            
+            for (int i = 1; i <= maxDepth; i++) {
+                kernScan << <threadsPerBlock, blockSize >> > (arrLen, dev_buf, dev_odata, i);
+                cudaDeviceSynchronize();
+                cudaMemcpy(dev_buf, dev_odata, sizeof(int) * arrLen, cudaMemcpyDeviceToDevice);
+            }         
+
             cudaMemcpy((void**)idata, dev_idata, sizeof(int) * n, cudaMemcpyDeviceToHost);
-            cudaMemcpy(odata, dev_odata, sizeof(int) * n, cudaMemcpyDeviceToHost);
+            cudaMemcpy(odata, dev_odata, sizeof(int) * arrLen, cudaMemcpyDeviceToHost);
+            cudaMemcpy(buf, dev_buf, sizeof(int) * arrLen, cudaMemcpyDeviceToHost);
 
             cudaFree(dev_idata);
-            cudaFree(dev_odata);
+            cudaFree(dev_odata); 
+            cudaFree(dev_buf);
 
             timer().endGpuTimer();
         }
