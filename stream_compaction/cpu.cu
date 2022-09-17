@@ -1,6 +1,5 @@
 #include <cstdio>
 #include "cpu.h"
-
 #include "common.h"
 
 namespace StreamCompaction {
@@ -84,5 +83,19 @@ namespace StreamCompaction {
             delete[] keepData;
             return oIndex;
         }
+
+        /*
+        * CPU sort using std::sort
+        */
+        void sort(int n, int* odata, const int* idata)
+        {
+            memcpy(odata, idata, n * sizeof(int));
+            timer().startCpuTimer();
+
+            std:: sort(odata, odata + n);
+
+            timer().endCpuTimer();
+        }
+
     }
 }
