@@ -4,7 +4,6 @@
 #include "naive.h"
 
 #define blockSize 256
-dim3 threadPerBlock(blockSize);
 
 namespace StreamCompaction {
     namespace Naive {
@@ -17,7 +16,7 @@ namespace StreamCompaction {
         // TODO: __global__
         __global__ void kernNaiveScan(int n, int* idata, int* odata, int offset) {
             int index = blockIdx.x * blockDim.x + threadIdx.x;
-            if (index > n) {
+            if (index >= n) {
                 return;
             }
             if (index >= offset) {
@@ -35,6 +34,7 @@ namespace StreamCompaction {
             
             // TODO
             dim3 blockPerGrid((n + blockSize - 1) / blockSize);
+            dim3 threadPerBlock(blockSize);
 
             int* dev_buf1;
             int* dev_buf2;
@@ -45,7 +45,7 @@ namespace StreamCompaction {
             cudaMemcpy(dev_buf1, idata, n * sizeof(int), cudaMemcpyHostToDevice);
 
             timer().startGpuTimer();
-            for (int i = 1; i <= ilog2ceil(n); ++i) {
+            for (int i = 1; i <= ilog2ceil(n); ++i)   {
                 int offset = pow(2, i - 1);
                 kernNaiveScan << <blockPerGrid, threadPerBlock >> > (n, dev_buf1, dev_buf2, offset);
                 cudaMemcpy(dev_buf1, dev_buf2, n * sizeof(int), cudaMemcpyDeviceToDevice);
