@@ -34,10 +34,11 @@ In order to implement the GPU stream compaction, the following algorithem is imp
 For the performance analysis, I used blocksize of 256. I was testing on four array size, which are 2^12, 2^16, 2^20, 2^24. The less time consuming the faster the program run, the better the performance is. The time for GPU does not record the cudaMalloc and cudaMemcpy time.
 
 ## Scan (exclusive prefix sum)
-<img src="/img/scan_analysis.gif"  width="800">
-As the graph shows, when array size is less than 2^16, CPU actually runs faster than GPU. I think the reason for this is for a countable amount of data, the time cost on GPU for reading data from global memory can not leverage the time saved by the parallel calculation. So, the performance is quit the same as CPU.  
+<img src="/img/scan_analysis_large.png"  width="500">  <img src="/img/scan_analysis.gif"  width="500">
+As the left graph shows, when array size is from 2^8 - 2^16, CPU actually runs faster than GPU. I think the reason is for a certain number of data, the time cost on GPU for reading data from global memory can not leverage the time saved by the parallel calculation. So, the performance is quit the same or not as good as CPU.  
 
-However, when the amount of data reached a point, for my test is 2^20, GPU efficient algorithem starts to act way better than CPU and GPU naive algothrithem. 
+However, when the amount of data reached a point, as the right graph shows, for my test is 2^20, GPU efficient algorithem starts to act way better than CPU and GPU naive algothrithem. 
+
 
 ## Stream Compacton
 <img src="/img/stream_compaction_analysis.gif"  width="800">
