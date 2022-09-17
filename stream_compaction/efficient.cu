@@ -15,7 +15,7 @@ namespace StreamCompaction {
         }
 
         // unlike naive impl, this one doesn't shift the array
-        __global__ void kernPadArray(int n, int paddedLen, int* odata, int* idata) {
+        __global__ void kernPadArray(int n, int paddedLen, int* odata, const int* idata) {
           int index = threadIdx.x + (blockIdx.x * blockDim.x);
           if (index < n) {
             odata[index] = idata[index];
@@ -23,6 +23,21 @@ namespace StreamCompaction {
           else if (index < paddedLen) {
             odata[index] = 0;
           }
+        }
+
+        __global__ void kernUpsweep(int numThreads, int readStride, int* data) {
+          int index = threadIdx.x + (blockIdx.x * blockDim.x);
+          if (index >= numThreads) {
+            return;
+          }
+
+          int writeStride = readStride * 2;
+
+          // Index of what element to write to is calculated using write stride
+          int writeIndex = (writeStride * index) + writeStride - 1;
+          int readIndex = (writeStride * index) + readStride - 1;
+
+          data[writeIndex] += data[readIndex];
         }
 
         int* dev_unpadded_idata;
@@ -42,19 +57,30 @@ namespace StreamCompaction {
 
             cudaMalloc((void**)&dev_unpadded_idata, n * sizeof(int));
             cudaMalloc((void**)&dev_idata, paddedLength * sizeof(int));
-            cudaMalloc((void**)&dev_odata, paddedLength * sizeof(int));
 
             cudaMemcpy(dev_unpadded_idata, idata, n * sizeof(int), cudaMemcpyHostToDevice);
             checkCUDAErrorFn("Cuda memcpy idata no work");
 
             kernPadArray << <fullBlocksPerGrid, blockSize >> > (n, paddedLength, dev_idata, dev_unpadded_idata);
+
+            // Build tree (upsweep)
+            // readStride = 2^depth, where depth goes from 0... log2n - 1... the stride between elements we read and sum
+            // writeStride = 2^(depth + 1)... the stride between indices of elements we store the sums in
+            for (int readStride = 1; readStride < paddedLength; readStride *= 2) {
+              int writeStride = readStride * 2;
+
+              int numThreads = paddedLength / writeStride; // one thread per element we write to
+              dim3 numBlocks((paddedLength + blockSize - 1) / blockSize);
+
+              kernUpsweep << <numBlocks, blockSize >> > (numThreads, readStride, dev_idata);
+            }
+
             printCudaArray(paddedLength, dev_idata);
 
-            // Build tree
+            cudaMemcpy(odata, dev_idata, n * sizeof(int), cudaMemcpyDeviceToHost);
 
             cudaFree(dev_unpadded_idata);
             cudaFree(dev_idata);
-            cudaFree(dev_odata);
 
             timer().endGpuTimer();
         }
