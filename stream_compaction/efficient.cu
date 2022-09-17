@@ -3,9 +3,7 @@
 #include "common.h"
 #include "efficient.h"
 #include <device_launch_parameters.h>
-
 #define blockSize 128
-
 namespace StreamCompaction {
     namespace Efficient {
         using StreamCompaction::Common::PerformanceTimer;
@@ -15,7 +13,7 @@ namespace StreamCompaction {
             return timer;
         }
 
-        __global__ void kernUpStreamReduction(int n, int d, int *data) {
+        __global__ void kernUpStreamReduction(int n, int d, int* data) {
             int k = threadIdx.x + (blockIdx.x * blockDim.x);
             int offsetd1 = pow(2, d + 1);
             int offsetd = pow(2, d);
@@ -50,55 +48,49 @@ namespace StreamCompaction {
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
-        void scan(int n, int *odata, const int *idata) {
+        void scan(int n, int* odata, const int* idata) {
             timer().startGpuTimer();
             // TODO
-            int* dev_buffer1;
-            int* dev_buffer2;
-            int* dev_backup;
+            int* dev_data;
 
             //dim3 gridSize(32, 32);
             //dim3 blockSize(32, 32);
 
             dim3 blocksPerGrid((n + blockSize - 1) / blockSize);
 
-            // Memory allocation
-            cudaMalloc((void**)&dev_buffer1, sizeof(int) * n);
-            checkCUDAError("cudaMalloc dev_idata failed!");
-            cudaMalloc((void**)&dev_buffer2, sizeof(int) * n);
-            checkCUDAError("cudaMalloc dev_odata failed!");
-            cudaMalloc((void**)&dev_backup, sizeof(int) * n);
-            checkCUDAError("cudaMalloc dev_odata failed!");
-
-            for (int i = 0; i < n; i++) {
-                printf("%d, ", idata[i]);
-            }
-
-            cudaMemcpy(dev_buffer1, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
-            checkCUDAError("memcpy into  dev_buffer1 failed!");
-            cudaMemcpy(dev_backup, dev_buffer1, sizeof(int) * n, cudaMemcpyDeviceToDevice);
-            checkCUDAError("memcpy into dev_backup failed!");
-            
             int maxDepth = ilog2ceil(n);
+            int extended_n = pow(2, maxDepth);
+            int* extended_idata = new int[extended_n];
+
+            for (int i = 0; i < extended_n; i++) {
+                extended_idata[i] = (i < n) ? idata[i] : 0;
+            }
+            // Memory allocation
+            cudaMalloc((void**)&dev_data, sizeof(int) * extended_n);
+            checkCUDAError("cudaMalloc dev_data failed!");
+
+            cudaMemcpy(dev_data, extended_idata, sizeof(int) * extended_n, cudaMemcpyHostToDevice);
+            checkCUDAError("memcpy into dev_data failed!");
+
             for (int d = 0; d < maxDepth; d++) {    // where d is depth of iteration
-                kernUpStreamReduction << <blocksPerGrid, blockSize >> > (n, d, dev_buffer1);
+                kernUpStreamReduction << <blocksPerGrid, blockSize >> > (extended_n, d, dev_data);
                 checkCUDAError("kernUpStreamReduction invocation failed!");
             }
 
             int* lastVal = new int();
-            cudaMemcpy(lastVal, dev_buffer1 + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            cudaMemcpy(lastVal, dev_data + extended_n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            checkCUDAError("lastVal memcpy failed!");
 
-            cudaMemset(dev_buffer1 + n - 1, 0, sizeof(int));
+            cudaMemset(dev_data + extended_n - 1, 0, sizeof(int));
             for (int d = maxDepth - 1; d >= 0; d--) {    // where d is depth of iteration
-                kernDownStream << <blocksPerGrid, blockSize >> > (n, d, dev_buffer1);
+                kernDownStream << <blocksPerGrid, blockSize >> > (extended_n, d, dev_data);
                 checkCUDAError("kernDownStream invocation failed!");
             }
-            
-            cudaMemcpy(odata, dev_buffer1, sizeof(int) * (n), cudaMemcpyDeviceToHost);
 
-            cudaFree(dev_buffer1);
-            cudaFree(dev_buffer2);
-            cudaFree(dev_backup);
+            cudaMemcpy(odata, dev_data, sizeof(int) * (extended_n), cudaMemcpyDeviceToHost);
+            checkCUDAError("odata memcpy failed!");
+
+            cudaFree(dev_data);
             timer().endGpuTimer();
         }
 
@@ -111,7 +103,7 @@ namespace StreamCompaction {
          * @param idata  The array of elements to compact.
          * @returns      The number of elements remaining after compaction.
          */
-        int compact(int n, int *odata, const int *idata) {
+        int compact(int n, int* odata, const int* idata) {
             timer().startGpuTimer();
             // TODO
             timer().endGpuTimer();
