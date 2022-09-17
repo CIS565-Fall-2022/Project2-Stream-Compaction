@@ -156,11 +156,18 @@ int main(int argc, char* argv[]) {
     a[SIZE - 1] = 0;
     printArray(SIZE, a, true);
 
-    zeroArray(SIZE, c);
+    zeroArray(SIZE, b);
     printDesc("cpu std::sort");
-    StreamCompaction::CPU::sort(SIZE, c, a);
+    StreamCompaction::CPU::sort(SIZE, b, a);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
-    printArray(SIZE, c, true);
+    printArray(SIZE, b, true);
+
+    zeroArray(SIZE, c);
+    printDesc("radix sort, power-of-two");
+    StreamCompaction::Efficient::radixSort(SIZE, c, a);
+    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    printCmpResult(SIZE, b, c);
+
 
     system("pause"); // stop Win32 console from closing on exit
     delete[] a;
