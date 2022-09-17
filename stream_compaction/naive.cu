@@ -19,9 +19,11 @@ namespace StreamCompaction {
             if (index >= n) {
                 return;
             }
+            int index1 = 1 << depth;
+            //int index1 = 1 << depth;
             odata[index] = idata[index];
-            if (index >= int(pow(2, depth))) {
-                odata[index] += idata[index - int(pow(2, depth ))];
+            if (index >= index1) {
+                odata[index] += idata[index - index1];
             }
             return;
         }
@@ -30,30 +32,25 @@ namespace StreamCompaction {
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int *odata, const int *idata) {
-
             dim3 blockDim((n + blockSize - 1) / blockSize);
             int depth = ilog2ceil(n);
-            bool oddEvenCount = false;
-            int* input, * output;
+            int* input, *output;
             cudaMalloc((void**)&input, n*sizeof(int));
             cudaMalloc((void**)&output, n*sizeof(int));
             cudaMemcpy(input, idata, n*sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemcpy(output, idata, n * sizeof(int), cudaMemcpyHostToDevice);
 
 
             timer().startGpuTimer();
-            for (int i = 0; i < depth; i++) {
-                
+            for (int i = 0; i <= depth; ++i) {
                 kernScan<<<blockDim, blockSize>>>(n, i, output, input);
-                std::swap(output, input);
-                oddEvenCount = !oddEvenCount;
+                checkCUDAError("kernScan failed");
+                //std::swap(input, output);
+                cudaMemcpy(input, output, n * sizeof(int), cudaMemcpyDeviceToDevice);
             }
-            
 
             timer().endGpuTimer();
 
-            if (!oddEvenCount) {
-                std::swap(input, output);
-            }
             //cudaMemcpy(odata, output, n, cudaMemcpyDeviceToHost);
             //change from inclusive to excluvise
             cudaMemcpy(odata + 1, output, (n - 1)*sizeof(int), cudaMemcpyDeviceToHost);
