@@ -126,6 +126,14 @@ namespace StreamCompaction {
             cudaMemcpy(&returnSize, dev_indices + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
             checkCUDAError("cudaMemcpy dev_indices to host failed!");
 
+            // Di shared this edge case with me
+            // When the input array has the last element non-zero, it will fail
+            // hence we can add the last bit of the bool array to the return size to make sure that this case is covered
+            int lastBool = 0;
+            cudaMemcpy(&lastBool, dev_bool + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            checkCUDAError("cudaMemcpy dev_bool to host failed!");
+            returnSize += lastBool;
+
 
             cudaMalloc((void**)&dev_odata, returnSize * sizeof(int));
             checkCUDAError("cudaMalloc dev_odata failed!");
