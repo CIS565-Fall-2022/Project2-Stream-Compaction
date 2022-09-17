@@ -93,7 +93,7 @@ namespace StreamCompaction {
                 }
             }
 
-            int numValid = sdata[n - 1];
+            int numValid = sdata[n - 1] + tdata[n - 1];
 
             delete[] tdata;
             delete[] sdata;

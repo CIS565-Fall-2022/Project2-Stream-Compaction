@@ -21,7 +21,7 @@ namespace StreamCompaction {
 
         // TODO: __global__
         // offset calculated from depth
-        __global__ void scanHelper(int n, int offset, int *odata, int *idata) {
+        __global__ void kernScanHelper(int n, int offset, int *odata, int *idata) {
             int index = threadIdx.x + (blockIdx.x * blockDim.x);
             if (index < n) {
                 if (index >= offset) {
@@ -35,7 +35,7 @@ namespace StreamCompaction {
             }
         }
 
-        __global__ void prependZero(int n, int* odata, int* idata) {
+        __global__ void kernPrependZero(int n, int* odata, int* idata) {
             int index = threadIdx.x + (blockIdx.x * blockDim.x);
             if (index < n) {
                 if (index == 0) {
@@ -80,7 +80,7 @@ namespace StreamCompaction {
             for (int depth = 0; depth < ilog2ceil(n); depth++) {
                 int offset = pow(2, depth);
 
-                scanHelper << <fullBlocksPerArray, blockSize>>>(n, offset, dev_odata2, dev_odata1);
+                kernScanHelper << <fullBlocksPerArray, blockSize>>>(n, offset, dev_odata2, dev_odata1);
                 // wait for threads
                 cudaDeviceSynchronize();
 
@@ -94,7 +94,7 @@ namespace StreamCompaction {
 
             // bit shift towards the right and add 0 to front of odata, put it in odataFinal
             // dev_odata1 should always have the most updated data.
-            prependZero << <fullBlocksPerArray, blockSize >> > (n, dev_odataFinal, dev_odata1);
+            kernPrependZero << <fullBlocksPerArray, blockSize >> > (n, dev_odataFinal, dev_odata1);
 
             // memcpy back from odata1 to odata
             cudaMemcpy(odata, dev_odataFinal, n * sizeof(int), cudaMemcpyDeviceToHost);
