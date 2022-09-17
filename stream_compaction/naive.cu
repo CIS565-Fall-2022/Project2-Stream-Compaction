@@ -56,16 +56,6 @@ namespace StreamCompaction {
           }
         }
 
-        void printCudaArray(int n, int* dev_array) {
-          int* tempArray = (int*) malloc(n * sizeof(int));
-          cudaMemcpy(tempArray, dev_array, n * sizeof(int), cudaMemcpyDeviceToHost);
-          printf("Print array -----------\n");
-          for (int i = 0; i < n; ++i) {
-            printf("%d ", tempArray[i]);
-          }
-          free(tempArray);
-        }
-
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */

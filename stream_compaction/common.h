@@ -30,6 +30,16 @@ inline int ilog2ceil(int x) {
     return x == 1 ? 0 : ilog2(x - 1) + 1;
 }
 
+inline void printCudaArray(int n, int* dev_array) {
+  int* tempArray = (int*)malloc(n * sizeof(int));
+  cudaMemcpy(tempArray, dev_array, n * sizeof(int), cudaMemcpyDeviceToHost);
+  printf("Print array -----------\n");
+  for (int i = 0; i < n; ++i) {
+    printf("%d ", tempArray[i]);
+  }
+  free(tempArray);
+}
+
 namespace StreamCompaction {
     namespace Common {
         __global__ void kernMapToBoolean(int n, int *bools, const int *idata);
