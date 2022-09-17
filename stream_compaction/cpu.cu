@@ -50,7 +50,7 @@ namespace StreamCompaction {
          */
         int compactWithScan(int n, int* odata, const int* idata) {
             timer().startCpuTimer();
-            int* scanned = new int[n]; // (should this be included in the timer?)
+            int* scanned = new int[n];
             // MAP step
             for (int i = 0; i < n; ++i) {
                 odata[i] = (idata[i] == 0) ? 0 : 1;
