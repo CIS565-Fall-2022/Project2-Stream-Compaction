@@ -6,13 +6,18 @@
 
 
 ## Features Implemented
-1. CPU reduction, scan, and stream compaction
+1. CPU scan and stream compaction
 2. Naive GPU scan
 3. Efficient GPU scan (upsweep and downsweep)
 4. Work-Efficient GPU scan using shared memory, with support for arbitrary array sizes (toggle using the macro `SHARED_OPT` in `efficient.cu`)
-5. GPU compaction using GPU scan
+5. GPU compaction using scan
 6. GPU radix sort (`rsort.h` and `rsort.cu`)
 7. scan, stream compaction, and sort using the Thrust library
+
+## A Note about Compilation
+- I modified line 97 of the file `cmake/CUDAComputesList.cmake`
+	- because my hardware or CUDA do not support `compute_30`
+	- see the [Ed Question Thread](https://edstem.org/us/courses/28083/discussion/1723078) for more info
 
 ## Default Program Output Example
 - NOTE: I added some extra testcases for thrust-based implementations and radix sort
