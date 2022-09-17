@@ -39,6 +39,7 @@ namespace StreamCompaction {
         }
 
         __global__ void kernInclusiveToExclusive(int n, int* odata, const int* idata) {
+            // shift all elements right and keep 1st element as identity 0
             int k = threadIdx.x + blockIdx.x * blockDim.x;
             if (k >= n) {
                 return;

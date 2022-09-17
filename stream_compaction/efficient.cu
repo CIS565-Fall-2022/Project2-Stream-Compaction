@@ -4,6 +4,8 @@
 #include "efficient.h"
 #include <device_launch_parameters.h>
 
+#define blockSize 128
+
 namespace StreamCompaction {
     namespace Efficient {
         using StreamCompaction::Common::PerformanceTimer;
@@ -14,20 +16,23 @@ namespace StreamCompaction {
         }
 
         __global__ void kernUpStreamReduction(int n, int d, int *data) {
-            int k = threadIdx.x + blockIdx.x * blockDim.x;
+            int k = threadIdx.x + (blockIdx.x * blockDim.x);
             int offsetd1 = pow(2, d + 1);
             int offsetd = pow(2, d);
             if (k >= n) {
                 return;
             }
-            if (k % offsetd1 != 0) {
+            /*if (k % offsetd1 != 0) {
+                return;
+            }*/
+            if (k % offsetd1 == 0) {
+                data[k + offsetd1 - 1] = data[k + offsetd1 - 1] + data[k + offsetd - 1];
                 return;
             }
-            data[k - 1 + offsetd1] += data[k - 1 + offsetd1] + data[k - 1 + offsetd];
         }
 
         __global__ void kernDownStream(int n, int d, int* data) {
-            int k = threadIdx.x + blockIdx.x * blockDim.x;
+            int k = threadIdx.x + (blockIdx.x * blockDim.x);
             int offsetd1 = pow(2, d + 1);
             int offsetd = pow(2, d);
             if (k >= n) {
@@ -41,6 +46,7 @@ namespace StreamCompaction {
             data[k - 1 + offsetd1] += t;
         }
 
+
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
@@ -51,8 +57,10 @@ namespace StreamCompaction {
             int* dev_buffer2;
             int* dev_backup;
 
-            dim3 gridSize(32, 32);
-            dim3 blockSize(32, 32);
+            //dim3 gridSize(32, 32);
+            //dim3 blockSize(32, 32);
+
+            dim3 blocksPerGrid((n + blockSize - 1) / blockSize);
 
             // Memory allocation
             cudaMalloc((void**)&dev_buffer1, sizeof(int) * n);
@@ -62,12 +70,18 @@ namespace StreamCompaction {
             cudaMalloc((void**)&dev_backup, sizeof(int) * n);
             checkCUDAError("cudaMalloc dev_odata failed!");
 
-            cudaMemcpy(dev_buffer1, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
-            cudaMemcpy(dev_backup, dev_buffer1, sizeof(int) * n, cudaMemcpyDeviceToDevice);
+            for (int i = 0; i < n; i++) {
+                printf("%d, ", idata[i]);
+            }
 
+            cudaMemcpy(dev_buffer1, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
+            checkCUDAError("memcpy into  dev_buffer1 failed!");
+            cudaMemcpy(dev_backup, dev_buffer1, sizeof(int) * n, cudaMemcpyDeviceToDevice);
+            checkCUDAError("memcpy into dev_backup failed!");
+            
             int maxDepth = ilog2ceil(n);
             for (int d = 0; d < maxDepth; d++) {    // where d is depth of iteration
-                kernUpStreamReduction << <gridSize, blockSize >> > (n, d, dev_buffer1);
+                kernUpStreamReduction << <blocksPerGrid, blockSize >> > (n, d, dev_buffer1);
                 checkCUDAError("kernUpStreamReduction invocation failed!");
             }
 
@@ -76,7 +90,7 @@ namespace StreamCompaction {
 
             cudaMemset(dev_buffer1 + n - 1, 0, sizeof(int));
             for (int d = maxDepth - 1; d >= 0; d--) {    // where d is depth of iteration
-                kernDownStream << <gridSize, blockSize >> > (n, d, dev_buffer1);
+                kernDownStream << <blocksPerGrid, blockSize >> > (n, d, dev_buffer1);
                 checkCUDAError("kernDownStream invocation failed!");
             }
             
