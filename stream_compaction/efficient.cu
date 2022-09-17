@@ -19,9 +19,12 @@ namespace StreamCompaction {
             if (index >= n) {
                 return;
             }
-            int offset = pow(2, depth + 1);
-            if (index % offset == 0) {
-                data[index + offset - 1] += data[index + (int)pow(2, depth) - 1];
+            //int offset1 = powf(2, depth);
+            //int offset2 = powf(2, depth + 1);
+            int offset1 = 1<<depth;
+            int offset2 = 1 << (depth+1);
+            if (index % offset2 == 0) {
+                data[index + offset2 - 1] += data[index + offset1 - 1];
             }
         }
 
@@ -30,8 +33,8 @@ namespace StreamCompaction {
             if (index >= n) {
                 return;
             }
-            int offset1 = pow(2, depth);
-            int offset2 = pow(2, depth + 1);
+            int offset1 = 1 << depth;
+            int offset2 = 1 << (depth + 1);
             if (index % offset2 == 0) {
                 int t = data[index + offset1 - 1];
                 data[index + offset1 - 1] = data[index + offset2 - 1];
@@ -54,19 +57,20 @@ namespace StreamCompaction {
             cudaMalloc((void**)&dev_data, arraySize * sizeof(int));
             // set data and then copy the original data 
             cudaMemset(dev_data, 0, arraySize * sizeof(int));
-            cudaMemcpy(dev_data, idata, n * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_data, idata, arraySize * sizeof(int), cudaMemcpyHostToDevice);
 
             timer().startGpuTimer();
             // TODO
-            for (int i = 0; i < power; ++i) {
+            for (int i = 0; i < power; i++) {
                 kernUpSweep << <blockPerGrid, threadPerBlock >> > (arraySize, dev_data, i);
             }
             // set the root to 0
             cudaMemset(dev_data + arraySize - 1, 0, sizeof(int));
-            for (int i = power - 1; i >= 0; --i) {
+            for (int i = power - 1; i >= 0; i--) {
                 kernDownSweep << <blockPerGrid, threadPerBlock >> > (arraySize, dev_data, i);
             }
             timer().endGpuTimer();
+
             cudaMemcpy(odata, dev_data, n * sizeof(int), cudaMemcpyDeviceToHost);
 
             // free memory
