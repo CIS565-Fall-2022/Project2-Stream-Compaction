@@ -42,7 +42,10 @@ namespace StreamCompaction {
 
         int compact(int n, int* out, const int* in) {
             thrust::device_vector<int> dev_in(in, in + n);
+
+            timer().startGpuTimer();
             auto it = thrust::remove_if(dev_in.begin(), dev_in.end(), Pred());
+            timer().endGpuTimer();
 
             int ret = thrust::distance(dev_in.begin(), it);
             thrust::copy(dev_in.begin(), it, out);
@@ -51,7 +54,11 @@ namespace StreamCompaction {
 
         void sort(int n, int* out, const int* in) {
             thrust::device_vector<int> dev_in(in, in + n);
+            
+            timer().startGpuTimer();
             thrust::sort(dev_in.begin(), dev_in.end());
+            timer().endGpuTimer();
+            
             thrust::copy(dev_in.begin(), dev_in.end(), out);
         }
     }

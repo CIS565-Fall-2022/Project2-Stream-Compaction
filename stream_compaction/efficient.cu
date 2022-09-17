@@ -46,7 +46,7 @@ namespace StreamCompaction {
         */
 #define SHARED_OPT
 // #define BANK_CONFLICT_OPT
-#define SHARED_OPT_BSIZE 512 // how many threads per block in shared memory implementation
+#define SHARED_OPT_BSIZE 128 // how many threads per block in shared memory implementation
 #define SHARED_OPT_MAX_ARR_SIZE (2 * SHARED_OPT_BSIZE) // maximum array that can be processed by a block in shared memory implementation
 
 
@@ -82,6 +82,11 @@ namespace StreamCompaction {
             saves[0] = temp[x + bank_offset_A] = in[x];
             saves[1] = temp[y + bank_offset_B] = in[y];
 
+            BOUND_CHECK(temp, SHARED_OPT_MAX_ARR_SIZE, x);
+            BOUND_CHECK(temp, SHARED_OPT_MAX_ARR_SIZE, y);
+            BOUND_CHECK(in, blockDim.x * SHARED_OPT_MAX_ARR_SIZE, x);
+            BOUND_CHECK(in, blockDim.x * SHARED_OPT_MAX_ARR_SIZE, y);
+
             for (int d = N >> 1; d > 0; d >>= 1) {
                 __syncthreads();
                 if (thid < d) {
@@ -92,6 +97,10 @@ namespace StreamCompaction {
                     ai += CONFLICT_FREE_OFFSET(ai);
                     bi += CONFLICT_FREE_OFFSET(bi);
 #endif
+
+                    BOUND_CHECK(temp, SHARED_OPT_MAX_ARR_SIZE, ai);
+                    BOUND_CHECK(temp, SHARED_OPT_MAX_ARR_SIZE, bi);
+
                     temp[bi] += temp[ai];
                 }
                 offset <<= 1;
@@ -100,6 +109,8 @@ namespace StreamCompaction {
             // downsweep
             if (!thid) {
                 temp[N - 1 + CONFLICT_FREE_OFFSET(N-1)] = 0;
+
+                BOUND_CHECK(temp, SHARED_OPT_MAX_ARR_SIZE, N - 1 + CONFLICT_FREE_OFFSET(N - 1));
             }
 
             for (int d = 1; d < N; d <<= 1) {
@@ -114,6 +125,9 @@ namespace StreamCompaction {
                     bi += CONFLICT_FREE_OFFSET(bi);
 #endif
 
+                    BOUND_CHECK(temp, SHARED_OPT_MAX_ARR_SIZE, ai);
+                    BOUND_CHECK(temp, SHARED_OPT_MAX_ARR_SIZE, bi);
+
                     int save = temp[ai];
                     temp[ai] = temp[bi];
                     temp[bi] += save;
@@ -127,19 +141,11 @@ namespace StreamCompaction {
                 out[x] += saves[0];
                 out[y] += saves[1];
             }
+
+            BOUND_CHECK(out, blockDim.x * SHARED_OPT_MAX_ARR_SIZE, x);
+            BOUND_CHECK(out, blockDim.x * SHARED_OPT_MAX_ARR_SIZE, y);
         }
 
-        __global__ void kernOffset(int N, int* in, int* out, bool plus) {
-            int self = (blockIdx.x * blockDim.x) + threadIdx.x;
-            if (self >= N) {
-                return;
-            }
-            if (plus) {
-                out[self] += in[self];
-            } else {
-                out[self] -= in[self];
-            }
-        }
         /**
         *  Compute block increments if the array was split into several blocks
         */
@@ -149,6 +155,9 @@ namespace StreamCompaction {
                 return;
             }
             out[self] = (in + self * SHARED_OPT_MAX_ARR_SIZE)[SHARED_OPT_MAX_ARR_SIZE -1];
+
+            BOUND_CHECK(out, N, self);
+            BOUND_CHECK(in, N * SHARED_OPT_MAX_ARR_SIZE, self * SHARED_OPT_MAX_ARR_SIZE + SHARED_OPT_MAX_ARR_SIZE - 1);
         }
         /**
         *  Compute the final prefix sum based on block increments
@@ -159,6 +168,9 @@ namespace StreamCompaction {
                 return;
             }
             out[self] += strides[self / SHARED_OPT_MAX_ARR_SIZE];
+
+            BOUND_CHECK(strides, N / SHARED_OPT_MAX_ARR_SIZE, self / SHARED_OPT_MAX_ARR_SIZE);
+            BOUND_CHECK(out, N, self);
         }
 
         /** 
@@ -189,6 +201,7 @@ namespace StreamCompaction {
                 kernComputeStride KERN_PARAM(nblocks2, SHARED_OPT_BSIZE) (nblocks, dev_in_out, stride);
 
                 // PRINT_GPU(dev_in_out, n);
+                cudaDeviceSynchronize();
                 scan_impl(nblocks, stride, false);
                 // PRINT_GPU(stride, nblocks);
 

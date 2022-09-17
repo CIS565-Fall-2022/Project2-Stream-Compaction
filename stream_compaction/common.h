@@ -15,7 +15,7 @@
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
 
-#define blockSize 32
+#define blockSize 64
 // convenience macro
 #define ALLOC(name, size) if(cudaMalloc((void**)&name, (size) * sizeof(*name)) != cudaSuccess) checkCUDAError("cudaMalloc " ## #name ## " failed!")
 #define MEMSET(name, val, size) if(cudaMemset(name, val, size) != cudaSuccess) checkCUDAError("cudaMemset " ## #name ## " failed!")
@@ -27,9 +27,10 @@
 // debug helpers
 #ifndef NDEBUG
 #define PRINT_GPU(arr, ...) printGPU(#arr, arr, __VA_ARGS__)
-#define BOUND_CHECK(arr, n, expr) do { if((expr) < 0 || (expr) >= n) { std::cout << #expr << " " << (expr) << std::endl; assert(!"bound check fail"); } } while(0)
+#define BOUND_CHECK(arr, n, expr) do { if((expr) < 0 || (expr) >= (n)) { printf(#expr " , size = %d, idx = %d", n, (int)(expr)); assert(!"bound check fail"); } } while(0)
 #else
 #define PRINT_GPU(...)
+#define BOUND_CHECK(arr, n, expr)
 #endif // !NDEBUG
 
 template<typename T>

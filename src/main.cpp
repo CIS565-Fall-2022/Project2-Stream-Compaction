@@ -13,12 +13,17 @@
 #include <stream_compaction/thrust.h>
 #include <stream_compaction/rsort.h>
 #include "testing_helpers.hpp"
+#include <fstream>
+
+// #define PERFORMANCE_TEST
+#ifndef PERFORMANCE_TEST
+
 
 const int SIZE = 1 << 24; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
-int *a = new int[SIZE];
-int *b = new int[SIZE];
-int *c = new int[SIZE];
+int* a = new int[SIZE];
+int* b = new int[SIZE];
+int* c = new int[SIZE];
 
 void small_test() {
     constexpr int SMALL_SIZE = 256;
@@ -38,7 +43,6 @@ void small_test() {
         std::cout << i << " ";
     std::cout << std::endl;
 }
-
 void sort_test() {
     constexpr int SMALL_SIZE = 8;
 #define in a
@@ -52,32 +56,65 @@ void sort_test() {
     printDesc("gpu sort, power-of-two, small");
     StreamCompaction::Thrust::sort(SMALL_SIZE, correct_out, in);
     StreamCompaction::RadixSort::sort(SMALL_SIZE, out, in);
-    printElapsedTime(StreamCompaction::RadixSort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    printElapsedTime(StreamCompaction::RadixSort::timer().getGpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     printArray(SMALL_SIZE, out);
     printCmpResult(SMALL_SIZE, out, correct_out);
 
     printDesc("gpu sort, non-power-of-two, small");
     in[i++] = 11;
     printArray(SMALL_SIZE + 1, in);
-    StreamCompaction::Thrust::sort(SMALL_SIZE+1, correct_out, in);
-    StreamCompaction::RadixSort::sort(SMALL_SIZE+1, out, in);
-    printElapsedTime(StreamCompaction::RadixSort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    StreamCompaction::Thrust::sort(SMALL_SIZE + 1, correct_out, in);
+    StreamCompaction::RadixSort::sort(SMALL_SIZE + 1, out, in);
+    printElapsedTime(StreamCompaction::RadixSort::timer().getGpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     printArray(SMALL_SIZE + 1, out);
-    printCmpResult(SMALL_SIZE+1, out, correct_out);
+    printCmpResult(SMALL_SIZE + 1, out, correct_out);
 
     printDesc("gpu sort, power-of-two, large");
     genArray(SIZE, in, 0x3f3f3f3f);
     StreamCompaction::Thrust::sort(SIZE, correct_out, in);
     StreamCompaction::RadixSort::sort(SIZE, out, in);
-    printElapsedTime(StreamCompaction::RadixSort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    printElapsedTime(StreamCompaction::RadixSort::timer().getGpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     printCmpResult(SIZE, out, correct_out);
-#undef in,out,correct_out
+#undef in
+#undef out
+#undef correct_out
+}
+
+
+#endif // !PERFORMANCE_TEST
+
+void performance_tests(std::ofstream& fout, int size) {
+    int* in = new int[size];
+    genArray(size, in, 50);
+    int* out = new int[size];
+    fout << size << ",";
+    StreamCompaction::CPU::scan(size, out, in);
+    fout << StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation() << ",";
+    StreamCompaction::Naive::scan(size, out, in);
+    fout << StreamCompaction::Naive::timer().getGpuElapsedTimeForPreviousOperation() << ",";
+    StreamCompaction::Efficient::scan(size, out, in);
+    fout << StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation() << ",";
+    StreamCompaction::Thrust::scan(size, out, in);
+    fout << StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation() << "\n";
+    delete[] in;
+    delete[] out;
 }
 
 int main(int argc, char* argv[]) {
     small_test();
     sort_test();
-    // Scan tests
+#ifdef PERFORMANCE_TEST
+    std::ofstream fout("./data/plot.csv");
+    fout << "array size, cpu, naive, efficient, thrust\n";
+    int lim = 1 << 30;
+    for (int size = 2; size < lim; size <<= 1) {
+        performance_tests(fout, size);
+        std::cout << size << " ";
+    }
+    fout.close();
+    return 0;
+#else
+        // Scan tests
     printf("\n");
     printf("****************\n");
     printf("** SCAN TESTS **\n");
@@ -221,4 +258,5 @@ int main(int argc, char* argv[]) {
     delete[] a;
     delete[] b;
     delete[] c;
+#endif // PERFORMANCE_TEST
 }
