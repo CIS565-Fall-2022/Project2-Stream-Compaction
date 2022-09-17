@@ -78,7 +78,7 @@ namespace StreamCompaction {
 
             // for depth from 1 to 2^d-1, for each k in parallel, invoke scan on an offset and odata.
             for (int depth = 0; depth < ilog2ceil(n); depth++) {
-                int offset = pow(2, depth);
+                int offset = 1 << depth; // pow(2, depth);
 
                 kernScanHelper << <fullBlocksPerArray, blockSize>>>(n, offset, dev_odata2, dev_odata1);
                 // wait for threads
@@ -99,10 +99,6 @@ namespace StreamCompaction {
             // memcpy back from odata1 to odata
             cudaMemcpy(odata, dev_odataFinal, n * sizeof(int), cudaMemcpyDeviceToHost);
             checkCUDAErrorWithLine("cudaMemcpy dev_odataFinal to odata failed!");
-
-            /*for (int i = 0; i < n; i++) {
-                std::cout << odata[i] << std::endl;
-            }*/
 
             cudaFree(dev_odata1);
             cudaFree(dev_odata2);

@@ -26,8 +26,6 @@ namespace StreamCompaction {
                 int a = tdata[idx - neighborLoc];
                 int b = tdata[idx];
                 tdata[idx] = a + b;
-
-                //printf("red: %i, \n", a + b);
             }
         }
 
@@ -66,8 +64,6 @@ namespace StreamCompaction {
             int nextPowTwo = ilog2ceil(n);
             int numZeroes = pow(2, nextPowTwo) - n;
 
-            // std::cout << numZeroes << std::endl;
-
             // 1. up sweep same as reduction
             // empty buffer as idata
             // malloc enough space for n and 0's
@@ -93,20 +89,6 @@ namespace StreamCompaction {
                 cudaDeviceSynchronize();
             }
 
-            // store the last int of the array temporarily
-            // since exclusive scan, don't need it.
-            /*int lastInt = 0;
-            cudaMemcpy(&lastInt, dev_tidata + n + numZeroes - 1, sizeof(int), cudaMemcpyDeviceToHost);
-            checkCUDAErrorWithLine("cudaMemcpy lastInt Device to Host failed!");*/
-
-            //int* tempBuf = new int[n];
-            //cudaMemcpy(tempBuf, dev_tidata, (n + numZeroes) * sizeof(int), cudaMemcpyDeviceToHost);
-            //for (int i = 0; i < n; i++) {
-            //    std::cout << tempBuf[i] << std::endl;
-            //}
-            // 
-            // std::cout << "lastInt: " << lastInt << std::endl;
-
             // set last int of array to 0
             cudaMemset(&dev_tidata[n + numZeroes - 1], 0, sizeof(int));
             checkCUDAErrorWithLine("cudaMemset last int failed!");
@@ -119,25 +101,10 @@ namespace StreamCompaction {
                 cudaDeviceSynchronize();
             }
 
-            // remove
-            /*int* tempBuf = new int[n];
-            cudaMemcpy(tempBuf, dev_tidata, (n + numZeroes) * sizeof(int), cudaMemcpyDeviceToHost);
-            for (int i = 0; i < n; i++) {
-                std::cout << tempBuf[i] << std::endl;
-            }*/
-            // std::cout << "lastInt: " << lastInt << std::endl;
-
             // create output array for shifting
             int* dev_tidataFinal;
             cudaMalloc((void**)&dev_tidataFinal, (n + numZeroes) * sizeof(int));
             checkCUDAErrorWithLine("cudaMalloc dev_tidataFinal failed!");
-
-            // shift entire list to the left by 1 to remove extraneous 0 at the beginning
-            kernShiftLeft << <fullBlocksPerArray, blockSize >> > (n + numZeroes, dev_tidataFinal, dev_tidata);
-
-            // set last number in the array
-            /*cudaMemcpy(dev_tidata + n + numZeroes - 1, &lastInt, sizeof(int), cudaMemcpyHostToDevice);
-            checkCUDAErrorWithLine("cudaMemcpy lastInt Host to Device failed!");*/
 
             // copy final result to odata
             cudaMemcpy(odata, dev_tidata, n * sizeof(int), cudaMemcpyDeviceToHost);
@@ -202,16 +169,11 @@ namespace StreamCompaction {
             int depth = 0;
 
             for (depth = 1; depth <= ilog2ceil(n + numZeroes); depth++) {
-                int offset = pow(2, depth);
+                int offset = 1 << depth; // pow(2, depth);
                 kernReductionHelper << <fullBlocksPerArray, blockSize >> > (n + numZeroes, offset, dev_tidata);
                 // wait for cuda timer. wait for all threads to finish
                 cudaDeviceSynchronize();
             }
-
-            // store the last int of the array temporarily
-            //int lastInt = 0;
-            //cudaMemcpy(&lastInt, dev_tidata + n + numZeroes - 1, sizeof(int), cudaMemcpyDeviceToHost);
-            //checkCUDAErrorWithLine("cudaMemcpy lastInt Device to Host failed!");
 
             // set last int of array to 0
             cudaMemset(&dev_tidata[n + numZeroes - 1], 0, sizeof(int));
@@ -225,31 +187,12 @@ namespace StreamCompaction {
                 cudaDeviceSynchronize();
             }
 
-            // create output array for shifting
-            int* dev_tidataFinal;
-            cudaMalloc((void**)&dev_tidataFinal, (n + numZeroes) * sizeof(int));
-            checkCUDAErrorWithLine("cudaMalloc dev_tidataFinal failed!");
-
-            // shift entire list to the left by 1 to remove extraneous 0 at the beginning
-            kernShiftLeft << <fullBlocksPerArray, blockSize >> > (n + numZeroes, dev_tidataFinal, dev_tidata);
-
-            // set last number in the array
-            //cudaMemcpy(dev_tidata + n + numZeroes - 1, &lastInt, sizeof(int), cudaMemcpyHostToDevice);
-            //checkCUDAErrorWithLine("cudaMemcpy lastInt Host to Device failed!");
-
             // copy final result to odata
-            cudaMemcpy(dev_odata, dev_tidataFinal, n * sizeof(int), cudaMemcpyDeviceToHost);
+            cudaMemcpy(dev_odata, dev_tidata, n * sizeof(int), cudaMemcpyDeviceToHost);
             checkCUDAErrorWithLine("cudaMemcpy dev_tidata to odata failed!");
-
-            /*int* tempBuf = new int[n];
-            cudaMemcpy(tempBuf, dev_tidataFinal, (n) * sizeof(int), cudaMemcpyDeviceToHost);
-            for (int i = 0; i < n; i++) {
-                std::cout << tempBuf[i] << std::endl;
-            }*/
 
             // free all buffers
             cudaFree(dev_tidata);
-            cudaFree(dev_tidataFinal);
         }
 
         /**
@@ -294,12 +237,10 @@ namespace StreamCompaction {
             int numScatters = 0;
             int validSlot = 0;
             cudaMemcpy(&numScatters, dev_scanArray + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
-            cudaMemcpy(&numScatters, dev_tempArray + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            cudaMemcpy(&validSlot, dev_tempArray + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
 
             numScatters += validSlot;
             checkCUDAErrorWithLine("cudaMemcpy numScatters failed!");
-
-            // std::cout << numScatters << std::endl;
 
             int* dev_scatterFinal;
             cudaMalloc((void**)&dev_scatterFinal, numScatters * sizeof(int));
