@@ -80,11 +80,17 @@ number of elements in input array for non-power of 2 tests = 33554429
 ```
 
 
-## Implementaion
+## Implementation
 
 ### Array Scan
 
-The array scan algorithm 
+The array scan algorithm is an algorithm that, given an input array of ints ```idata``` of size n, 
+will output an an array ```odata``` with size also n, where the value at each 
+index ```i``` in ```odata``` is the sum of all previous ```i-1``` elements from ```idata```.
+Exclusive scan is the version implemented in this repository, as opposed to Inclusive. This means 
+setting ```odata[0] = 0``` and each element in ```odata``` not including the addition of 
+its correpsonding value in ```idata``` when computing the value. Below each of the different
+implementations of the exclusive scan algorithm are talked in more detail.
 
 #### CPU Implementation
 
@@ -183,14 +189,18 @@ for the output data is then transferred back to the host array.
 
 ### Stream Compaction
 
+Stream compaction is an array algorithm that, given an input array of ints ```idata``` of size ```n```,
+returns an output array ```odata``` of some size ```[0,n]``` such that ```odata``` contains only the
+values ```x``` in ```idata``` that satisfy some criteria function ```f(x)```. This is essentially 
+used to compact an array into a smaller size by getting rid of unneeded elements as determined by 
+the criteria function ```f(x)```. Values for which ```f(x)``` return ```true``` are kept, while
+values for which ```f(x)``` return false are removed.
+
 #### CPU Implementation
 
 #### Extra Credit
 
-I also implemented the extra credit to optimize and parameterize the grid-based looping to handle arbitrary
-subgrid lengths. This involved calculating the number of cells needed to be checked in the x,y,z directions of the cell
-grid, and then using these values to offset the grid cell indices from the current boid grid cell index. This feature 
-is how I generated Figure 7.
+###### Not implemented :(
 
 ## Testing Strategy
 
