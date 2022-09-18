@@ -3,12 +3,17 @@ University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 2
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 2**
 
-* (TODO) YOUR NAME HERE
+* Di Lu
   * (TODO) [LinkedIn](), [personal website](), [twitter](), etc.
-* Tested on: (TODO) Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Tested on: Windows 11, i7-12700H @ 2.30GHz 32GB, NVIDIA GeForce RTX 3050 Ti
 
-### (TODO: Your README)
+## Introduction
 
-Include analysis, etc. (Remember, this is public, so don't put
-anything here that you don't want to share with the world.)
+In this project, I implemented the following algorithms on the GPU and tested them:
+
+1. Exclusive Scan (CPU, Naive Scan, Work-Efficient Scan) - given an array A, output another array B such that each element b\[i\]
+is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
+2. Stream Compaction - given an array A, output another array B that only contains elements from A which match a criteria.
+
+
 
