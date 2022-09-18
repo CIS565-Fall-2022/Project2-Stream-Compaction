@@ -35,6 +35,8 @@ The final graph shows some data of very large array sizes with element counts ne
 
 Despite the expectation that the gpu should begin performing better than the cpu this is not the case. Simply comparing the work efficient approach with the cpu, it's likely a lot of unnecessary overhead is being created. The number of threads generated each time in the kernel is relative to the size of the input array at every step, rather than the number of threads actually needed. For example if the array has a million elements, the kernel will genereate a million threads even if it only needs two. However, the naive approach performing this poorly is genuinely mistifying. At worst it seems to do about double the work as the efficient approach, yet it takes 10 times longer.
 
+All four approaches seem to be limited be computation in some way, the cpu approach more than the others. The GPU will also begin to serialize tasks once the array size exceeds the number of threads that can run at the same time. It is also likely that the GPU faces some I/O limitations in a similar vein, as writing to global memory takes more time.
+
 Lastly: Here is the output of some testing. These were done at array size 2 to the 18.
 ```
 ****************
