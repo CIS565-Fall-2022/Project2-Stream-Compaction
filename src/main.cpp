@@ -14,7 +14,7 @@
 #include <stream_compaction/radix.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 22; // feel free to change the size of array
+const int SIZE = 1 << 15; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
@@ -105,8 +105,6 @@ int main(int argc, char* argv[]) {
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printArray(NPOT, c, true);
     printCmpResult(NPOT, b, c);
-
-    
 
     zeroArray(SIZE, c);
     printDesc("thrust scan, power-of-two");
