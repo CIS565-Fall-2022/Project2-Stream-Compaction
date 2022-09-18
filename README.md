@@ -16,8 +16,8 @@ This project implements the required features of CPU based scan and stream compa
 ### Performance Analysis
 Here are the graphs comapring the runtimes of scan implemented on the CPU, GPU, and with Thrust. Note that Thrust is removed and the range of array sizes is shrunk for the second graph for visualization purposes.
 
-![Scan](images/scan.png)
-![Scan (Better Visualization)](images/scan_small.png)
+![Scan](img/scan.png)
+![Scan (Better Visualization)](img/scan_small.png)
 
 From the graphs, we can see that CPU is faster than the work-efficent GPU implementation until the array size reaches about ~1,000,000 elements. This is suprising because the theortical complexities of these algorithms are O(n), O(nlogn), O(n) for CPU, naive, and work efficent respectively. Since the GPU implementations are paralleized we would expect that they are faster than the CPU implementation. The cause of this is likely the lack of optimizations in my GPU code and frequent reads and writes to global memory which is slow. An implementation using shared memory would improve the memory access speeds. Further more, the indexing of scan is inefficent since there are many inactive threads that could be retired in a warp if they were consecutive. 
 
@@ -25,8 +25,8 @@ The Thrust implementations are significantly slower than both GPU and CPU implem
 
 We can see these inefficenies reflected again in the stream compaction run times:
 
-![Stream Compaction](images/scan.png)
-![Stream Compaction (Better Visualization)](images/scan_small.png)
+![Stream Compaction](img/compaction.png)
+![Stream Compaction (Better Visualization)](img/compaction_small.png)
 
 ### Program Output
 ```
