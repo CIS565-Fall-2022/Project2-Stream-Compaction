@@ -54,13 +54,17 @@ namespace StreamCompaction {
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
+
         void scan(int n, int *odata, const int *idata, bool gpuTimerStart) {
             int* dev_data;
+            int* dev_buffer;
+
             int log2n = ilog2ceil(n);
             //input array may not be two power 
             //So need to get nearest two power
             int nearest_2power = 1 << log2n;
             int finalMemorySize = nearest_2power;
+            int difference =  finalMemorySize-n;
 
             dim3 fullBlocksPergrid((finalMemorySize + blockSize - 1) / blockSize);
 
@@ -68,11 +72,17 @@ namespace StreamCompaction {
             cudaMalloc((void**)&dev_data, finalMemorySize * sizeof(int));
             checkCUDAError("cudaMalloc dev_data failed!");
 
+            cudaMalloc((void**)&dev_buffer, finalMemorySize * sizeof(int));
+            checkCUDAError("cudaMemset dev_buffer failed!");
+
             cudaMemset(dev_data, 0, finalMemorySize * sizeof(int));
             checkCUDAError("cudaMemset dev_data failed!");
 
             cudaMemcpy(dev_data, idata, n * sizeof(int), cudaMemcpyHostToDevice);
             checkCUDAError("cudaMemcpy dev_data failed!");
+
+            cudaMemcpy(dev_buffer, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
+            checkCUDAError("cudaMemcpy dev_buffer failed!");
 
             if (gpuTimerStart == false)
             {
@@ -95,7 +105,7 @@ namespace StreamCompaction {
                 KernDownSweep << <fullBlocksPergrid, blockSize >> > (nearest_2power,dev_data,d);
                 checkCUDAError("KernDownSweep failed!");
             }
-
+           
             if (gpuTimerStart == false)
             {
                 timer().endGpuTimer();
@@ -148,10 +158,12 @@ namespace StreamCompaction {
 
             timer().endGpuTimer();
 
-            cudaMemcpy(count, dev_boolScan + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            cudaMemcpy(count, dev_bool + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+
+            cudaMemcpy(count+1, dev_boolScan + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
 
             //size equals to last of boolean array and last of boolean prefix sum array
-            int compactedSize = count[0] ;
+            int compactedSize = count[0] + count[1];
 
             cudaMemcpy(odata, dev_odata, sizeof(int) * compactedSize, cudaMemcpyDeviceToHost);
             checkCUDAError("cudaMemcpy back failed!");
