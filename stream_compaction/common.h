@@ -9,9 +9,15 @@
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
+#include <iostream>
+#include <vector>
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
+
+#define blockSize 256
+
+//#define inclusiveToExclusive
 
 /**
  * Check for CUDA errors; print and exit if there was a problem.
@@ -36,6 +42,10 @@ namespace StreamCompaction {
 
         __global__ void kernScatter(int n, int *odata,
                 const int *idata, const int *bools, const int *indices);
+
+        __global__ void kernMapToBooleanBitwiseCheck(int n, int c, int* bools, const int* idata);
+
+        __global__ void kernReverseArray(int n, int* odata_reversed, const int* odata);
 
         /**
         * This class is used for timing the performance
