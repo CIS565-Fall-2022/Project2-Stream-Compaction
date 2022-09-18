@@ -24,6 +24,7 @@ Implementation including:
 - We will test with arrays that have sizes from 2^8 to 2^19, and compare the performances of different types of scans and compacts
 - All number varies from 0 to 99, and the run time is mesasured in ms;
 - NPOT in the following charts means Non Power of Two
+- BlockSize at 128
 
 ### Performance Analysis of Scan
 ![Scan](./img/Scan.png)
@@ -47,8 +48,8 @@ Implementation including:
 
 
 ### Why is My GPU Approach So Slow?
-- The main reason why our GPU is slower than CPU is because all computation uses global memory in GPU. Getting data from global memory is costly in terms of performance.(Even though when facing large size of array parallelism become GPU's biggest advantage over CPU)
-- When executing kernel function, our current method/code will leave a lot of separate data thus cost warp divergence and performance lag. The way to optimize it is to use warp partitioning and a new way of reduction(change index mostly).
+- The main reason why our GPU is slower than CPU is because all computation uses global memory in GPU. Getting data from global memory is costly in terms of performance(Even though when facing large size of array parallelism become GPU's biggest advantage over CPU). The way to optimize it is to use shared memory instead of global and use an algorithm that reduces bank conflicts. (TODO)
+- When executing kernel function, our current method/code will leave a lot of separate data thus cost warp divergence and performance lag. The way to optimize it is to use warp partitioning and a new way of reduction(change index mostly).(TODO)
 
 ### Bloopers
 - So there are two things I would like to address specifically, one is using Pow instead of << in scan will result in array difference, and the other one is using std::swap instead of cudaMemCpy will also do that. These two errors will only occur with arraySize bigger than 1>>10, so I would assume it is a memory problem or precision problem? I will ask that in class I think. 
