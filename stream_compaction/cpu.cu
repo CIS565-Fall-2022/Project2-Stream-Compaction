@@ -20,6 +20,11 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+            odata[0] = 0;
+            for (int i = 1; i < n; ++i)
+            {
+                odata[i] = odata[i - 1] + idata[i - 1];
+            }
             timer().endCpuTimer();
         }
 
@@ -31,8 +36,17 @@ namespace StreamCompaction {
         int compactWithoutScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+            int currentOutputIndex = 0;
+            for (int i = 0; i < n; ++i)
+            {
+                if (idata[i] != 0)
+                {
+                    odata[currentOutputIndex] = idata[i];
+                    currentOutputIndex++;
+                }
+            }
             timer().endCpuTimer();
-            return -1;
+            return currentOutputIndex;
         }
 
         /**
@@ -41,10 +55,44 @@ namespace StreamCompaction {
          * @returns the number of elements remaining after compaction.
          */
         int compactWithScan(int n, int *odata, const int *idata) {
+            int* mapData = new int[n];
+            int* scanData = new int[n];
+
             timer().startCpuTimer();
             // TODO
+            for (int i = 0; i < n; ++i)
+            {
+                if (idata[i] != 0)
+                {
+                    mapData[i] = 1;
+                }
+                else
+                {
+                    mapData[i] = 0;
+                }
+            }
+
+            // scan(n, scanData, mapData); this will throw an exception for re-start the cpu timer
+            scanData[0] = 0;
+            for (int i = 1; i < n; ++i)
+            {
+                scanData[i] = scanData[i - 1] + mapData[i - 1];
+            }
+
+
+            for (int i = 0; i < n; i++)
+            {
+                if (idata[i] !=0)
+                {
+                    odata[scanData[i]] = idata[i];
+                }
+            }
+
+            int result = scanData[n - 1];
             timer().endCpuTimer();
-            return -1;
+            delete[] mapData;
+            delete[] scanData;
+            return result;
         }
     }
 }
