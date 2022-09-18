@@ -45,7 +45,9 @@ namespace StreamCompaction {
         void upDownSweep(int n, int* data, dim3 blockPerGrid)
         {
             for (int d = 0; d <= ilog2ceil(n) - 1; ++d) {
-                kernUpSweep << < blockPerGrid, blockSize >> > (n, d, data);
+                //kernUpSweep << < blockPerGrid, blockSize / pow(2, d)>> > (n, d, data);
+                kernUpSweep << < blockPerGrid, blockSize>> > (n, d, data);
+
             }
             cudaDeviceSynchronize();
 
@@ -54,7 +56,9 @@ namespace StreamCompaction {
 
 
             for (int d = ilog2ceil(n) - 1; d >= 0; --d) {
+//                kernDownSweep << < blockPerGrid, blockSize / pow(2, ilog2ceil(n) - d - 1) >> > (n, d, data);
                 kernDownSweep << < blockPerGrid, blockSize >> > (n, d, data);
+
             }
             cudaDeviceSynchronize();
         }
