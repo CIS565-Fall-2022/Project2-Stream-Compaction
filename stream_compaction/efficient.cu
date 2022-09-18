@@ -58,6 +58,7 @@ namespace StreamCompaction {
 
             dim3 blocksPerGrid((n + blockSize - 1) / blockSize);
 
+            // Extend buffers to handle arrays with lengths which are not a power of two
             int maxDepth = ilog2ceil(n);
             int extended_n = pow(2, maxDepth);
             int* extended_idata = new int[extended_n];
@@ -65,28 +66,35 @@ namespace StreamCompaction {
             for (int i = 0; i < extended_n; i++) {
                 extended_idata[i] = (i < n) ? idata[i] : 0;
             }
+
             // Memory allocation
             cudaMalloc((void**)&dev_data, sizeof(int) * extended_n);
             checkCUDAError("cudaMalloc dev_data failed!");
-
             cudaMemcpy(dev_data, extended_idata, sizeof(int) * extended_n, cudaMemcpyHostToDevice);
             checkCUDAError("memcpy into dev_data failed!");
 
+            // Upstream - parallel reduction
             for (int d = 0; d < maxDepth; d++) {    // where d is depth of iteration
                 kernUpStreamReduction << <blocksPerGrid, blockSize >> > (extended_n, d, dev_data);
                 checkCUDAError("kernUpStreamReduction invocation failed!");
             }
 
+            // Getting parallel reduction sum which can be used to convert to inclusive scan
             int* lastVal = new int();
             cudaMemcpy(lastVal, dev_data + extended_n - 1, sizeof(int), cudaMemcpyDeviceToHost);
             checkCUDAError("lastVal memcpy failed!");
 
+            // Set last element to identity value which is zero
             cudaMemset(dev_data + extended_n - 1, 0, sizeof(int));
+            checkCUDAError("cudaMemset last value to identity failed!");
+
+            // Downstream
             for (int d = maxDepth - 1; d >= 0; d--) {    // where d is depth of iteration
                 kernDownStream << <blocksPerGrid, blockSize >> > (extended_n, d, dev_data);
                 checkCUDAError("kernDownStream invocation failed!");
             }
 
+            // Copy calculated buffer to output
             cudaMemcpy(odata, dev_data, sizeof(int) * (extended_n), cudaMemcpyDeviceToHost);
             checkCUDAError("odata memcpy failed!");
 
