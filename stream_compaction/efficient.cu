@@ -150,7 +150,9 @@ namespace StreamCompaction {
         __global__ void kernCheckBit(int n, int bit, int* inp, int* booleans, int* invertBooleans) {
             int idx = (blockIdx.x * blockDim.x) + threadIdx.x;
             if (idx >= n) return;
-            int boolean = (inp[idx] & (1 << bit)) == 0 ? 0 : 1;
+            int boolean;
+            //if (inp[idx] == 0) boolean = 0; // +0 and -0
+            /*else*/ boolean = (inp[idx] & (1 << bit)) == 0 ? 0 : 1;
             booleans[idx] = boolean;
             invertBooleans[idx] = boolean == 0 ? 1 : 0;
         }
@@ -214,19 +216,16 @@ namespace StreamCompaction {
                         offset /= 2;
                     }
                 }
-                
+
                 int totalFalse;
+                int lastNum;
                 cudaMemcpy(&totalFalse, devFalse + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
-                //std::cout << totalFalse << std::endl;
-                if ((inp[n - 1] & (1 << bit)) != 0) totalFalse += 1;
+                cudaMemcpy(&lastNum, devInp + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+                if ((lastNum & (1 << bit)) == 0) totalFalse += 1;
+
                 kernComputeIndices <<<fullBlocksPerGrid, BLOCK_SIZE>>> (n, totalFalse, devFalse, devTrue, devIndices);
 
                 kernRadixSortScatter <<<fullBlocksPerGrid, BLOCK_SIZE>>> (n, devIndices, devInp, devTrue); //temporarily store output into devTrue buffer
-                //cudaMemcpy(out, devTrue, n * sizeof(int), cudaMemcpyDeviceToHost);
-                //for (int i = 0; i < 64; i++) {
-                //    std::cout << out[i] << " ";
-                //}
-                //std::cout << std::endl;
                 std::swap(devInp, devTrue);
             }
 

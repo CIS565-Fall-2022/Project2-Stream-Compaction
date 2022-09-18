@@ -7,5 +7,6 @@ namespace StreamCompaction {
         StreamCompaction::Common::PerformanceTimer& timer();
 
         void scan(int n, int *odata, const int *idata, bool enableTimer = true);
+        void sort(int n, int *odata, const int *idata, bool enableTimer = true);
     }
 }
