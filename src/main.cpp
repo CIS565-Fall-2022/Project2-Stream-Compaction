@@ -31,6 +31,10 @@ int main(int argc, char* argv[]) {
     a[SIZE - 1] = 0;
     printArray(SIZE, a, true);
 
+    //int in[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    //int out[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    //StreamCompaction::Efficient::scan(8, out, in);
+
     // initialize b using StreamCompaction::CPU::scan you implement
     // We use b for further comparison. Make sure your StreamCompaction::CPU::scan is correct.
     // At first all cases passed because b && c are all zeroes.
