@@ -129,12 +129,16 @@ namespace StreamCompaction {
           }
           memcpy(temp_odata, idata, n * sizeof(int));
 
+          timer().startCpuTimer();
+
           int bitmask = 1;
           for (int i = 0; i < numBits; ++i) {
             split(n, bitmask, temp_odata2, temp_odata);
             std::swap(temp_odata2, temp_odata); // at end of loop, temp_odata always has most updated info
             bitmask <<= 1;
           }
+
+          timer().endCpuTimer(); // end before final memcpy (which just transfers output to odata)
 
           memcpy(odata, temp_odata, n * sizeof(int));
 

@@ -159,6 +159,8 @@ namespace StreamCompaction {
           cudaMalloc((void**)&dev_falsesScanData, paddedLength * sizeof(int));
           cudaMalloc((void**)&dev_scatterAddresses, n * sizeof(int)); 
 
+          timer().startGpuTimer();
+
           int bitmask = 1;
           for (int i = 0; i < numBits; ++i) {
             // need indices from 0... paddedLength - 1
@@ -191,6 +193,8 @@ namespace StreamCompaction {
             bitmask = bitmask << 1; // eg. ...0010 => ...0100
             std::swap(dev_odata, dev_idata); // dev_idata always has latest
           }
+
+          timer().endGpuTimer();
 
           cudaMemcpy(odata, dev_idata, n * sizeof(int), cudaMemcpyDeviceToHost);
 
