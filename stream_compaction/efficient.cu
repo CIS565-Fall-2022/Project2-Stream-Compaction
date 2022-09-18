@@ -174,15 +174,24 @@ namespace StreamCompaction {
             }
             odata[index] = index - idata[index] + f;
         }
-        __global__ void kernScatter(int n, int* odata, int* b, int* t, int* f, int* idata)
+        __global__ void kernComputeD(int n, int* d, int* b, int* t, int* f)
         {
             int index = threadIdx.x + (blockIdx.x * blockDim.x);
             if (index >= n) {
                 return;
             }
-            odata[index] = idata[b[index] == 0 ? t[index] : f[index]];
+            // b is just the opposite of e
+            d[index] = b[index] == 0 ? t[index] : f[index];
         }
 
+        __global__ void kernScatter(int n, int* d, int*odata, int* idata)
+        {
+            int index = threadIdx.x + (blockIdx.x * blockDim.x);
+            if (index >= n) {
+                return;
+            }
+            odata[d[index]] = idata[index];
+           }
 
         void radixSort(int n, int* odata, const int* idata)
         {
@@ -257,8 +266,13 @@ namespace StreamCompaction {
 
 
                 // Step 5: scatter
-                kernScatter << < fullBlocksPerGrid, blockSize >> > (arraySize, dev_odata, dev_e, dev_t, dev_f, dev_idata);
+                kernComputeD << < fullBlocksPerGrid, blockSize >> > (arraySize, dev_d, dev_e, dev_t, dev_f);
                 cudaDeviceSynchronize();
+
+                cudaMemcpy(temp, dev_d, n * sizeof(int), cudaMemcpyDeviceToHost);
+
+
+                kernScatter << < fullBlocksPerGrid, blockSize >> > (arraySize, dev_d, dev_odata, dev_idata);
 
                 cudaMemcpy(temp, dev_odata, n * sizeof(int), cudaMemcpyDeviceToHost);
 
