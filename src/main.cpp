@@ -167,6 +167,8 @@ int main(int argc, char* argv[]) {
     StreamCompaction::Efficient::radixSort(SIZE, c, a);
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printCmpResult(SIZE, b, c);
+    printArray(SIZE, c, true);
+
 
 
     system("pause"); // stop Win32 console from closing on exit
