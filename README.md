@@ -12,27 +12,72 @@ compacting arrays with millions of elements in parallel on the GPU.**
 
 ### Results
 
-#### Array Scan
+*Testbench functional and performance results for scan and stream compaction on input array size of 2^25 (33554432):*
+```
+number of elements in input array for power of 2 tests = 33554432
+number of elements in input array for non-power of 2 tests = 33554429
 
-![](images/results/scan_25.PNG)
-*Figure 1: Array Scan test results with input array size = 2^25 (33554432).*
+****************
+** SCAN TESTS **
+****************
+    [  34  41  19  15   6   8   5  37  47  15   4  40  20 ...  44  16   0 ]
+==== cpu scan, power-of-two ====
+   elapsed time: 19.1805ms    (std::chrono Measured)
+    [   0  34  75  94 109 115 123 128 165 212 227 231 271 ... 821815873 821815917 821815933 ]
+==== cpu scan, non-power-of-two ====
+   elapsed time: 19.9557ms    (std::chrono Measured)
+    [   0  34  75  94 109 115 123 128 165 212 227 231 271 ... 821815825 821815842 821815853 ]
+    passed
+==== naive scan, power-of-two ====
+   elapsed time: 29.1328ms    (CUDA Measured)
+    [   0  34  75  94 109 115 123 128 165 212 227 231 271 ... 821815873 821815917 821815933 ]
+    passed
+==== naive scan, non-power-of-two ====
+   elapsed time: 29.0673ms    (CUDA Measured)
+    [   0  34  75  94 109 115 123 128 165 212 227 231 271 ... 821815825 821815842 821815853 ]
+    passed
+==== work-efficient scan, power-of-two ====
+   elapsed time: 24.446ms    (CUDA Measured)
+    [   0  34  75  94 109 115 123 128 165 212 227 231 271 ... 821815873 821815917 821815933 ]
+    passed
+==== work-efficient scan, non-power-of-two ====
+   elapsed time: 21.2756ms    (CUDA Measured)
+    [   0  34  75  94 109 115 123 128 165 212 227 231 271 ... 821815825 821815842 821815853 ]
+    passed
+==== thrust scan, power-of-two ====
+   elapsed time: 1.16003ms    (CUDA Measured)
+    [   0  34  75  94 109 115 123 128 165 212 227 231 271 ... 821815873 821815917 821815933 ]
+    passed
+==== thrust scan, non-power-of-two ====
+   elapsed time: 1.17952ms    (CUDA Measured)
+    [   0  34  75  94 109 115 123 128 165 212 227 231 271 ... 821815825 821815842 821815853 ]
+    passed
 
-![](images/results/scan_20.PNG)
-*Figure 2: Array Scan test results with input array size = 2^20 (1048576).*
-
-![](images/results/scan_15.PNG)
-*Figure 3: Array Scan test results with input array size = 2^15 (32768).*
-
-#### Stream Compaction
-
-![](images/results/scan_25.PNG)
-*Figure 1: Array Scan test results with input array size = 2^25 (33554432).*
-
-![](images/results/scan_20.PNG)
-*Figure 2: Array Scan test results with input array size = 2^20 (1048576).*
-
-![](images/results/scan_15.PNG)
-*Figure 3: Array Scan test results with input array size = 2^15 (32768).*
+*****************************
+** STREAM COMPACTION TESTS **
+*****************************
+    [   2   3   3   0   0   1   1   0   3   1   0   1   1 ...   2   0   0 ]
+==== cpu compact without scan, power-of-two ====
+   elapsed time: 51.9551ms    (std::chrono Measured)
+    [   2   3   3   1   1   3   1   1   1   3   2   2   2 ...   2   3   2 ]
+    passed
+==== cpu compact without scan, non-power-of-two ====
+   elapsed time: 51.9623ms    (std::chrono Measured)
+    [   2   3   3   1   1   3   1   1   1   3   2   2   2 ...   3   2   3 ]
+    passed
+==== cpu compact with scan ====
+   elapsed time: 103.018ms    (std::chrono Measured)
+    [   2   3   3   1   1   3   1   1   1   3   2   2   2 ...   2   3   2 ]
+    passed
+==== work-efficient compact, power-of-two ====
+   elapsed time: 25.3891ms    (CUDA Measured)
+    [   2   3   3   1   1   3   1   1   1   3   2   2   2 ...   2   3   2 ]
+    passed
+==== work-efficient compact, non-power-of-two ====
+   elapsed time: 25.2508ms    (CUDA Measured)
+    [   2   3   3   1   1   3   1   1   1   3   2   2   2 ...   3   2   3 ]
+    passed
+```
 
 
 ## Implementaion

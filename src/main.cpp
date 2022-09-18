@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     std::cout << "number of elements in input array for power of 2 tests = " << SIZE << std::endl;
     std::cout << "number of elements in input array for non-power of 2 tests = " << NPOT << std::endl;
 
-    /*printf("\n");
+    printf("\n");
     printf("****************\n");
     printf("** SCAN TESTS **\n");
     printf("****************\n");
@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
     onesArray(SIZE, c);
     printDesc("1s array for finding bugs");
     StreamCompaction::Naive::scan(SIZE, c, a);
-    printArray(SIZE, c, true); 
+    printArray(SIZE, c, true); */
 
     zeroArray(SIZE, c);
     printDesc("naive scan, non-power-of-two");
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
     printArray(NPOT, c, true);
     printCmpResult(NPOT, b, c);
 
-    zeroArray(SIZE, c);
+    /*zeroArray(SIZE, c);
     printDesc("work-efficient optimized scan, power-of-two");
     StreamCompaction::Efficient::scan_optimized(SIZE, c, a);
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     StreamCompaction::Efficient::scan_sharedMem(NPOT, c, a);
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     //printArray(NPOT, c, true);
-    printCmpResult(NPOT, b, c);
+    printCmpResult(NPOT, b, c);*/
 
     zeroArray(SIZE, c);
     printDesc("thrust scan, power-of-two");
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
     printElapsedTime(StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printArray(NPOT, c, true);
     printCmpResult(NPOT, b, c);
-    */
+
     printf("\n");
     printf("*****************************\n");
     printf("** STREAM COMPACTION TESTS **\n");
