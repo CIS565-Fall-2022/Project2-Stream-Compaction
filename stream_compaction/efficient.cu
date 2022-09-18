@@ -94,7 +94,6 @@ namespace StreamCompaction {
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int *odata, const int *idata) {
-            timer().startGpuTimer();
             // TODO
             // Pad array
             int* dev_unpadded_idata;
@@ -110,15 +109,20 @@ namespace StreamCompaction {
             cudaMemcpy(dev_unpadded_idata, idata, n * sizeof(int), cudaMemcpyHostToDevice);
             checkCUDAErrorFn("Cuda memcpy idata no work");
 
+            // start timer after all initial memcpys
+            timer().startGpuTimer();
+
             kernPadArray << <fullBlocksPerGrid, blockSize >> > (n, paddedLength, dev_idata, dev_unpadded_idata);
 
             scanImpl(paddedLength, dev_idata);
+
+            // end timer before copying result array
+            timer().endGpuTimer();
+
             cudaMemcpy(odata, dev_idata, n * sizeof(int), cudaMemcpyDeviceToHost);
 
             cudaFree(dev_unpadded_idata);
             cudaFree(dev_idata);
-
-            timer().endGpuTimer();
         }
 
         __global__ void kernGetPaddedBoolArray(int n, int paddedLength, int* odata, const int* idata) {
@@ -153,7 +157,6 @@ namespace StreamCompaction {
          * @returns      The number of elements remaining after compaction.
          */
         int compact(int n, int *odata, const int *idata) {
-            timer().startGpuTimer();
             // TODO
             int* dev_boolData;
             int* dev_boolScan;
@@ -166,8 +169,10 @@ namespace StreamCompaction {
             cudaMalloc((void**)&dev_boolScan, paddedLength * sizeof(int));
             cudaMalloc((void**)&dev_idata, n * sizeof(int));
             cudaMalloc((void**)&dev_odata, n * sizeof(int)); // don't need padding for scatter step
-            // copy input data
             cudaMemcpy(dev_idata, idata, n * sizeof(int), cudaMemcpyHostToDevice);
+
+            // Start timer after copying input data
+            timer().startGpuTimer();
 
             dim3 fullBlocksPerGrid((paddedLength + blockSize - 1) / blockSize);
             kernGetPaddedBoolArray << <fullBlocksPerGrid, blockSize >> > (n, paddedLength, dev_boolData, dev_idata);
@@ -178,6 +183,9 @@ namespace StreamCompaction {
             dim3 fullBlocksPerGridNonPadded((n + blockSize - 1) / blockSize);
             kernScatter << <fullBlocksPerGridNonPadded, blockSize >> >
               (n, dev_odata, dev_idata, dev_boolData, dev_boolScan);
+
+            // End timer before copying odata out
+            timer().endGpuTimer();
 
             cudaMemcpy(odata, dev_odata, n * sizeof(int), cudaMemcpyDeviceToHost);
 
@@ -197,8 +205,6 @@ namespace StreamCompaction {
             cudaFree(dev_boolScan);
             cudaFree(dev_idata);
             cudaFree(dev_odata);
-
-            timer().endGpuTimer();
 
             return resultLength;
         }
