@@ -32,34 +32,21 @@ In this project, I implemented stream compaction on CPU and GPU using parallel a
 
 1. Naive scan
 2. Work-efficient scan
-    - Step 1: Upsweep scan (Parallel Reduction)
+    - Step 1: **Upsweep scan** (Parallel Reduction)
 
         ![](img/upsweep.jpg)
 
-    - Step 2: Downsweep scan (Collecting scanned results) - At each level
+    - Step 2: **Downsweep scan** (Collecting scanned results) - At each level,
         - Left child: Copy the parent value
         - Right child: Add the parent value and left child value copying  root value.
 
         [](img/downsweep.jpg)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### Performance Analysis
 
 
 ### References
 
+1. GPU Parallel Algorithms Course Presentation - CIS 5650 - Fall 2022
+2. GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html)
