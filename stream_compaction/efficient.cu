@@ -23,13 +23,46 @@ namespace StreamCompaction {
             if (k >= N) {
                 return;
             }
-            
             if ((k+1)%(1 << depth) == 0) {
                 odata[k] = idata[k] + idata[k - (1 << (depth-1))];
             }
             else {
                 odata[k] = idata[k];
             }
+        }
+
+        __global__ void downSweep(int N, int* idata, int* odata, int depth) {
+            int k = threadIdx.x + (blockIdx.x * blockDim.x);
+            if (k >= N) {
+                return;
+            }
+
+            if ((k + 1) % (1 << depth) == 0) {
+                if ((k + 1) % (1 << (depth + 1)) == 0) {
+                    odata[k] = idata[k - (1 << depth)] + idata[k];
+                }
+                else {
+                    odata[k] = idata[k + (1 << depth)];
+                }
+            }
+            else {
+                odata[k] = idata[k];
+            }
+        }
+
+        __global__ void toInclusive(int N, int* idata, int* odata, int* buf) {
+            int k = threadIdx.x + (blockIdx.x * blockDim.x);
+            if (k >= N) {
+                return;
+            }
+            if (k < N-1){
+                odata[k] = buf[k + 1];
+            }
+            else {
+                odata[k] = buf[k] + idata[k];
+            }
+            
+            
 
         }
 
@@ -42,7 +75,7 @@ namespace StreamCompaction {
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
-        void scan(int n, int *odata, const int *idata) {
+        void scan(int n, int* odata, const int* idata) {
             timer().startGpuTimer();
             int arrLen;
             int maxDepth = ilog2ceil(n);
@@ -74,6 +107,15 @@ namespace StreamCompaction {
                 upSweep << <threadsPerBlock, blockSize >> > (arrLen, dev_buf, dev_odata, i);
                 cudaMemcpy(dev_buf, dev_odata, sizeof(int) * arrLen, cudaMemcpyDeviceToDevice);
             }
+
+            cudaMemset(&dev_buf[arrLen - 1], 0, sizeof(int) * 1);
+
+            for (int i = maxDepth - 1; i >= 0; i--) {
+                downSweep << <threadsPerBlock, blockSize >> > (arrLen, dev_buf, dev_odata, i);
+                cudaMemcpy(dev_buf, dev_odata, sizeof(int) * arrLen, cudaMemcpyDeviceToDevice);
+            }
+
+            toInclusive << <threadsPerBlock, blockSize >> > (arrLen, dev_idata, dev_odata, dev_buf);
 
             cudaMemcpy((void**)idata, dev_idata, sizeof(int) * n, cudaMemcpyDeviceToHost);
             cudaMemcpy(odata, dev_odata, sizeof(int) * arrLen, cudaMemcpyDeviceToHost);
