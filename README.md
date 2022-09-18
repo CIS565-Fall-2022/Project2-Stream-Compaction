@@ -11,9 +11,22 @@ University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 2
 
 In this project, I implemented the following algorithms on the GPU and tested them:
 
-1. Exclusive Scan (CPU, Naive Scan, Work-Efficient Scan) - given an array A, output another array B such that each element b\[i\]
+1. Exclusive Scan (CPU, Naive Scan, Work-Efficient Scan, Thrust Scan) - given an array A, output another array B such that each element b\[i\]
 is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 2. Stream Compaction - given an array A, output another array B that only contains elements from A which match a criteria.
+
+## Implementation and Results
+### Scan
+#### Part 1. Sequential CPU Scan 
+#### Part 1. Naive Boids Simulation
+#### Part 1. Naive Boids Simulation
+### Stream Compaction
+
+## Performance Analysis
+## Extra Credit?
+
+
+
 
 
 
