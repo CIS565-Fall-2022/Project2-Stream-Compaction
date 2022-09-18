@@ -1,5 +1,6 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <algorithm>
 #include "common.h"
 #include "efficient.h"
 
@@ -140,8 +141,6 @@ namespace StreamCompaction {
             cudaMalloc((void**)&dev_odata, n * sizeof(int));
             cudaMalloc((void**)&dev_scanResult, size * sizeof(int));
 
-           
-
             cudaMemcpy(dev_idata, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
 
             timer().startGpuTimer();
@@ -164,7 +163,85 @@ namespace StreamCompaction {
             cudaFree(dev_idata);
             cudaFree(dev_odata);
             cudaFree(dev_scanResult);
+
             return length;
+        }
+
+
+        __global__ void kernNegate(int n, int k, int* data, int* bools) {
+            int index = threadIdx.x + (blockIdx.x * blockDim.x);
+            if (index >= n) {
+                return;
+            }
+
+            int curBit = (data[index] & (1 << k)) >> k;
+            bools[index] = curBit == 1 ? 0 : 1;
+
+        }
+
+        __global__ void kernSplit(int n, int k, int totalFalses, int* scan, int* idata, int* odata) {
+            int index = threadIdx.x + (blockIdx.x * blockDim.x);
+            if (index >= n) {
+                return;
+            }
+
+            int cur = idata[index];
+            int curBit = (cur & (1 << k)) >> k;                             
+            int scanIdx = scan[index];
+           // odata[index] = curBit == 0 ? idata[scanIdx] : idata[index - scanIdx + totalFalses];
+            if (curBit == 0) {
+                odata[scanIdx] = cur;
+            } else {
+                odata[index - scanIdx + totalFalses] = cur;
+            }
+
+        }
+
+
+        void radixSort(int n, int* odata, const int* idata) {
+            
+            int* dev_idata;
+            int* dev_odata;
+            int* dev_scanResult;
+            int* dev_bool;
+
+            int size = 1 << ilog2ceil(n);
+            int lastBool = 0;
+            int lastCount = 0;
+            int totalFalses = 0;
+
+            dim3 fullBlocksPerGrid((n + blockSize - 1) / blockSize);
+
+            cudaMalloc((void**)&dev_idata, n * sizeof(int));
+            cudaMalloc((void**)&dev_odata, n * sizeof(int));
+            cudaMalloc((void**)&dev_bool, n * sizeof(int));
+            cudaMalloc((void**)&dev_scanResult, size * sizeof(int));
+
+            cudaMemcpy(dev_idata, idata, n * sizeof(int), cudaMemcpyHostToDevice);
+
+            timer().startGpuTimer();
+
+            int max = *std::max_element(idata, idata + n);
+            int numBits = ilog2ceil(max);
+
+            for (int i = 0; i < numBits; i++) {
+                kernNegate << <fullBlocksPerGrid, blockSize >> > (n, i, dev_idata, dev_bool);
+                cudaMemcpy(&lastBool, dev_bool + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+                cudaMemcpy(dev_scanResult, dev_bool, n * sizeof(int), cudaMemcpyDeviceToDevice);
+                perfixSumScan(size, dev_scanResult);
+                cudaMemcpy(&lastCount, dev_scanResult + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+                totalFalses = lastBool + lastCount;
+                kernSplit << <fullBlocksPerGrid, blockSize >> > (n, i, totalFalses, dev_scanResult, dev_idata, dev_odata);
+                std::swap(dev_idata, dev_odata);
+            }
+            timer().endGpuTimer();
+
+            cudaMemcpy(odata, dev_idata, n * sizeof(int), cudaMemcpyDeviceToHost);
+
+            cudaFree(dev_idata);
+            cudaFree(dev_odata);
+            cudaFree(dev_bool);
+            cudaFree(dev_scanResult);
         }
     }
 }

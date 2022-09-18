@@ -74,5 +74,11 @@ namespace StreamCompaction {
             delete temp;
             return count;
         }
+
+        void sort(int n, int* idata) {
+            timer().startCpuTimer();
+            std::sort(idata, idata + n);
+            timer().endCpuTimer();
+        }
     }
 }
