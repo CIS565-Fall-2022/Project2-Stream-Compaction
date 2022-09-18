@@ -56,6 +56,7 @@ Implementation including:
 
 
 ### Printout Example for 2^15 Array
+```
 ****************
 ** SCAN TESTS **
 ****************
