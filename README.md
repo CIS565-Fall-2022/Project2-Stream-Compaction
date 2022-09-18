@@ -12,6 +12,7 @@ CUDA Stream Compaction
 * Naive GPU scan
 * Work-Efficient GPU scan (upsweep and downsweep) with support for arbitrary array length
 * GPU compaction using scan
+* Thrust library scan
 
 ## Features TODO
 * Radix Sort
