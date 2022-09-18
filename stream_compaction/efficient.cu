@@ -40,6 +40,22 @@ namespace StreamCompaction {
           data[writeIndex] += data[readIndex];
         }
 
+        __global__ void kernDownsweep(int numThreads, int writeStride, int* data) {
+          int index = threadIdx.x + (blockIdx.x * blockDim.x);
+          if (index >= numThreads) {
+            return;
+          }
+
+          int readStride = writeStride * 2;
+
+          int leftChildIndex = index * readStride + writeStride - 1;
+          int rightChildIndex = index * readStride + readStride - 1; // right child is also where parent is stored
+
+          int temp = data[leftChildIndex];
+          data[leftChildIndex] = data[rightChildIndex];
+          data[rightChildIndex] += temp;
+        }
+
         int* dev_unpadded_idata;
         int* dev_idata;
         int* dev_odata;
@@ -70,12 +86,30 @@ namespace StreamCompaction {
               int writeStride = readStride * 2;
 
               int numThreads = paddedLength / writeStride; // one thread per element we write to
-              dim3 numBlocks((paddedLength + blockSize - 1) / blockSize);
+              dim3 numBlocks((numThreads + blockSize - 1) / blockSize);
 
               kernUpsweep << <numBlocks, blockSize >> > (numThreads, readStride, dev_idata);
+              cudaDeviceSynchronize();
             }
 
-            printCudaArray(paddedLength, dev_idata);
+            // Down sweep
+            // In down sweep, children now read info from parent. So writeStride = readStride / 2
+            // Write stride = n/2, n/4, ... 4, 2, 1, aka. 2^depth
+            // Read stride = 2^(depth + 1)
+            
+            // First set parent to 0
+            int zero = 0;
+            cudaMemcpy(dev_idata + paddedLength - 1, &zero, sizeof(int), cudaMemcpyHostToDevice);
+
+            for (int writeStride = paddedLength / 2; writeStride >= 1; writeStride = writeStride >> 1) {
+              int readStride = writeStride * 2;
+              
+              // now launch 1 thread per element we read from
+              int numThreads = paddedLength / readStride;
+              dim3 numBlocks((numThreads + blockSize - 1) / blockSize);
+
+              kernDownsweep << <numBlocks, blockSize >> > (numThreads, writeStride, dev_idata);
+            }
 
             cudaMemcpy(odata, dev_idata, n * sizeof(int), cudaMemcpyDeviceToHost);
 
