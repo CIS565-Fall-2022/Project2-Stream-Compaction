@@ -15,7 +15,7 @@ CUDA Stream Compaction
 Stream compaction is an important parallel computing primitive that generates a compact output buffer with selected elements of an input buffer based on some condition. Basically, given an array of elements, we want to create a new array with elements that meet a certain criteria while preserving order.
 The important steps in a stream compaction algorithm are as follows:
 
-[](img/stream-compaction.jpg)
+![](img/stream-compaction.jpg)
 
 1. Step 1: Mapping - Compute a temporary array containing
     - 1 if corresponding element meets criteria
@@ -33,14 +33,14 @@ In this project, I implemented stream compaction on CPU and GPU using parallel a
 1. Naive scan
 2. Work-efficient scan
     - Step 1: Upsweep scan (Parallel Reduction)
-    
-        [](img/upsweep.jpg)
+
+        ![](img/upsweep.jpg)
 
     - Step 2: Downsweep scan (Collecting scanned results) - At each level
         - Left child: Copy the parent value
         - Right child: Add the parent value and left child value copying  root value.
 
-        [](img/upsweep.jpg)
+        [](img/downsweep.jpg)
 
 
 
