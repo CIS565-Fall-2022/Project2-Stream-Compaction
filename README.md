@@ -40,7 +40,7 @@ In this project, I implemented stream compaction on CPU and GPU using parallel a
         - Left child: Copy the parent value
         - Right child: Add the parent value and left child value copying  root value.
 
-        [](img/downsweep.jpg)
+        ![](img/downsweep.jpg)
 
 
 ### Performance Analysis
