@@ -1,4 +1,4 @@
-CUDA Stream Compaction
+University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 2 - CUDA Stream Compaction
 ======================
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 2**
