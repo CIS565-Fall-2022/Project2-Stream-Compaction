@@ -207,7 +207,7 @@ namespace StreamCompaction {
             toInclusive << <threadsPerBlock, blockSize >> > (arrLen, dev_idata, dev_odata, dev_buf);
 
             cudaMemcpy(odata, dev_odata, sizeof(int) * arrLen, cudaMemcpyDeviceToHost);
-            int retLen = odata[arrLen - 1];
+            int retLen = odata[n - 1];
 
             cudaMemcpy(dev_buf, dev_odata, sizeof(int) * arrLen, cudaMemcpyDeviceToDevice);
 
