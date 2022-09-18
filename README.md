@@ -247,6 +247,8 @@ end
 
 ## Testing Strategy
 
+**All tests and results are done on Release mode in Visual Studio**
+
 The first step in the testing strategy was to figure out the optimal block size for the 
 different GPU implementations of the scan and stream compaction algorithms. Data from each
 implementation was collected with a constant input array size of 2^25 (33,554,432) for
@@ -265,9 +267,11 @@ while the runtime stays roughly constant for the naive scan.
 
 ## Performance Analysis
 
+**All tests and results are done on Release mode in Visual Studio**
+
 ### Scan
 
-As can be seen by Figure XXX below, the runtime of the scan algorithm increases linearly for each of the
+As can be seen by Figure XXX below, the runtime of the scan algorithm increases roughly linearly for each of the
 different implementations, but the slope of this increase is different for each one. 
 
 The thrust version was by far the fastest in most cases and had the smallest slope. 
@@ -305,7 +309,14 @@ that much additional memory usage.
 Likewise, Figure XXX below shows the runtime of the stream compaction algorithm also increases linearly
 for each of the implementations, and again the slope of this increase is the only thing that changes.
 However, unlike with scan, here the GPU stream compaction is significantly faster than either of the
-CPU implementations for arrays with very large amounts of elements (>2000000).
+CPU implementations for arrays with very large amounts of elements (>2000000). This is because
+the CPU version (without scan), even though it is logically barely more complex than the CPU scan (which
+was faster than the GPU scans), has a conditional in the for loop. Because the array the stream 
+compaction input array has elements which are not related in any way to each other, in the worst
+case the array would have alternating elements that are ```0``` and not ```0```, causing the branch
+prediction in the CPU to cause large performance penalties with increasing array sizes. By parallelizing
+these conditionals, the GPU implementation of stream compaction has much faster runtime for array sizes
+in the millions.
 
 ![](images/figures/graph_compact.png)
 *Figure XXX: Effect of cuda kernel block size on average fps for uniform grid-based simulation*
