@@ -2,13 +2,18 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include <device_functions.h>
 
+#include <iostream>
 #include <cstdio>
 #include <cstring>
 #include <cmath>
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
+#include <vector>
+#include <iomanip>
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
@@ -30,12 +35,131 @@ inline int ilog2ceil(int x) {
     return x == 1 ? 0 : ilog2(x - 1) + 1;
 }
 
+inline int lowBit(int x) {
+    return x & -x;
+}
+
+inline int ceilPow2(int x) {
+    while (x != lowBit(x)) {
+        x += lowBit(x);
+    }
+    return x;
+}
+
+inline int floorPow2(int x) {
+    return ceilPow2(x) >> 1;
+}
+
+inline int ceilDiv(int x, int y) {
+    return (x + y - 1) / y;
+}
+
 namespace StreamCompaction {
+    template<typename T>
+    struct DevMemRec {
+        DevMemRec() = default;
+        DevMemRec(T* ptr, int size) : ptr(ptr), size(size) {}
+        DevMemRec(T* ptr, int size, int realSize) : ptr(ptr), size(size), realSize(realSize) {}
+        T* ptr;
+        int size;
+        int realSize;
+    };
+
+    template<typename T>
+    class DevSharedScanAuxBuffer {
+    public:
+        DevSharedScanAuxBuffer() = default;
+
+        DevSharedScanAuxBuffer(int n, int blockSize) {
+            for (int i = ceilDiv(n, blockSize) * blockSize; i >= 1; i = ceilDiv(i, blockSize)) {
+                offsets.push_back(size);
+                int paddedSize = ceilDiv(i, blockSize) * blockSize;
+                sizes.push_back(paddedSize);
+                size += paddedSize;
+                if (i == 1) {
+                    break;
+                }
+            }
+            cudaMalloc(&ptr, size * sizeof(T));
+        }
+
+        ~DevSharedScanAuxBuffer() {
+            if (ptr) {
+                destroy();
+            }
+        }
+
+        void destroy() {
+            if (ptr) {
+                cudaFree(ptr);
+            }
+        }
+
+        T* operator [] (int index) const { return ptr + offsets[index]; }
+        T* data() const { return ptr; }
+        int numLayers() const { return sizes.size(); }
+        int totalSize() const { return size; }
+        int sizeAt(int index) const { return sizes[index]; }
+        int offsetAt(int index) const { return offsets[index]; }
+
+    private:
+        T* ptr = nullptr;
+        int size = 0;
+        std::vector<int> offsets;
+        std::vector<int> sizes;
+    };
+
     namespace Common {
+        int numSM();
+        int warpSize();
+        int maxBlockSize();
+        void initCudaProperties();
+
+        inline int getDynamicBlockSizeEXT(int n) {
+            return std::max(warpSize(), std::min(maxBlockSize(), floorPow2(n / numSM())));
+        }
+
         __global__ void kernMapToBoolean(int n, int *bools, const int *idata);
 
         __global__ void kernScatter(int n, int *odata,
                 const int *idata, const int *bools, const int *indices);
+
+        template<typename T>
+        void printDevice(const T* devData, size_t n, const std::string& msg = "") {
+            T* data = new T[n];
+            cudaMemcpy(data, devData, n * sizeof(T), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+
+            if (msg != "") {
+                std::cout << msg << std::endl;
+            }
+
+            for (size_t i = 0; i < n; i++) {
+                std::cout << data[i] << " ";
+            }
+            std::cout << std::endl;
+
+            delete[] data;
+        }
+
+        template<typename T>
+        void printDeviceInGroup(const T* devData, size_t n, int groupSize, const std::string& msg = "") {
+            T* data = new T[n];
+            cudaMemcpy(data, devData, n * sizeof(T), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+
+            if (msg != "") {
+                std::cout << msg << std::endl;
+            }
+
+            for (size_t i = 0; i < n; i++) {
+                std::cout << std::setw(4) << data[i] << " ";
+                if ((i + 1) % groupSize == 0) {
+                    std::cout << std::endl;
+                }
+            }
+            std::cout << std::endl;
+
+            delete[] data;
+        }
 
         /**
         * This class is used for timing the performance

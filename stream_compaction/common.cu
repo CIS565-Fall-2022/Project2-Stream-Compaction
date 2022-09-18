@@ -14,9 +14,32 @@ void checkCUDAErrorFn(const char *msg, const char *file, int line) {
     exit(EXIT_FAILURE);
 }
 
-
 namespace StreamCompaction {
     namespace Common {
+        static int NumSM;
+        static int WarpSize;
+        static int MaxBlockSize;
+
+        int numSM() {
+            return NumSM;
+        }
+
+        int warpSize() {
+            return WarpSize;
+        }
+
+        int maxBlockSize() {
+            return MaxBlockSize;
+        }
+
+        void initCudaProperties() {
+            // Get SM count, warp size and max block size for dynamic block size
+            cudaDeviceProp prop;
+            cudaGetDeviceProperties(&prop, 0);
+            NumSM = prop.multiProcessorCount;
+            WarpSize = prop.warpSize;
+            MaxBlockSize = prop.maxThreadsPerBlock;
+        }
 
         /**
          * Maps an array to an array of 0s and 1s for stream compaction. Elements
@@ -24,6 +47,11 @@ namespace StreamCompaction {
          */
         __global__ void kernMapToBoolean(int n, int *bools, const int *idata) {
             // TODO
+            int idx = blockDim.x * blockIdx.x + threadIdx.x;
+            if (idx >= n) {
+                return;
+            }
+            bools[idx] = (idata[idx] != 0);
         }
 
         /**
@@ -33,6 +61,13 @@ namespace StreamCompaction {
         __global__ void kernScatter(int n, int *odata,
                 const int *idata, const int *bools, const int *indices) {
             // TODO
+            int idx = blockDim.x * blockIdx.x + threadIdx.x;
+            if (idx >= n) {
+                return;
+            }
+            if (bools[idx]) {
+                odata[indices[idx]] = idata[idx];
+            }
         }
 
     }

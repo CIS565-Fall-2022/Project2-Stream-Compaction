@@ -4,10 +4,19 @@
 
 namespace StreamCompaction {
     namespace Efficient {
+        const int SharedScanBlockSize = 128;
+
         StreamCompaction::Common::PerformanceTimer& timer();
 
-        void scan(int n, int *odata, const int *idata);
+        void devScanInPlace(int* devData, int size);
+        void devBlockScanInPlaceShared(int* devData, int* devBlockSum, int size, int blockSize);
+        void devScanInPlaceShared(int* devData, int size);
+        void devScannedBlockAdd(int* devData, int* devBlockSum, int n, int blockSize);
 
-        int compact(int n, int *odata, const int *idata);
+        void scan(int n, int *odata, const int *idata);
+        void scanShared(int* out, const int* in, int n, int blockSize);
+
+        int compact(int* out, const int* in, int n);
+        int compactShared(int* out, const int* in, int n);
     }
 }
