@@ -94,7 +94,7 @@ implementations of the exclusive scan algorithm are talked in more detail.
 
 #### CPU Implementation
 
-The CPU implementation implements the array scan algorithm in a serial format, according to the pseudocode
+The CPU implementation implements the array scan algorithm in a serial format, according to the pseudocode:
 
 ```
 function scan_cpu(input_array, output_array, number_of_elements):
@@ -196,7 +196,50 @@ used to compact an array into a smaller size by getting rid of unneeded elements
 the criteria function ```f(x)```. Values for which ```f(x)``` return ```true``` are kept, while
 values for which ```f(x)``` return false are removed.
 
-#### CPU Implementation
+#### CPU Implementation (without scan)
+
+The CPU implementation (without scan) implements the stream compaction algorithm in a serial format,
+according to the pseudocode:
+
+```
+function stream_compact_cpu_no_scan(input_array, output_array, number_of_elements):
+
+    let num_compacted_elements = 0
+    for i in range [0, number_of_elements):
+        if input_array[i] != 0 then:
+            output_array[num_compacted_elements] = input_array[i]
+            num_compacted_elements = num_compacted_elements + 1
+
+    return num_elements
+
+end
+```
+
+This method keeps a rolling index while looping through the input array that keeps track of what index
+into the output array to write to, only writing to that index when a value in the input array
+satisfies the condition function, which in this case is ```x != 0```.
+
+#### CPU Implementation (with scan)
+
+The CPU implementation (with scan) implements the stream compaction algorithm in a "pseudo"-parallel format,
+meaning that the structure of the algorithm mimics what will be used for the CUDA implementation,
+but still operates on the array serially. This involves a (serial) pass to check for each element in
+the input array that is not 0, running a (serial) scan on this data, and then running a (serial) scatter
+on the scan result to build the final output array. The psuedocode is below:
+
+```
+function stream_compact_cpu_scan(input_array, output_array, number_of_elements):
+
+    let num_compacted_elements = 0
+    for i in range [0, number_of_elements):
+        if input_array[i] != 0 then:
+            output_array[num_compacted_elements] = input_array[i]
+            num_compacted_elements = num_compacted_elements + 1
+
+    return num_elements
+
+end
+```
 
 #### Extra Credit
 
@@ -207,18 +250,57 @@ values for which ```f(x)``` return false are removed.
 The first step in the testing strategy was to figure out the optimal block size for the 
 different GPU implementations of the scan and stream compaction algorithms. Data from each
 implementation was collected with a constant input array size of 2^25 (33,554,432) for
-powers of two block sizes from 32 to 1024, and the resutls are shown in Figure XXX below.
+powers of two block sizes from 32 to 1024, and the results are shown in Figure XXX below.
 
 ![](images/figures/graph_blocksize.png)
 *Figure XXX: Effect of CUDA block size on runtime of scan and stream compaction.*
 
+As seen from the graph, for both exclusive scan and stream compaction, the optimal block size is
+around 128-256. Below these values, the runtime shoots up exponentially with decreasing block size,
+getting as high as almost 4x worse performance at a block size of 32 compared to 256 for the parallel
+stream compaction on an array with a size not a power of 2.
+Similarly, the performance also increases with increasing block size past 256, at least for all the
+algorithms save the naive scan. This growth appears roughly linear for the other algorithms,
+while the runtime stays roughly constant for the naive scan.
+
 ## Performance Analysis
 
+### Scan
+
 As can be seen by Figure XXX below, the runtime of the scan algorithm increases linearly for each of the
-different implementations, but the slope of this increase is different for each one.
+different implementations, but the slope of this increase is different for each one. 
+
+The thrust version was by far the fastest in most cases and had the smallest slope. 
+In all test cases, the thrust version maintained a runtime below 3ms. This makes sense, as thrust is
+a highly optimized GPU and parallel algorithm library developed for high performance applications.
+As to its amazing performance relative the CUDA implementations found in this repository,
+that will be discussed further down the readme.
+
+The next best version was the CPU scan. While this is initially suprising, there are a couple benefits
+the CPU version has with respect to the GPU versions. First, the logic is very simple for computing
+each element of the output, and the serial nature of the algorithm means it is very cache coherent.
+It also requires no additional memory allocation (CPU or GPU), which all the parallel versions require.
+
+The work-efficient parallel scan is the next best version. This is slower than the CPU and thrust versions,
+but faster than the naive parallel version in the long run. The reason this is slower than the
+
+Finally, the naive parallel scan is the worst version. For 33 million array size, this algorithm
+is 50% worse than the efficient parallel scan, and 30x slower than the thrust library implementation. 
+This is mostly due to a couple factors. First, the naive parallel algorithm never decreases the amount
+of threads (number of blocks) launched for the kernels, which means at the final iteration, there are
+millions of threads (for the final data point) being launched, and only half of them are actually doing
+work. Another problem is that the number of active threads for each iteration is only being decreased
+by a number that doubles each time. This means that, compared with the efficient version that halves
+the number of active threads each iteration, the naive approach will only decrease the number by a
+power of two. A final problem with this approach is that it requires double buffering, meaning
+at least double the memory of the efficient version, along with the memory latency that comes with
+that much additional memory usage.
+
 
 ![](images/figures/graph_scan.png)
-*Figure 5: Effect of input array size on runtiem of scan algorithm.*
+*Figure XXX: Effect of input array size on runtime of scan algorithm.*
+
+### Stream Compaction
 
 Likewise, Figure XXX below shows the runtime of the stream compaction algorithm also increases linearly
 for each of the implementations, and again the slope of this increase is the only thing that changes.
@@ -226,19 +308,7 @@ However, unlike with scan, here the GPU stream compaction is significantly faste
 CPU implementations for arrays with very large amounts of elements (>2000000).
 
 ![](images/figures/graph_compact.png)
-*Figure 6: Effect of cuda kernel block size on average fps for uniform grid-based simulation*
-
-As a final point of analysis, Figure 7 below displays the effect of changing the grid cell resolution with respect the
-maximum neighbor search distance each boid uses to get nearby boids that influence its velocity. As can be shown,
-balancing this ratio is important for improving and maintain efficiency, and the benefits of the grid-based system.
-Too low a resolution, such as the first data point on the graph, and the performance is suboptimal as a lot of potentially
-empty space is being encompassed by large cells. Too high a resolution, and the benefit of the grid-based system is lost.
-There are now so many neighboring cells needed to be checked by a single boid, that even the increased potential
-prevalence of empty cells is lost. The graph shows that having a resolution approximately equal to the maximum search distance
-is optimal.
-
-![](images/figures/ratio_vs_fps.png)
-*Figure 7: Effect of the ratio of grid cell width to boid neighbor max search distance on average FPS*
+*Figure XXX: Effect of cuda kernel block size on average fps for uniform grid-based simulation*
 
 ### Bloopers
 
