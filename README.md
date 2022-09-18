@@ -31,7 +31,7 @@ Implementation including:
 - In the Scan process with normal size of arrays, CPU performs way better than GPU, no matter GPU is using naive scan or work efficient scan;
 - When array size gets really large(more than 100K), GPU naive scan performs better than CPU(perheps because of parallelism's advantage towards massive work), and GPU work efficient scan has the second best performance, while CPU has the worst performance with a huge size of array(like 2^22)
 - There is no clear difference for the same method if we use array that has a power of two size or Non-Power-Of-Two size. Because in our GPU method we pad NPOT arrays to power-of-two arrays, and in CPU few elements would not cause a obvious difference.
-- For Thrust Sort mine result is a little weird(it takes more time than other scan). For small and normal size array its performance is really consistent, and then slowly increases when array size gets huge. 
+- For Thrust Sort mine result is unusual(it takes more time than other scan). For small and normal size array its performance is really consistent, and then slowly increases when array size gets huge. I would think it as an optimization problem for now and ask it later in class. 
 
 ### Performance Analysis of Compaction
 ![Compact](./img/Compact.png)
