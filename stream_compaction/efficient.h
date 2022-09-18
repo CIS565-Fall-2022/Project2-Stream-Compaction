@@ -9,5 +9,9 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata);
 
         int compact(int n, int *odata, const int *idata);
+
+        void RadixSort(int n, int* odata, const int* idata);
+        void scanWithSharedMemory(int n, int* odata, const int* idata);
+        void scanWithoutTimer(int n, int* odata, const int* idata);
     }
 }

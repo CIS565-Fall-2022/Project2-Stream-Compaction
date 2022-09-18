@@ -69,6 +69,13 @@ void printArray(int n, int *a, bool abridged = false) {
     printf("]\n");
 }
 
+void printPowerOf2(int n) {
+    if ((n & (n - 1)) == 0)
+        printf("%s", "N is a power of 2");
+    else
+        printf("%s", "N is not a power of 2");
+}
+
 template<typename T>
 void printElapsedTime(T time, std::string note = "")
 {
