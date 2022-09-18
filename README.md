@@ -34,7 +34,7 @@ In order to implement the GPU stream compaction, the following algorithem is imp
 For the performance analysis, I used blocksize of 256. I was testing on four array size, which are 2^12, 2^16, 2^20, 2^24. The less time consuming the faster the program run, the better the performance is. The time for GPU does not record the cudaMalloc and cudaMemcpy time.
 
 ## Scan (exclusive prefix sum)
-<img src="/img/scan_analysis_large.png"  width="500">  <img src="/img/scan_analysis.gif"  width="500">
+<img src="/img/scan_analysis_large.png"  width="700">  <img src="/img/scan_analysis.gif"  width="700">
 * As the left graph shows, when array size is from 2^8 - 2^16, CPU actually runs faster than GPU naive and work-efficient. I think the reason is for a certain number of data, the time cost on GPU for reading data from global memory can not leverage the time saved by the parallel calculation. So, the performance is quit the same or not as good as CPU.  
   However, when the amount of data reached a point, as the right graph shows, for my test is 2^20, GPU efficient algorithem starts to act way better than CPU and GPU naive algothrithm.
 
@@ -43,7 +43,7 @@ For the performance analysis, I used blocksize of 256. I was testing on four arr
 * For the two GPU version, naive and work-efficient, naive cost more time, sometime even as same as CPU version. I think the most important reason is because we are ping-pong from two buffer every iteration, the cudaMemcpy cost most of the time and is very time consuming.
 
 ## Stream Compacton
-<img src="/img/stream_compaction_large.png"  width="500"> <img src="/img/stream_compaction_analysis.gif"  width="500">
+<img src="/img/stream_compaction_large.png"  width="700"> <img src="/img/stream_compaction_analysis.gif"  width="700">
 * Same with Scan, as the left graph shows, when array size is from 2^8 - 2^16, the two CPU functions run faster than GPU. And the reason is same as above. 
   Same, when the amount of data reached a point, as the right graph shows, for my test is 2^20, GPU efficient algorithm starts to act way better than the two CPU functions.
  * What interesting here is, the CPU without scan perfored much better than CPU with scan. So apparently, when not running parallelly, the two extra buffer created when using scan in stream compaction are very time consuming. It only acts efficiently when running parallely.
