@@ -34,5 +34,25 @@ namespace StreamCompaction {
             // TODO
         }
 
+        // unlike naive impl, this one doesn't shift the array
+        __global__ void kernPadArray(int n, int paddedLen, int* odata, const int* idata) {
+          int index = threadIdx.x + (blockIdx.x * blockDim.x);
+          if (index < n) {
+            odata[index] = idata[index];
+          }
+          else if (index < paddedLen) {
+            odata[index] = 0;
+          }
+        }
+
+        __global__ void kernGetPaddedBoolArray(int n, int paddedLength, int* odata, const int* idata) {
+          int index = threadIdx.x + (blockIdx.x * blockDim.x);
+          if (index < n) {
+            odata[index] = idata[index] == 0 ? 0 : 1;
+          }
+          else if (index < paddedLength) {
+            odata[index] = 0;
+          }
+        }
     }
 }

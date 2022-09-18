@@ -97,5 +97,49 @@ namespace StreamCompaction {
 
             return outIndex + 1;
         }
+
+        void split(int n, int bitmask, int* odata, const int* idata) {
+          // write 0s to odata in 1 pass, 1s in the next pass
+          int zeroCount = 0;
+          for (int i = 0; i < n; ++i) {
+            if ((idata[i] & bitmask) == 0) {
+              odata[zeroCount] = idata[i];
+              ++zeroCount; // eg. we write a total of 123 elts with 0s, then indices 0...122s are filled
+            }
+          }
+
+          int oneCount = 0;
+          for (int i = 0; i < n; ++i) {
+            if ((idata[i] & bitmask) != 0) {
+              odata[zeroCount + oneCount] = idata[i];
+              ++oneCount;
+            }
+          }
+        }
+
+        // CPU radix sort implementation
+        void radixSort(int n, int numBits, int* odata, const int* idata)
+        {
+          // use temporary buffers so we don't destroy idata
+          int* temp_odata = (int*) malloc(n * sizeof(int));
+          int* temp_odata2 = (int*)malloc(n * sizeof(int));
+          if (temp_odata == NULL || temp_odata2 == NULL) {
+            printf("ERROR - failed to allocate temp_odata");
+            return;
+          }
+          memcpy(temp_odata, idata, n * sizeof(int));
+
+          int bitmask = 1;
+          for (int i = 0; i < numBits; ++i) {
+            split(n, bitmask, temp_odata2, temp_odata);
+            std::swap(temp_odata2, temp_odata); // at end of loop, temp_odata always has most updated info
+            bitmask <<= 1;
+          }
+
+          memcpy(odata, temp_odata, n * sizeof(int));
+
+          free(temp_odata);
+          free(temp_odata2);
+        }
     }
 }

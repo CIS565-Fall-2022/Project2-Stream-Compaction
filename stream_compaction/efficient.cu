@@ -14,17 +14,6 @@ namespace StreamCompaction {
             return timer;
         }
 
-        // unlike naive impl, this one doesn't shift the array
-        __global__ void kernPadArray(int n, int paddedLen, int* odata, const int* idata) {
-          int index = threadIdx.x + (blockIdx.x * blockDim.x);
-          if (index < n) {
-            odata[index] = idata[index];
-          }
-          else if (index < paddedLen) {
-            odata[index] = 0;
-          }
-        }
-
         __global__ void kernUpsweep(int numThreads, int readStride, int* data) {
           int index = threadIdx.x + (blockIdx.x * blockDim.x);
           if (index >= numThreads) {
@@ -112,7 +101,7 @@ namespace StreamCompaction {
             // start timer after all initial memcpys
             timer().startGpuTimer();
 
-            kernPadArray << <fullBlocksPerGrid, blockSize >> > (n, paddedLength, dev_idata, dev_unpadded_idata);
+            Common::kernPadArray << <fullBlocksPerGrid, blockSize >> > (n, paddedLength, dev_idata, dev_unpadded_idata);
 
             scanImpl(paddedLength, dev_idata);
 
@@ -123,16 +112,6 @@ namespace StreamCompaction {
 
             cudaFree(dev_unpadded_idata);
             cudaFree(dev_idata);
-        }
-
-        __global__ void kernGetPaddedBoolArray(int n, int paddedLength, int* odata, const int* idata) {
-          int index = threadIdx.x + (blockIdx.x * blockDim.x);
-          if (index < n) {
-            odata[index] = idata[index] == 0 ? 0 : 1;
-          }
-          else if (index < paddedLength) {
-            odata[index] = 0;
-          }
         }
 
         __global__ void kernScatter(int n, int* odata, int* idata, int *boolData, int *boolScan) {
@@ -175,7 +154,7 @@ namespace StreamCompaction {
             timer().startGpuTimer();
 
             dim3 fullBlocksPerGrid((paddedLength + blockSize - 1) / blockSize);
-            kernGetPaddedBoolArray << <fullBlocksPerGrid, blockSize >> > (n, paddedLength, dev_boolData, dev_idata);
+            Common::kernGetPaddedBoolArray << <fullBlocksPerGrid, blockSize >> > (n, paddedLength, dev_boolData, dev_idata);
             // copy dev_boolData since the scan implementation is destructive
             cudaMemcpy(dev_boolScan, dev_boolData, paddedLength * sizeof(int), cudaMemcpyDeviceToDevice);
             scanImpl(paddedLength, dev_boolScan);
