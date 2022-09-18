@@ -22,24 +22,8 @@ int *a = new int[SIZE];
 int *b = new int[SIZE];
 int *c = new int[SIZE];
 
-void test() {
-    int testTimes = 10;
-    float sumTime = 0.f;
-
-    for (int i = 0; i < testTimes; i++) {
-        genArray(NPOT, a, 50);
-        StreamCompaction::Efficient::scanShared(c, a, NPOT, 128);
-        float time = StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation();
-        std::cout << time << "\n";
-        sumTime += time;
-    }
-    std::cout << "avg: " << sumTime / testTimes << "\n";
-}
-
 int main(int argc, char* argv[]) {
     StreamCompaction::Common::initCudaProperties();
-
-    //test(); return 0;
 
     // Scan tests
 
@@ -196,12 +180,6 @@ int main(int argc, char* argv[]) {
     StreamCompaction::CPU::sort(b, a, NPOT);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono)");
     printCmpResult(NPOT, b, b);
-
-    zeroArray(NPOT, c);
-    printDesc("cpu radix sort, NPOT");
-    StreamCompaction::CPU::sort(c, a, NPOT);
-    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono)");
-    printCmpResult(NPOT, b, c);
 
     zeroArray(NPOT, c);
     printDesc("gpu radix sort, NPOT");

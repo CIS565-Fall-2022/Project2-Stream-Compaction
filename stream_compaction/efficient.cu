@@ -19,6 +19,7 @@ namespace StreamCompaction {
         __device__ inline int bankOffset(int idx) {
             return idx >> 5;
         }
+
         __device__ inline int offsetAddr(int idx) {
 #if SCAN_EFFI_REDUCE_BANK_CONFLICT
             return idx + bankOffset(idx);
