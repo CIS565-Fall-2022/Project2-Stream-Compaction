@@ -13,6 +13,9 @@ namespace StreamCompaction {
             return timer;
         }
 
+        /*
+         * Kernel for parallel reduction with upstream scan
+         */
         __global__ void kernUpStreamReduction(int n, int d, int* data) {
             int k = threadIdx.x + (blockIdx.x * blockDim.x);
             int offsetd1 = pow(2, d + 1);
@@ -29,6 +32,9 @@ namespace StreamCompaction {
             }
         }
 
+        /*
+         * Kernel for collecting results with downstream scan
+         */
         __global__ void kernDownStream(int n, int d, int* data) {
             int k = threadIdx.x + (blockIdx.x * blockDim.x);
             int offsetd1 = pow(2, d + 1);
@@ -44,12 +50,36 @@ namespace StreamCompaction {
             data[k - 1 + offsetd1] += t;
         }
 
+        /*
+         * Kernel to parallelly map input data to 0 and 1 based on whether
+         * it meets criteria for stream compaction
+         */
+        __global__ void kernMap(int n, int* odata, const int* idata) {
+            int k = threadIdx.x + (blockIdx.x * blockDim.x);
+            if (k >= n) {
+                return;
+            }
+            odata[k] = (idata[k] == 0) ? 0 : 1;
+        }
+
+        /*
+         * Kernel to scatter
+         */
+        __global__ void kernScatter(int n, int* odata, const int* scandata, const int* criteria, const int* idata) {
+            int k = threadIdx.x + (blockIdx.x * blockDim.x);
+            if (k >= n) {
+                return;
+            }
+            if (criteria[k] == 1) {
+                odata[scandata[k]] = idata[k];
+            }
+        }
 
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int* odata, const int* idata) {
-            timer().startGpuTimer();
+            //timer().startGpuTimer();
             // TODO
             int* dev_data;
 
@@ -99,8 +129,9 @@ namespace StreamCompaction {
             checkCUDAError("odata memcpy failed!");
 
             cudaFree(dev_data);
-            timer().endGpuTimer();
+            //timer().endGpuTimer();
         }
+
 
         /**
          * Performs stream compaction on idata, storing the result into odata.
@@ -114,8 +145,64 @@ namespace StreamCompaction {
         int compact(int n, int* odata, const int* idata) {
             timer().startGpuTimer();
             // TODO
+
+            int* dev_idata;
+            int* dev_odata;
+            int* dev_criteria_buffer;
+            int* dev_scanned_buffer;
+
+            int* criteria_buffer = new int[n];
+            int* scanned_buffer = new int[n];
+
+            dim3 blocksPerGrid((n + blockSize - 1) / blockSize);
+
+            // Memory allocation
+            cudaMalloc((void**)&dev_idata, sizeof(int) * n);
+            checkCUDAError("cudaMalloc dev_idata failed!");
+            cudaMalloc((void**)&dev_criteria_buffer, sizeof(int) * n);
+            checkCUDAError("cudaMalloc dev_criteria_buffer failed!");
+            cudaMalloc((void**)&dev_scanned_buffer, sizeof(int) * n);
+            checkCUDAError("cudaMalloc dev_scanned_buffer failed!");
+
+            cudaMemcpy(dev_idata, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
+            checkCUDAError("cudaMemcpy into dev_idata failed!");
+
+            // Mapping as per criteria
+            kernMap << <blocksPerGrid, blockSize >> > (n, dev_criteria_buffer, dev_idata);
+            checkCUDAError("kernMap invocation failed!");
+
+            cudaMemcpy(criteria_buffer, dev_criteria_buffer, sizeof(int) * n, cudaMemcpyDeviceToHost);
+            checkCUDAError("memcpy into criteria_buffer failed!");
+
+            // Scann criteria buffer to generate scanned buffer
+            scan(n, scanned_buffer, criteria_buffer);
+            cudaMemcpy(dev_scanned_buffer, scanned_buffer, sizeof(int) * n, cudaMemcpyHostToDevice);
+            checkCUDAError("memcpy into dev_scanned_buffer failed!");
+
+            // Malloc for compressed output data, compressed buffer
+            // size given by last element of scanned criteria
+            cudaMalloc((void**)&dev_odata, sizeof(int) * scanned_buffer[n-1]);
+            checkCUDAError("cudaMalloc dev_odata failed!");
+
+            // Initialize odata to 0
+            cudaMemset(dev_odata, 0, sizeof(int) * scanned_buffer[n-1]);
+            checkCUDAError("cudaMemset dev_odata initialization failed!");
+
+            // Scatter data - insert input data at index obtained
+            // from scanned buffer if criteria is set to true
+            kernScatter << <blocksPerGrid, blockSize >> > (n, dev_odata, dev_scanned_buffer, dev_criteria_buffer, dev_idata);
+            checkCUDAError("kernMap invocation failed!");
+
+            // Copy calculated buffer to output
+            cudaMemcpy(odata, dev_odata, sizeof(int) * scanned_buffer[n-1], cudaMemcpyDeviceToHost);
+            checkCUDAError("odata memcpy failed!");
+
+            cudaFree(dev_scanned_buffer);
+            cudaFree(dev_criteria_buffer);
+            cudaFree(dev_idata);
+            cudaFree(dev_odata);
             timer().endGpuTimer();
-            return -1;
+            return scanned_buffer[n-1];
         }
     }
 }
