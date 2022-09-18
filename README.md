@@ -53,7 +53,6 @@ Implementation including:
 
 ### Bloopers
 - So there are two things I would like to address specifically, one is using Pow instead of << in scan will result in array difference, and the other one is using std::swap instead of cudaMemCpy will also do that. These two errors will only occur with arraySize bigger than 1>>10, so I would assume it is a memory problem or precision problem? I will ask that in class I think. 
-- Also my ThrustSort timer always start will 20+ ms, which is also very strange because there is only one thrust::sort line between the timers.
 
 
 ### Printout Example for 2^15 Array
