@@ -13,6 +13,24 @@ namespace StreamCompaction {
         }
         // TODO: __global__
 
+        __global__ void KernShiftRight(int* idata, int* odata, int n)
+        {
+            int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+            if (index > n - 1)
+            {
+                return;
+            }
+            if (index == 0)
+            {
+                odata[index] = 0;
+                return;
+            }
+            odata[index] = idata[index - 1];
+
+        }
+
+
+
         __global__ void KernNaiveScan(int n,int d,int* odata,const int* idata)
         {
             //for all k in parallel

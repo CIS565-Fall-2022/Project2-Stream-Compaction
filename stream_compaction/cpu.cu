@@ -21,10 +21,10 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
-            odata[0] = idata[0];
+            odata[0] = 0;
             for (int i = 1; i < n; i++)
             {
-                odata[i] = odata[i - 1] + idata[i];
+                odata[i] = odata[i-1] + idata[i-1];
             }
            
             //Why the last two digit different?

@@ -6,7 +6,7 @@ CUDA Stream Compaction
 * Hanlin Sun
   * [LinkedIn](https://www.linkedin.com/in/hanlin-sun-7162941a5/), 
   * [personal website](https://hanlinsun.github.io/)
-* Tested on: (TODO) Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Tested on: Windows 10, i7-8750H @ 3.2GHz 32GB, NVIDIA Quadro P3200 
 
 ### ReadMe
 
