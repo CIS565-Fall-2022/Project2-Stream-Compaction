@@ -13,7 +13,7 @@ namespace StreamCompaction {
             return timer;
         }
         
-        constexpr unsigned blockSize = 128; // TODO test different blockSizes
+        constexpr unsigned blockSize = 128;
 
         __global__ void kernUpsweep(int d, int n, int* data) {
             unsigned index = (blockIdx.x * blockDim.x) + threadIdx.x;

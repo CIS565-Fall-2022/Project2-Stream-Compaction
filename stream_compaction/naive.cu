@@ -13,7 +13,7 @@ namespace StreamCompaction {
             return timer;
         }
 
-        constexpr unsigned blockSize = 128; // TODO test different blockSizes
+        constexpr unsigned blockSize = 256;
 
         __global__ void kernPrefixSumExclusiveScan(int d, int n, int *idata, int *odata) {
             unsigned index = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -51,10 +51,7 @@ namespace StreamCompaction {
             }
             timer().endGpuTimer();
 
-            // ensure we send back the last output bufer
-            d % 2 == 0 ? 
-                cudaMemcpy(odata, dev_data1, n * sizeof(int), cudaMemcpyDeviceToHost) :
-                cudaMemcpy(odata, dev_data2, n * sizeof(int), cudaMemcpyDeviceToHost);
+            cudaMemcpy(odata, dev_data1, n * sizeof(int), cudaMemcpyDeviceToHost);
 
             cudaFree(dev_data1);
             cudaFree(dev_data2);
