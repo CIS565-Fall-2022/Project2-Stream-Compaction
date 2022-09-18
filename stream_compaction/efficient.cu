@@ -90,16 +90,17 @@ namespace StreamCompaction {
 
             cudaMalloc((void**)&dev_idata, smallestPOTGreater * sizeof(int));
             cudaMemcpy(dev_idata, idata, n * sizeof(int), cudaMemcpyHostToDevice);
-            cudaMemset(dev_idata + n, 0, (smallestPOTGreater - n) * sizeof(int)); // necessary? 
 
             cudaMalloc((void**)&bool_data, smallestPOTGreater * sizeof(int));
             dim3 fullBlocksPerGrid((smallestPOTGreater + blockSize - 1) / blockSize);
             Common::kernMapToBoolean<<<fullBlocksPerGrid, blockSize>>>(smallestPOTGreater, bool_data, dev_idata);
+            cudaDeviceSynchronize();
 
             int* indices_data;
             cudaMalloc((void**)&indices_data, smallestPOTGreater * sizeof(int));
             cudaMemcpy(indices_data, bool_data, smallestPOTGreater * sizeof(int), cudaMemcpyDeviceToDevice);
             // -----PREFIX SUM CODE FROM SCAN-----
+            cudaMemset(indices_data + n, 0, (smallestPOTGreater - n) * sizeof(int)); // necessary? 
             int neededThreads = smallestPOTGreater;
             for (int d = 0; d < ilog2ceil(smallestPOTGreater); ++d, neededThreads /= 2) {
                 fullBlocksPerGrid = (neededThreads + blockSize - 1) / blockSize;

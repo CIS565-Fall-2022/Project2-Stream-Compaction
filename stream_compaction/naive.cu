@@ -50,7 +50,7 @@ namespace StreamCompaction {
                 cudaDeviceSynchronize();
             }
             // ensure we send back the last output bufer
-            d % 2 == 1 ? 
+            d % 2 == 0 ? 
                 cudaMemcpy(odata, dev_data1, n * sizeof(int), cudaMemcpyDeviceToHost) :
                 cudaMemcpy(odata, dev_data2, n * sizeof(int), cudaMemcpyDeviceToHost);
 
