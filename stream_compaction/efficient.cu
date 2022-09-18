@@ -3,7 +3,6 @@
 #include "common.h"
 #include "efficient.h"
 
-
 #define SCAN_EFFI_REDUCE_BANK_CONFLICT 1
 
 namespace StreamCompaction {
@@ -137,36 +136,25 @@ namespace StreamCompaction {
         }
 
         void devScanInPlaceShared(int* devData, int size) {
-            const int blockSize = 128;
-            if (size % blockSize != 0 || size <= blockSize) {
+            if (size % SharedScanBlockSize != 0 || size <= SharedScanBlockSize) {
                 throw std::runtime_error("devScanInPlaceShared:: size not multiple of BlockSize");
             }
 
-            std::vector<DevMemRec<int>> sums;
-            for (int i = size; i >= 1; i = ceilDiv(i, blockSize)) {
-                int size = ceilDiv(i, blockSize) * blockSize;
-                int* sum;
-                cudaMalloc(&sum, size * sizeof(int));
-                sums.push_back({ sum, size, i });
+            DevSharedScanAuxBuffer<int> devBuf(size, SharedScanBlockSize);
+            cudaMemcpy(devBuf.data(), devData, size * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
 
-                if (i == 1) {
-                    break;
-                }
-            }
-            cudaMemcpy(sums[0].ptr, devData, size * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
-
-            for (int i = 0; i + 1 < sums.size(); i++) {
-                devBlockScanInPlaceShared(sums[i].ptr, sums[i + 1].ptr, sums[i].size, blockSize);
+            timer().startGpuTimer();
+            for (int i = 0; i + 1 < devBuf.numLayers(); i++) {
+                devBlockScanInPlaceShared(devBuf[i], devBuf[i + 1], devBuf.sizeAt(i), SharedScanBlockSize);
             }
 
-            for (int i = sums.size() - 2; i > 0; i--) {
-                kernScannedBlockAdd<<<sums[i].size, blockSize>>>(sums[i - 1].ptr, sums[i].ptr, sums[i - 1].size);
+            for (int i = devBuf.numLayers() - 2; i > 0; i--) {
+                devScannedBlockAdd(devBuf[i - 1], devBuf[i], devBuf.sizeAt(i - 1), SharedScanBlockSize);
             }
-            cudaMemcpy(devData, sums[0].ptr, size * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
+            timer().endGpuTimer();
 
-            for (auto& sum : sums) {
-                cudaFree(sum.ptr);
-            }
+            cudaMemcpy(devData, devBuf.data(), size * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
+            devBuf.destroy();
         }
 
         void devScannedBlockAdd(int* devData, int* devBlockSum, int n, int blockSize) {
@@ -207,35 +195,21 @@ namespace StreamCompaction {
                 return;
             }
 
-            std::vector<DevMemRec<int>> sums;
-            for (int i = n; i >= 1; i = ceilDiv(i, blockSize)) {
-                int size = ceilDiv(i, blockSize) * blockSize;
-                int* sum;
-                cudaMalloc(&sum, size * sizeof(int));
-                sums.push_back({ sum, size, i });
-
-                if (i == 1) {
-                    break;
-                }
-            }
-            cudaMemcpy(sums[0].ptr, in, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
+            DevSharedScanAuxBuffer<int> devBuf(n, SharedScanBlockSize);
+            cudaMemcpy(devBuf.data(), in, n * sizeof(int), cudaMemcpyKind::cudaMemcpyHostToDevice);
 
             timer().startGpuTimer();
-            for (int i = 0; i + 1 < sums.size(); i++) {
-                devBlockScanInPlaceShared(sums[i].ptr, sums[i + 1].ptr, sums[i].size, blockSize);
+            for (int i = 0; i + 1 < devBuf.numLayers(); i++) {
+                devBlockScanInPlaceShared(devBuf[i], devBuf[i + 1], devBuf.sizeAt(i), blockSize);
             }
 
-            for (int i = sums.size() - 2; i > 0; i--) {
-                devScannedBlockAdd(sums[i - 1].ptr, sums[i].ptr, sums[i - 1].size, blockSize);
+            for (int i = devBuf.numLayers() - 2; i > 0; i--) {
+                devScannedBlockAdd(devBuf[i - 1], devBuf[i], devBuf.sizeAt(i - 1), blockSize);
             }
             timer().endGpuTimer();
 
-            cudaDeviceSynchronize();
-            cudaMemcpy(out, sums[0].ptr, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
-
-            for (auto& sum : sums) {
-                cudaFree(sum.ptr);
-            }
+            cudaMemcpy(out, devBuf.data(), n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+            devBuf.destroy();
         }
 
         /**
@@ -284,7 +258,6 @@ namespace StreamCompaction {
 
         int compactShared(int* out, const int* in, int n)
         {
-            const int ScanBlockSize = 128;
             int* devIn, * devOut;
             cudaMalloc(&devIn, n * sizeof(int));
             cudaMalloc(&devOut, n * sizeof(int));
@@ -294,34 +267,25 @@ namespace StreamCompaction {
             int* devIndices;
             cudaMalloc(&devIndices, size * sizeof(int));
 
-            std::vector<DevMemRec<int>> sums;
-            for (int i = n; i >= 1; i = ceilDiv(i, ScanBlockSize)) {
-                int sz = ceilDiv(i, ScanBlockSize) * ScanBlockSize;
-                int* sum;
-                cudaMalloc(&sum, sz * sizeof(int));
-                sums.push_back({ sum, sz, i });
+            DevSharedScanAuxBuffer<int> devBuf(n, SharedScanBlockSize);
 
-                if (i == 1) {
-                    break;
-                }
-            }
             timer().startGpuTimer();
 
             int blockSize = Common::getDynamicBlockSizeEXT(n);
             int blockNum = ceilDiv(n, blockSize);
             Common::kernMapToBoolean<<<blockNum, blockSize>>>(n, devIndices, devIn);
-            cudaMemcpy(sums[0].ptr, devIndices, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
+            cudaMemcpy(devBuf.data(), devIndices, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
 
-            for (int i = 0; i + 1 < sums.size(); i++) {
-                devBlockScanInPlaceShared(sums[i].ptr, sums[i + 1].ptr, sums[i].size, ScanBlockSize);
+            for (int i = 0; i + 1 < devBuf.numLayers(); i++) {
+                devBlockScanInPlaceShared(devBuf[i], devBuf[i + 1], devBuf.sizeAt(i), SharedScanBlockSize);
+            }
+            for (int i = devBuf.numLayers() - 2; i > 0; i--) {
+                devScannedBlockAdd(devBuf[i - 1], devBuf[i], devBuf.sizeAt(i - 1), SharedScanBlockSize);
             }
 
-            for (int i = sums.size() - 2; i > 0; i--) {
-                devScannedBlockAdd(sums[i - 1].ptr, sums[i].ptr, sums[i - 1].size, ScanBlockSize);
-            }
-
-            cudaMemcpy(devIndices, sums[0].ptr, n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
+            cudaMemcpy(devIndices, devBuf.data(), n * sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToDevice);
             Common::kernScatter<<<blockNum, blockSize>>>(n, devOut, devIn, devIn, devIndices);
+
             timer().endGpuTimer();
 
             int compactedSize;
@@ -332,10 +296,8 @@ namespace StreamCompaction {
             cudaFree(devIndices);
             cudaFree(devIn);
             cudaFree(devOut);
+            devBuf.destroy();
 
-            for (auto& sum : sums) {
-                cudaFree(sum.ptr);
-            }
             return compactedSize;
         }
     }

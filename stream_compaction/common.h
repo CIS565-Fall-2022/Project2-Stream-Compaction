@@ -3,6 +3,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+#include <device_functions.h>
 
 #include <iostream>
 #include <cstdio>
@@ -62,6 +63,50 @@ namespace StreamCompaction {
         T* ptr;
         int size;
         int realSize;
+    };
+
+    template<typename T>
+    class DevSharedScanAuxBuffer {
+    public:
+        DevSharedScanAuxBuffer() = default;
+
+        DevSharedScanAuxBuffer(int n, int blockSize) {
+            for (int i = ceilDiv(n, blockSize) * blockSize; i >= 1; i = ceilDiv(i, blockSize)) {
+                offsets.push_back(size);
+                int paddedSize = ceilDiv(i, blockSize) * blockSize;
+                sizes.push_back(paddedSize);
+                size += paddedSize;
+                if (i == 1) {
+                    break;
+                }
+            }
+            cudaMalloc(&ptr, size * sizeof(T));
+        }
+
+        ~DevSharedScanAuxBuffer() {
+            if (ptr) {
+                destroy();
+            }
+        }
+
+        void destroy() {
+            if (ptr) {
+                cudaFree(ptr);
+            }
+        }
+
+        T* operator [] (int index) const { return ptr + offsets[index]; }
+        T* data() const { return ptr; }
+        int numLayers() const { return sizes.size(); }
+        int totalSize() const { return size; }
+        int sizeAt(int index) const { return sizes[index]; }
+        int offsetAt(int index) const { return offsets[index]; }
+
+    private:
+        T* ptr = nullptr;
+        int size = 0;
+        std::vector<int> offsets;
+        std::vector<int> sizes;
     };
 
     namespace Common {

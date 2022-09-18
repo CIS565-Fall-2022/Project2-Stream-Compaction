@@ -4,6 +4,8 @@
 
 namespace StreamCompaction {
     namespace Efficient {
+        const int SharedScanBlockSize = 128;
+
         StreamCompaction::Common::PerformanceTimer& timer();
 
         void devScanInPlace(int* devData, int size);

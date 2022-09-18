@@ -13,15 +13,34 @@
 #include <stream_compaction/thrust.h>
 #include <stream_compaction/radixsort.h>
 #include "testing_helpers.hpp"
-
-const int SIZE = 1 << 26; // feel free to change the size of array
+/// <summary>
+/// 
+/// </summary>
+const int SIZE = 1 << 28; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
 int *c = new int[SIZE];
 
+void test() {
+    int testTimes = 10;
+    float sumTime = 0.f;
+
+    for (int i = 0; i < testTimes; i++) {
+        genArray(NPOT, a, 50);
+        StreamCompaction::Efficient::scanShared(c, a, NPOT, 128);
+        float time = StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation();
+        std::cout << time << "\n";
+        sumTime += time;
+    }
+    std::cout << "avg: " << sumTime / testTimes << "\n";
+}
+
 int main(int argc, char* argv[]) {
     StreamCompaction::Common::initCudaProperties();
+
+    //test(); return 0;
+
     // Scan tests
 
     printf("\n");
@@ -84,15 +103,7 @@ int main(int argc, char* argv[]) {
     printCmpResult(NPOT, b, c);
 
     zeroArray(SIZE, c);
-    printDesc("work-efficient scan with shared memory");
-
-    /*int test[128] = { 1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, 1, 2, 1, 16,
-        1, 2, 1, 4, 1, 2, 1, 8, 1, 2, 1, 4, 1, 2, 1, 32 };
-    memcpy(test + 32, test, 32 * sizeof(int));
-    for (int i = 0; i < 128; i++)
-        test[i] = 1;
-    
-    memcpy(a, test, 128 * sizeof(int));*/
+    printDesc("work-efficient scan with shared memory, NPOT");
     StreamCompaction::Efficient::scanShared(c, a, NPOT, 128);
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printCmpResult(NPOT, b, c);
@@ -144,11 +155,11 @@ int main(int argc, char* argv[]) {
     printCmpLenResult(count, expectedNPOT, b, c);
 
     zeroArray(SIZE, c);
-    printDesc("cpu compact with scan");
-    count = StreamCompaction::CPU::compactWithScan(SIZE, c, a);
+    printDesc("cpu compact with scan, NPOT");
+    count = StreamCompaction::CPU::compactWithScan(NPOT, c, a);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     printArray(count, c, true);
-    printCmpLenResult(count, expectedCount, b, c);
+    printCmpLenResult(count, expectedNPOT, b, c);
 
     zeroArray(SIZE, c);
     printDesc("work-efficient compact, power-of-two");
@@ -165,7 +176,7 @@ int main(int argc, char* argv[]) {
     printCmpLenResult(count, expectedNPOT, b, c);
 
     zeroArray(SIZE, c);
-    printDesc("work-efficient compact with shared memory");
+    printDesc("work-efficient compact with shared memory, NPOT");
     count = StreamCompaction::Efficient::compactShared(c, a, NPOT);
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     //printArray(count, c, true);
@@ -181,25 +192,25 @@ int main(int argc, char* argv[]) {
     printArray(SIZE, a, true);
 
     zeroArray(NPOT, b);
-    printDesc("cpu std::sort");
+    printDesc("cpu std::sort, NPOT");
     StreamCompaction::CPU::sort(b, a, NPOT);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono)");
     printCmpResult(NPOT, b, b);
 
     zeroArray(NPOT, c);
-    printDesc("cpu radix sort");
+    printDesc("cpu radix sort, NPOT");
     StreamCompaction::CPU::sort(c, a, NPOT);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono)");
     printCmpResult(NPOT, b, c);
 
     zeroArray(NPOT, c);
-    printDesc("gpu radix sort");
+    printDesc("gpu radix sort, NPOT");
     StreamCompaction::RadixSort::sort(c, a, NPOT);
     printElapsedTime(StreamCompaction::RadixSort::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printCmpResult(NPOT, c, b);
 
     zeroArray(NPOT, c);
-    printDesc("gpu radix sort with shared memory");
+    printDesc("gpu radix sort with shared memory, NPOT");
     StreamCompaction::RadixSort::sortShared(c, a, NPOT);
     printElapsedTime(StreamCompaction::RadixSort::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printCmpResult(NPOT, c, b);

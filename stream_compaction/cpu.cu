@@ -4,7 +4,7 @@
 #include "common.h"
 
 #define CPU_SIMUL_NAIVE_SCAN 0
-#define CPU_SIMUL_WEFF_SCAN 1
+#define CPU_SIMUL_WEFF_SCAN 0
 
 namespace StreamCompaction {
     namespace CPU {
@@ -79,10 +79,13 @@ namespace StreamCompaction {
             memcpy(odata, buf, n * sizeof(int));
             delete[] buf;
 #else
-            odata[0] = 0;
+            int* buf = new int[n];
+            buf[0] = 0;
             for (int i = 1; i < n; i++) {
-                odata[i] = odata[i - 1] + idata[i - 1];
+                buf[i] = buf[i - 1] + idata[i - 1];
             }
+            memcpy(odata, buf, n * sizeof(int));
+            delete[] buf;
 #endif
         }
 
