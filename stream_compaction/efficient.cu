@@ -4,7 +4,7 @@
 #include "efficient.h"
 #include <iostream>
 
-#define blockSize 128 
+#define blockSize 1024
 
 namespace StreamCompaction {
     namespace Efficient {
