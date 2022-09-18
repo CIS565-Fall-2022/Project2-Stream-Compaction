@@ -174,7 +174,7 @@ namespace StreamCompaction {
             /*cudaMemcpy(odata, dev_in, sizeof(int) * n, cudaMemcpyDeviceToHost);
             printArray(n, odata);*/
 
-            int blockSize = 64;
+            int blockSize = 128;
             dim3 fullBlocks((n + blockSize - 1) / blockSize);
             kernBitArray << <fullBlocks, blockSize >> > (n, dev_bit, dev_in);
 
