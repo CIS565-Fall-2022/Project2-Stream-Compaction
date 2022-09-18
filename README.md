@@ -13,7 +13,7 @@ Implementation including:
 - CPU Version of Scan
 - CPU Version of Compact with Scan and without Scan
 - GPU Naive Version
-- GPU Work-Efficient Scan
+- GPU Work-Efficient Scan(UpSweep and DownSweep)
 - GPU Work-Effient Compact
 - CUDA Thrust Library Scan and Compaction
 - Radix Sort(Extra Credit)
@@ -27,9 +27,11 @@ Implementation including:
 
 ### Performance Analysis of Scan
 ![Scan](./img/Scan.png)
+![ThrustScan](./img/Thrust.png)
 - In the Scan process with normal size of arrays, CPU performs way better than GPU, no matter GPU is using naive scan or work efficient scan;
 - When array size gets really large(more than 100K), GPU naive scan performs better than CPU(perheps because of parallelism's advantage towards massive work), and GPU work efficient scan has the second best performance, while CPU has the worst performance with a huge size of array(like 2^22)
 - There is no clear difference for the same method if we use array that has a power of two size or Non-Power-Of-Two size. Because in our GPU method we pad NPOT arrays to power-of-two arrays, and in CPU few elements would not cause a obvious difference.
+- For Thrust Sort mine result is a little weird(it takes more time than other scan). For small and normal size array its performance is really consistent, and then slowly increases when array size gets huge. 
 
 ### Performance Analysis of Compaction
 ![Compact](./img/Compact.png)
@@ -47,6 +49,11 @@ Implementation including:
 ### Why is My GPU Approach So Slow?
 - The main reason why our GPU is slower than CPU is because all computation uses global memory in GPU. Getting data from global memory is costly in terms of performance.(Even though when facing large size of array parallelism become GPU's biggest advantage over CPU)
 - When executing kernel function, our current method/code will leave a lot of separate data thus cost warp divergence and performance lag. The way to optimize it is to use warp partitioning and a new way of reduction(change index mostly).
+
+### Bloopers
+- So there are two things I would like to address specifically, one is using Pow instead of << in scan will result in array difference, and the other one is using std::swap instead of cudaMemCpy will also do that. These two errors will only occur with arraySize bigger than 1>>10, so I would assume it is a memory problem or precision problem? I will ask that in class I think. 
+- Also my ThrustSort timer always start will 20+ ms, which is also very strange because there is only one thrust::sort line between the timers.
+
 
 ### Printout Example for 2^15 Array
 ```

@@ -57,9 +57,7 @@ namespace StreamCompaction {
             thrust::host_vector<int>dev_out(idata, idata + n);
             timer().startGpuTimer();
             thrust::sort(dev_out.begin(), dev_out.end());
-
             thrust::copy(dev_out.begin(), dev_out.end(), odata);
-
             timer().endGpuTimer();
         }
 
@@ -88,41 +86,33 @@ namespace StreamCompaction {
             cudaMalloc((void**)&arrayD, n * sizeof(int));
             
             cudaMemcpy(dev_in, idata, n * sizeof(int), cudaMemcpyHostToDevice);
-            //PRINT_GPU(dev_in, n);
             timer().startGpuTimer();
             for (int i = 0; i < maxBits; i++) {
                 kernCalBool<<<blockDim, blockSize>>>(n, i, splitBool, dev_in);
+                checkCUDAError("kernCalBool failed");
                 cudaDeviceSynchronize();
                 //Scan
                 Efficient::fillArray(&splitScan, splitBool, maxN, n);
-                /*cudaMalloc((void**)&splitScan, maxN * sizeof(int));
-                cudaMemcpy(splitScan, splitBool, n * sizeof(int), cudaMemcpyHostToDevice);
-                if (n != maxN) {
-                    cudaMemset(splitScan + n, 0, (maxN - n) * sizeof(int));
-                }*/
                 Efficient::scanImpl(maxN, splitScan);
-                //PRINT_GPU(splitBool, n);
-                //PRINT_GPU(splitScan, n);
                 int lastOfScan;
                 cudaMemcpy(&lastOfScan, splitScan + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
                 int lastOfBool;
                 cudaMemcpy(&lastOfBool, splitBool + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
                 totalFalse = lastOfScan + lastOfBool;
-                //PRINT_GPU(arrayT, n);
                 kernCalT << <blockDim, blockSize >> > (n, totalFalse, splitScan, arrayT);
+                checkCUDAError("kernCalT failed");
                 cudaDeviceSynchronize();
                 kernCalD << <blockDim, blockSize >> > (n, i, arrayD, arrayT, splitScan, splitBool);
+                checkCUDAError("kernCalD failed");
                 cudaDeviceSynchronize();
-                //PRINT_GPU(arrayD, n);
                 kernCalScatter << <blockDim, blockSize >> > (n, dev_out, dev_in, arrayD);
+                checkCUDAError("kernCalScatter failed");
                 cudaDeviceSynchronize();
-                //PRINT_GPU(dev_out, n);
 
                 //std::swap(dev_out, dev_in);
                 cudaMemcpy(dev_in, dev_out, n * sizeof(int), cudaMemcpyDeviceToDevice);
             }
             timer().endGpuTimer();
-            //PRINT_GPU(dev_out, n);
             cudaMemcpy(odata, dev_out, n * sizeof(int), cudaMemcpyDeviceToHost);
             cudaFree(dev_in); cudaFree(dev_out); cudaFree(splitBool); cudaFree(splitScan); cudaFree(arrayT); cudaFree(arrayD);
         }

@@ -15,16 +15,17 @@
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
 
 
-#define PRINT_GPU(arr, ...) printGPU(#arr, arr, __VA_ARGS__)
-template<typename T>
-static inline void printGPU(char const* name, T* dev, int n) {
-    T* tmp = new T[n];
-    std::cout << name << "\n";
-    cudaMemcpy(tmp, dev, n * sizeof(int), cudaMemcpyDeviceToHost);
-    for (int i = 0; i < n; ++i)
-        std::cout << tmp[i] << " \n"[i < n - 1 ? 0 : 1];
-    delete[] tmp;
-}
+//I learned this debug method from Tongwei, and only used it to debug.
+//#define PRINT_GPU(arr, ...) printGPU(#arr, arr, __VA_ARGS__)
+//template<typename T>
+//static inline void printGPU(char const* name, T* dev, int n) {
+//    T* tmp = new T[n];
+//    std::cout << name << "\n";
+//    cudaMemcpy(tmp, dev, n * sizeof(int), cudaMemcpyDeviceToHost);
+//    for (int i = 0; i < n; ++i)
+//        std::cout << tmp[i] << " \n"[i < n - 1 ? 0 : 1];
+//    delete[] tmp;
+//}
 
 /**
  * Check for CUDA errors; print and exit if there was a problem.

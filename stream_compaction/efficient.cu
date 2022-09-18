@@ -27,10 +27,6 @@ namespace StreamCompaction {
         __global__ void kernDownsweep(int n, int depth, int* odata) {
             int index = threadIdx.x + (blockIdx.x * blockDim.x);
             int path = 1<< depth;
-            //if (index == n - 1 && depth == maxDepth) {
-            //    odata[index] = 0;//have to do this here because cant do this in void directly
-            //    return;
-            //}cant do this actually because odata is in host and we do not write to it in device 
             if (index >= n || index % (2 * path)) {
                 return;
             }
@@ -44,6 +40,7 @@ namespace StreamCompaction {
             dim3 blockDim((maxN + blockSize - 1) / blockSize);
             for (int i = 0; i < ilog2ceil(maxN); ++i) {
                 kernUpsweep << <blockDim, blockSize >> > (maxN, i, odataMax);
+                checkCUDAError("kernUpSweep failed");
             }
             int addr = 0;
             //set the first value to 0 by using MemCpy
@@ -51,6 +48,7 @@ namespace StreamCompaction {
             //Downsweep
             for (int i = ilog2ceil(maxN) - 1; i >= 0; --i) {
                 kernDownsweep << <blockDim, blockSize >> > (maxN, i, odataMax);
+                checkCUDAError("kernDownSweep failed");
             }
         }
 

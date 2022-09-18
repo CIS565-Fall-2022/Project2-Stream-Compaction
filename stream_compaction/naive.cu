@@ -19,8 +19,8 @@ namespace StreamCompaction {
             if (index >= n) {
                 return;
             }
+            //pow not working so <<
             int index1 = 1 << depth;
-            //int index1 = 1 << depth;
             odata[index] = idata[index];
             if (index >= index1) {
                 odata[index] += idata[index - index1];
@@ -39,8 +39,6 @@ namespace StreamCompaction {
             cudaMalloc((void**)&output, n*sizeof(int));
             cudaMemcpy(input, idata, n*sizeof(int), cudaMemcpyHostToDevice);
             cudaMemcpy(output, idata, n * sizeof(int), cudaMemcpyHostToDevice);
-
-
             timer().startGpuTimer();
             for (int i = 0; i <= depth; ++i) {
                 kernScan<<<blockDim, blockSize>>>(n, i, output, input);
@@ -50,8 +48,6 @@ namespace StreamCompaction {
             }
 
             timer().endGpuTimer();
-
-            //cudaMemcpy(odata, output, n, cudaMemcpyDeviceToHost);
             //change from inclusive to excluvise
             cudaMemcpy(odata + 1, output, (n - 1)*sizeof(int), cudaMemcpyDeviceToHost);
             odata[0] = 0;
