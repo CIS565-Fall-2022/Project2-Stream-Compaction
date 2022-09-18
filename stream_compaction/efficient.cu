@@ -220,29 +220,24 @@ namespace StreamCompaction {
             cudaMemcpy(dev_idata, idata, n * sizeof(int), cudaMemcpyHostToDevice);
             checkCUDAError("cudaMemcpy dev_bool to dev_data failed!");
 
-
-            int* temp = new int[arraySize];
-            cudaMemcpy(temp, dev_idata, n * sizeof(int), cudaMemcpyDeviceToHost);
-
-
-
             timer().startGpuTimer();
 
             for (int i = 0; i < 32; ++i)
             {
                 // Step 1: compute e array
-                kernComputeE << < fullBlocksPerGrid, blockSize >> > (arraySize, i, dev_e, dev_idata);
+                kernComputeE << < fullBlocksPerGrid, blockSize >> > (n, i, dev_e, dev_idata);
                 cudaDeviceSynchronize();
-
-                cudaMemcpy(temp, dev_e, arraySize * sizeof(int), cudaMemcpyDeviceToHost);
+                // pad a 0 for non-power-of-two case
+                if (arraySize > n)
+                {
+                    cudaMemset(dev_e + arraySize - 1, 0, sizeof(int));
+                }
 
 
                 // Step 2: exclusive scan e array and store it in f
                 cudaMemcpy(dev_f, dev_e, arraySize * sizeof(int), cudaMemcpyDeviceToDevice);
                 upDownSweep(arraySize, dev_f, fullBlocksPerGrid);
                 cudaDeviceSynchronize();
-
-                cudaMemcpy(temp, dev_f, n * sizeof(int), cudaMemcpyDeviceToHost);
 
 
                 // Step 3: compute total false
@@ -255,31 +250,22 @@ namespace StreamCompaction {
                 cudaMemcpy(&lastF, dev_f + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
                 checkCUDAError("cudaMemcpy dev_f to host failed!");
                 cudaDeviceSynchronize();
-
                 totalFalse += lastF;
 
                 // Step 4: compute t array
                 kernComputeT << < fullBlocksPerGrid, blockSize >> > (arraySize, totalFalse, dev_t, dev_f);
                 cudaDeviceSynchronize();
 
-                cudaMemcpy(temp, dev_t, n * sizeof(int), cudaMemcpyDeviceToHost);
-
 
                 // Step 5: scatter
                 kernComputeD << < fullBlocksPerGrid, blockSize >> > (arraySize, dev_d, dev_e, dev_t, dev_f);
                 cudaDeviceSynchronize();
 
-                cudaMemcpy(temp, dev_d, n * sizeof(int), cudaMemcpyDeviceToHost);
-
-
                 kernScatter << < fullBlocksPerGrid, blockSize >> > (arraySize, dev_d, dev_odata, dev_idata);
-
-                cudaMemcpy(temp, dev_odata, n * sizeof(int), cudaMemcpyDeviceToHost);
 
                 cudaMemcpy(dev_idata, dev_odata, arraySize * sizeof(int), cudaMemcpyDeviceToDevice);
             }
             timer().endGpuTimer();
-            delete[] temp;
 
             cudaMemcpy(odata, dev_odata, arraySize * sizeof(int), cudaMemcpyDeviceToHost);
 

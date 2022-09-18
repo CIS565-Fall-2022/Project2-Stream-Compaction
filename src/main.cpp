@@ -179,7 +179,6 @@ int main(int argc, char* argv[]) {
     printDesc("radix sort, non-power-of-two");
     StreamCompaction::Efficient::radixSort(NPOT, d, a);
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
-    printArray(NPOT, d, true);
     printCmpResult(NPOT,c, d);
 
 
@@ -187,4 +186,5 @@ int main(int argc, char* argv[]) {
     delete[] a;
     delete[] b;
     delete[] c;
+    delete[] d;
 }
