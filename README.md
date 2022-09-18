@@ -35,5 +35,63 @@ The final graph shows some data of very large array sizes with element counts ne
 
 Despite the expectation that the gpu should begin performing better than the cpu this is not the case. Simply comparing the work efficient approach with the cpu, it's likely a lot of unnecessary overhead is being created. The number of threads generated each time in the kernel is relative to the size of the input array at every step, rather than the number of threads actually needed. For example if the array has a million elements, the kernel will genereate a million threads even if it only needs two. However, the naive approach performing this poorly is genuinely mistifying. At worst it seems to do about double the work as the efficient approach, yet it takes 10 times longer.
 
+Lastly: Here is the output of some testing. These were done at array size 2 to the 18.
+```
+****************
+** SCAN TESTS **
+****************
+    [  18   3  44  33  23  38  10   2   5  12  37  31  11 ...  14   0 ]
+==== cpu scan, power-of-two ====
+   elapsed time: 0.5045ms    (std::chrono Measured)
+    [   0  18  21  65  98 121 159 169 171 176 188 225 256 ... 6415867 6415881 ]
+==== cpu scan, non-power-of-two ====
+   elapsed time: 0.5299ms    (std::chrono Measured)
+    [   0  18  21  65  98 121 159 169 171 176 188 225 256 ... 6415791 6415831 ]
+    passed
+==== naive scan, power-of-two ====
+   elapsed time: 11.6556ms    (CUDA Measured)
+    [   0  18  21  65  98 121 159 169 171 176 188 225 256 ... 6415867 6415881 ]
+    passed
+==== naive scan, non-power-of-two ====
+   elapsed time: 11.6711ms    (CUDA Measured)
+    [   0  18  21  65  98 121 159 169 171 176 188 225 256 ... 6415791 6415831 ]
+    passed
+==== work-efficient scan, power-of-two ====
+   elapsed time: 1.0831ms    (CUDA Measured)
+    [   0  18  21  65  98 121 159 169 171 176 188 225 256 ... 6415867 6415881 ]
+    passed
+==== work-efficient scan, non-power-of-two ====
+   elapsed time: 1.07619ms    (CUDA Measured)
+    [   0  18  21  65  98 121 159 169 171 176 188 225 256 ... 6415791 6415831 ]
+    passed
+==== thrust scan, power-of-two ====
+   elapsed time: 14.2314ms    (CUDA Measured)
+    passed
+==== thrust scan, non-power-of-two ====
+   elapsed time: 3.38083ms    (CUDA Measured)
+    passed
 
-
+*****************************
+** STREAM COMPACTION TESTS **
+*****************************
+    [   2   1   2   3   1   2   0   2   1   0   1   1   3 ...   0   0 ]
+==== cpu compact without scan, power-of-two ====
+   elapsed time: 0.9719ms    (std::chrono Measured)
+    [   2   1   2   3   1   2   2   1   1   1   3   3   2 ...   3   1 ]
+    passed
+==== cpu compact without scan, non-power-of-two ====
+   elapsed time: 0.9846ms    (std::chrono Measured)
+    [   2   1   2   3   1   2   2   1   1   1   3   3   2 ...   2   3 ]
+    passed
+==== cpu compact with scan ====
+   elapsed time: 0.5184ms    (std::chrono Measured)
+    [   2   1   2   3   1   2   2   1   1   1   3   3   2 ...   3   1 ]
+    passed
+==== work-efficient compact, power-of-two ====
+   elapsed time: 1.1184ms    (CUDA Measured)
+    passed
+==== work-efficient compact, non-power-of-two ====
+   elapsed time: 1.08938ms    (CUDA Measured)
+    [   2   1   2   3   1   2   2   1   1   1   3   3   2 ...   2   3 ]
+    passed
+Press any key to continue . . .```
