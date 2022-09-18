@@ -13,7 +13,7 @@ namespace StreamCompaction {
         }
 
 
-        __global__ void kernUpSweep(int n, int exp2d,int exp2d1, int* idata) 
+        __global__ void kernUpSweep(int n,int size, int exp2d,int exp2d1, int* idata) 
         {
             /*int index = threadIdx.x + (blockIdx.x * blockDim.x);
             if (index >= n)
@@ -22,14 +22,23 @@ namespace StreamCompaction {
             }*/
 
             int index = threadIdx.x;
-            int blockOffset = blockIdx.x * blockDim.x;
+            int blockOffset = blockIdx.x * size;
 
-            if (index % exp2d1 == 0) {
+            /*if (index % exp2d1 == 0) {
                 idata[index + blockOffset + exp2d1 - 1] += idata[index + blockOffset + exp2d - 1];
+            }*/
+
+
+            int leftChild = index * exp2d1 + exp2d - 1;
+            int rightChild = (index + 1) * exp2d1 - 1;
+            if (rightChild >= n)
+            {
+                return;
             }
+            idata[rightChild + blockOffset] += idata[leftChild + blockOffset];
         }
 
-        __global__ void kernDownSweep(int n, int exp2d, int exp2d1, int* idata) {
+        __global__ void kernDownSweep(int n, int size, int exp2d, int exp2d1, int* idata) {
             /*int index = threadIdx.x + (blockIdx.x * blockDim.x);
             if (index >= n)
             {
@@ -37,13 +46,20 @@ namespace StreamCompaction {
             }*/
 
             int index = threadIdx.x;
-            int blockOffset = blockIdx.x * blockDim.x;
+            int blockOffset = blockIdx.x * size;
 
-            if (index % exp2d1 == 0) {
+            /*if (index % exp2d1 == 0) {
                 int t = idata[index + blockOffset+ exp2d - 1];
                 idata[index + blockOffset + exp2d - 1] = idata[index + blockOffset + exp2d1 - 1];
                 idata[index + blockOffset + exp2d1 - 1] += t;
-            }
+            }*/
+
+            int rightChild = (index + 1) * exp2d1 - 1;
+            int leftChild = index * exp2d1 + exp2d - 1;
+            if (rightChild >= n) { return; }
+            int t = idata[leftChild + blockOffset];
+            idata[leftChild + blockOffset] = idata[rightChild + blockOffset];
+            idata[rightChild + blockOffset] += t;
         }
 
         __global__ void kernCombine(int blockNum, int* original_buffer, int* inter_buffer)
@@ -154,10 +170,11 @@ namespace StreamCompaction {
 
             // we do scan for each block
             // up sweep
-            for (int d = 0; d <= ilog2ceil(blockSize) - 1; ++d) {
+            for (int d = 0; d <= ilog2ceil(blockSize)-1; ++d) {
                 int exp2d = 1 << d;
                 int exp2d1 = 1 << (d + 1);
-                kernUpSweep << <fullBlocksPerGrid, blockSize >> > (n, exp2d,exp2d1, dev_buffer);
+                int realSize = blockSize / exp2d1;
+                kernUpSweep << <fullBlocksPerGrid, realSize >> > (bufferSize, blockSize, exp2d,exp2d1, dev_buffer);
             }
             // down sweep
 
@@ -165,10 +182,12 @@ namespace StreamCompaction {
             dim3 numBlocksForBlock((blockNum + blockSize - 1) / blockSize);
             kernSetZero << <numBlocksForBlock, blockSize >> > (blockNum, blockSize, dev_buffer);
 
+            int realSize = 1;
             for (int d = ilog2ceil(blockSize) - 1; d >= 0; --d) {
                 int exp2d = 1 << d;
                 int exp2d1 = 1 << (d + 1);
-                kernDownSweep << <fullBlocksPerGrid, blockSize >> > (n, exp2d, exp2d1, dev_buffer);
+                kernDownSweep << <fullBlocksPerGrid, realSize >> > (bufferSize,blockSize, exp2d, exp2d1, dev_buffer);
+                realSize *= 2;
             }
 
             // make them all inclusive
@@ -180,13 +199,17 @@ namespace StreamCompaction {
             for (int d = 0; d <= ilog2ceil(blockSize) - 1; ++d) {
                 int exp2d = 1 << d;
                 int exp2d1 = 1 << (d + 1);
-                kernUpSweep << <1, blockSize >> > (blockNum, exp2d, exp2d1, dev_inter_buffer);
+                int realSize = blockSize / exp2d1;
+                kernUpSweep << <1, realSize >> > (blockSize, blockSize, exp2d, exp2d1, dev_inter_buffer);
             }
             kernSetInterZero << <1, 1 >> > (blockSize, dev_inter_buffer);
+
+            int realInterSize = 1;
             for (int d = ilog2ceil(blockSize) - 1; d >= 0; --d) {
                 int exp2d = 1 << d;
                 int exp2d1 = 1 << (d + 1);
-                kernDownSweep << <1, blockSize >> > (blockNum, exp2d, exp2d1, dev_inter_buffer);
+                kernDownSweep << <1, realInterSize >> > (blockSize, blockSize, exp2d, exp2d1, dev_inter_buffer);
+                realInterSize *= 2;
             }
 
             // now we add those offsets to the original buffer
@@ -285,7 +308,8 @@ namespace StreamCompaction {
             for (int d = 0; d <= ilog2ceil(blockSize) - 1; ++d) {
                 int exp2d = 1 << d;
                 int exp2d1 = 1 << (d + 1);
-                kernUpSweep << <fullBlocksPerGrid, blockSize >> > (n, exp2d, exp2d1, dev_buffer);
+                int realSize = blockSize / exp2d1;
+                kernUpSweep << <fullBlocksPerGrid, realSize >> > (bufferSize, blockSize, exp2d, exp2d1, dev_buffer);
             }
             // down sweep
 
@@ -293,10 +317,12 @@ namespace StreamCompaction {
             dim3 numBlocksForBlock((blockNum + blockSize - 1) / blockSize);
             kernSetZero << <numBlocksForBlock, blockSize >> > (blockNum, blockSize, dev_buffer);
 
+            int realSize = 1;
             for (int d = ilog2ceil(blockSize) - 1; d >= 0; --d) {
                 int exp2d = 1 << d;
                 int exp2d1 = 1 << (d + 1);
-                kernDownSweep << <fullBlocksPerGrid, blockSize >> > (n, exp2d, exp2d1, dev_buffer);
+                kernDownSweep << <fullBlocksPerGrid, realSize >> > (bufferSize, blockSize, exp2d, exp2d1, dev_buffer);
+                realSize *= 2;
             }
 
             // make them all inclusive
@@ -308,13 +334,17 @@ namespace StreamCompaction {
             for (int d = 0; d <= ilog2ceil(blockSize) - 1; ++d) {
                 int exp2d = 1 << d;
                 int exp2d1 = 1 << (d + 1);
-                kernUpSweep << <1, blockSize >> > (blockNum, exp2d, exp2d1, dev_inter_buffer);
+                int realSize = blockSize / exp2d1;
+                kernUpSweep << <1, realSize >> > (blockSize, blockSize, exp2d, exp2d1, dev_inter_buffer);
             }
             kernSetInterZero << <1, 1 >> > (blockSize, dev_inter_buffer);
+
+            int realInterSize = 1;
             for (int d = ilog2ceil(blockSize) - 1; d >= 0; --d) {
                 int exp2d = 1 << d;
                 int exp2d1 = 1 << (d + 1);
-                kernDownSweep << <1, blockSize >> > (blockNum, exp2d, exp2d1, dev_inter_buffer);
+                kernDownSweep << <1, realInterSize >> > (blockSize, blockSize, exp2d, exp2d1, dev_inter_buffer);
+                realInterSize *= 2;
             }
 
             // now we add those offsets to the original buffer
