@@ -16,11 +16,11 @@ is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 2. Stream Compaction - given an array A, output another array B that only contains elements from A which match a criteria.
 
 ## Implementation and Results
-### Scan
-#### Part 1. Sequential CPU Scan 
-#### Part 1. Naive Boids Simulation
-#### Part 1. Naive Boids Simulation
-### Stream Compaction
+#### Scan 1. Sequential CPU Scan 
+#### Scan 2. Naive GPU Scan
+#### Scan 3. Work-Efficient GPU Scan
+#### Scan 4. Thrust Scan
+#### Stream Compaction
 
 ## Performance Analysis
 ## Extra Credit?
