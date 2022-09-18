@@ -3,8 +3,6 @@
 #include "common.h"
 #include "efficient.h"
 #include <device_launch_parameters.h>
-#include <iostream>
-
 
 namespace StreamCompaction {
     namespace Efficient {
@@ -22,7 +20,7 @@ namespace StreamCompaction {
             unsigned rightPOT = 1 << (d + 1);
             index *= rightPOT; // "by 2^(d+1)"
             unsigned rightIdx = index + rightPOT - 1;
-            if (rightIdx > n) { return; }
+            if (rightIdx > n) { return; } //  not necessary since n is always POT?
             data[rightIdx] += data[index + (1 << d) - 1];
         }
 
@@ -85,9 +83,56 @@ namespace StreamCompaction {
          */
         int compact(int n, int *odata, const int *idata) {
             timer().startGpuTimer();
-            // TODO
+
+            int smallestPOTGreater = 1 << ilog2ceil(n); // smallest POT larger than n
+            int* dev_idata;
+            int* bool_data;
+
+            cudaMalloc((void**)&dev_idata, smallestPOTGreater * sizeof(int));
+            cudaMemcpy(dev_idata, idata, n * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemset(dev_idata + n, 0, (smallestPOTGreater - n) * sizeof(int)); // necessary? 
+
+            cudaMalloc((void**)&bool_data, smallestPOTGreater * sizeof(int));
+            dim3 fullBlocksPerGrid((smallestPOTGreater + blockSize - 1) / blockSize);
+            Common::kernMapToBoolean<<<fullBlocksPerGrid, blockSize>>>(smallestPOTGreater, bool_data, dev_idata);
+
+            int* indices_data;
+            cudaMalloc((void**)&indices_data, smallestPOTGreater * sizeof(int));
+            cudaMemcpy(indices_data, bool_data, smallestPOTGreater * sizeof(int), cudaMemcpyDeviceToDevice);
+            // -----PREFIX SUM CODE FROM SCAN-----
+            int neededThreads = smallestPOTGreater;
+            for (int d = 0; d < ilog2ceil(smallestPOTGreater); ++d, neededThreads /= 2) {
+                fullBlocksPerGrid = (neededThreads + blockSize - 1) / blockSize;
+                kernUpsweep<<<fullBlocksPerGrid, blockSize>>>(d, n, indices_data);
+                cudaDeviceSynchronize();
+            }
+
+            cudaMemset(&indices_data[smallestPOTGreater - 1], 0, sizeof(int));
+
+            for (int d = ilog2ceil(smallestPOTGreater) - 1; d >= 0; --d, neededThreads *= 2) {
+                fullBlocksPerGrid = (neededThreads + blockSize - 1) / blockSize;
+                kernDownsweep<<<fullBlocksPerGrid, blockSize>>>(d, smallestPOTGreater, indices_data);
+                cudaDeviceSynchronize();
+            }
+            // -----END PREFIX SUM CODE FROM SCAN------
+
+            int* dev_odata;
+            cudaMalloc((void**)&dev_odata, smallestPOTGreater * sizeof(int));
+
+            fullBlocksPerGrid = (smallestPOTGreater + blockSize - 1) / blockSize;
+            Common::kernScatter<<<fullBlocksPerGrid, blockSize>>>(smallestPOTGreater, dev_odata, dev_idata, bool_data, indices_data);
+
+            cudaMemcpy(odata, dev_odata, n * sizeof(int), cudaMemcpyDeviceToHost);
+            int size;
+            cudaMemcpy(&size, &indices_data[smallestPOTGreater - 1], sizeof(int), cudaMemcpyDeviceToHost); // cpy last elem of indcies_value 
+            
+            cudaFree(bool_data);
+            cudaFree(indices_data);
+            cudaFree(dev_idata);
+            cudaFree(dev_odata);
+
             timer().endGpuTimer();
-            return -1;
+            return size;
         }
     }
 }
