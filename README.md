@@ -17,9 +17,24 @@ is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 
 ## Implementation and Results
 #### CPU: Sequential Scan 
+
+On the CPU, a sequential scan consists of a simple for-loop that loops through all the elements
+of input array A, and outputs to B[i] = B[i - 1] + A[i - 1]
+
 #### CPU: Stream Compact without Scan
+
+Stream compact without Scan will simply keep a counter of the current write-index in the output array B, 
+while iterating through input array A. If A[i] != 0, then B[output_index] = A[i].
+
 #### CPU: Stream Compact with Scan
+
+Stream compact with scan is a sequential implementation of the stream compact algorithm for GPU, except on the CPU
+and thus none of the advantages of parallel programming will come into play. See the following section for GPU stream
+compaction algorithms. 
+
 #### GPU: Naive GPU Scan
+
+A naive GPU scan 
 #### GPU: Work-Efficient GPU Scan
 #### GPU: Thrust Scan
 #### GPU: Stream Compaction
@@ -124,8 +139,6 @@ blockSize: 256
 
 These questions should help guide you in performance analysis on future
 assignments, as well.
-
-## Extra Credit?
 
 
 
