@@ -47,6 +47,54 @@ In this project, I implemented stream compaction on CPU and GPU using parallel a
         ![](img/downsweep.jpg)
 
 
+Tests performed
+---
+```
+****************
+** SCAN TESTS **
+****************
+    [   3  16  30  16   9   8   8  11  41  20  38  34   7 ...   4   0 ]
+==== cpu scan, power-of-two ====
+   elapsed time: 0ms    (std::chrono Measured)
+    [   0   3  19  49  65  74  82  90 101 142 162 200 234 ... 205461733 205461737 ]
+==== cpu scan, non-power-of-two ====
+   elapsed time: 0ms    (std::chrono Measured)
+    passed
+==== naive scan, power-of-two ====
+   elapsed time: 327.662ms    (CUDA Measured)
+    passed
+==== naive scan, non-power-of-two ====
+   elapsed time: 328.087ms    (CUDA Measured)
+    passed
+==== work-efficient scan, power-of-two ====
+   elapsed time: 0ms    (CUDA Measured)
+    passed
+==== work-efficient scan, non-power-of-two ====
+   elapsed time: 0ms    (CUDA Measured)
+    passed
+
+*****************************
+** STREAM COMPACTION TESTS **
+*****************************
+    [   3   3   1   0   3   3   3   3   3   0   0   1   0 ...   3   0 ]
+==== cpu compact without scan, power-of-two ====
+   elapsed time: 45.6113ms    (std::chrono Measured)
+    passed
+==== cpu compact without scan, non-power-of-two ====
+   elapsed time: 46.366ms    (std::chrono Measured)
+    passed
+==== cpu compact with scan ====
+   elapsed time: 142.93ms    (std::chrono Measured)
+    passed
+==== work-efficient compact, power-of-two ====
+   elapsed time: 743.851ms    (CUDA Measured)
+    passed
+==== work-efficient compact, non-power-of-two ====
+   elapsed time: 739.94ms    (CUDA Measured)
+    passed
+Press any key to continue . . .
+```
+
 Performance Analysis
 ---
 ### Scan algorithm
