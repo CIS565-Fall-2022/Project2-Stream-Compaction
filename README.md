@@ -144,6 +144,7 @@ blockSize: 256
 * Roughly optimize the block sizes of each of your implementations for minimal
   run time on your GPU.
   * (You shouldn't compare unoptimized implementations to each other!)
+  
   ![](img/blocksizeTable.png)
   
     _Table. 1 Blocksize vs. Results for each algorithm_
