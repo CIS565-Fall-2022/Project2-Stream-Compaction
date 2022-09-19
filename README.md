@@ -161,7 +161,7 @@ My implementation of radix sort is very slower than thrust function.
 
 The optimization I made to the the work-efficient scan is to avoid Warp Partitioning by compressing the threads:
 
-![Threads Allocation of the Down Sweep Function](img/Threads Allocation of the Down Sweep Function.png)
+![Threads Allocation of the Down Sweep Function](img/)
 
 Due to time constraints, I haven't implemeted the shared memory part. I guess this is where the thurst function surpasses mine.
 
