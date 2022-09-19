@@ -65,6 +65,8 @@ My work efficient scan halves the total number of threads launched each iteratio
 I implemented Radix sort on the CPU, wrote two test cases, and added Radix sort on the GPU, which calls my work efficient scan. The functions to look at are:
 - `radixSort` in `naive.cu`
 - `radixSort` in `cpu.cu`
+Example of usage:  
+`StreamCompaction::CPU::radixSort(NPOT, RADIX_NUM_BITS, b, a);`
 
 A few notes: you can pass in the number of bits you want to sort by, which should be `ilog2ceil(MAX_ARRAY_ELEMENT_VALUE)`. Also, I assumed for simplicity that each element is a positive integer (although still using int and not unsigned int types) so I can just use a bitmask to compact the arrays. Finally, to test, the array size should not be too close to 2^31 because of integer overflow issues...  
 
