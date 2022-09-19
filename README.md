@@ -152,6 +152,8 @@ blockSize: 256
   (with array size on the independent axis).
 #### Scan
   ![](img/scanTable.png)
+  
+  __Fig. 1 Scan Algorithm: Number of Elements vs. Results__
   ![](img/scanpow2.png)
   ![](img/scannotpow2.png)
 #### Stream Compaction
