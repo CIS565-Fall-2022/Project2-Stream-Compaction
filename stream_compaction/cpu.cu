@@ -77,7 +77,8 @@ namespace StreamCompaction {
                     count++;
                 }
             }
-
+            delete[] mapped;
+            delete[] scanned;
             timer().endCpuTimer();
             return count;
         }

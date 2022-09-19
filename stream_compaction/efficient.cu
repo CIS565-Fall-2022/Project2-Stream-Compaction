@@ -3,7 +3,7 @@
 #include "common.h"
 #include "efficient.h"
 #include <device_launch_parameters.h>
-#define blockSize 128
+#define blockSize 256
 namespace StreamCompaction {
     namespace Efficient {
         using StreamCompaction::Common::PerformanceTimer;
@@ -16,29 +16,27 @@ namespace StreamCompaction {
         /*
          * Kernel for parallel reduction with upstream scan
          */
-        __global__ void kernUpStreamReduction(int n, int d, int* data) {
+        __global__ void kernUpSweepReduction(int n, int d, int offsetd, int offsetd1, int* data) {
             int k = threadIdx.x + (blockIdx.x * blockDim.x);
-            int offsetd1 = pow(2, d + 1);
-            int offsetd = pow(2, d);
             if (k >= n) {
                 return;
             }
-            /*if (k % offsetd1 != 0) {
-                return;
-            }*/
             if (k % offsetd1 == 0) {
                 data[k + offsetd1 - 1] = data[k + offsetd1 - 1] + data[k + offsetd - 1];
                 return;
             }
+
+            //// Tried implementing optimized upsweep
+            //if (k < offsetd) {
+            //    data[k] += data[k + offsetd];
+            //}
         }
 
         /*
-         * Kernel for collecting results with downstream scan
+         * Kernel for collecting results with downsweep scan
          */
-        __global__ void kernDownStream(int n, int d, int* data) {
+        __global__ void kernDownSweep(int n, int d, int offsetd, int offsetd1, int* data) {
             int k = threadIdx.x + (blockIdx.x * blockDim.x);
-            int offsetd1 = pow(2, d + 1);
-            int offsetd = pow(2, d);
             if (k >= n) {
                 return;
             }
@@ -79,57 +77,61 @@ namespace StreamCompaction {
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int* odata, const int* idata) {
-            //timer().startGpuTimer();
+            
             // TODO
             int* dev_data;
-
-            //dim3 gridSize(32, 32);
-            //dim3 blockSize(32, 32);
-
-            dim3 blocksPerGrid((n + blockSize - 1) / blockSize);
 
             // Extend buffers to handle arrays with lengths which are not a power of two
             int maxDepth = ilog2ceil(n);
             int extended_n = pow(2, maxDepth);
-            int* extended_idata = new int[extended_n];
 
-            for (int i = 0; i < extended_n; i++) {
-                extended_idata[i] = (i < n) ? idata[i] : 0;
-            }
+            //dim3 gridSize(32, 32);
+            //dim3 blockSize(32, 32);
+
+            dim3 blocksPerGrid((extended_n + blockSize - 1) / blockSize);
 
             // Memory allocation
             cudaMalloc((void**)&dev_data, sizeof(int) * extended_n);
             checkCUDAError("cudaMalloc dev_data failed!");
-            cudaMemcpy(dev_data, extended_idata, sizeof(int) * extended_n, cudaMemcpyHostToDevice);
-            checkCUDAError("memcpy into dev_data failed!");
+            cudaMemset(dev_data, 0, sizeof(int) * extended_n);
+            checkCUDAError("cudaMemset dev_data initialization failed!");
+            cudaMemcpy(dev_data, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
+            checkCUDAError("cudaMemcpy into dev_data failed!");
 
-            // Upstream - parallel reduction
+            //timer().startGpuTimer();
+
+            // Upsweep - parallel reduction
             for (int d = 0; d < maxDepth; d++) {    // where d is depth of iteration
-                kernUpStreamReduction << <blocksPerGrid, blockSize >> > (extended_n, d, dev_data);
+                int offsetd1 = pow(2, d + 1);
+                int offsetd = pow(2, d);
+                //int offsetd = pow(2, maxDepth - d - 1);
+                kernUpSweepReduction << <blocksPerGrid, blockSize >> > (extended_n, d, offsetd, offsetd1, dev_data);
                 checkCUDAError("kernUpStreamReduction invocation failed!");
             }
-
-            // Getting parallel reduction sum which can be used to convert to inclusive scan
-            int* lastVal = new int();
-            cudaMemcpy(lastVal, dev_data + extended_n - 1, sizeof(int), cudaMemcpyDeviceToHost);
-            checkCUDAError("lastVal memcpy failed!");
 
             // Set last element to identity value which is zero
             cudaMemset(dev_data + extended_n - 1, 0, sizeof(int));
             checkCUDAError("cudaMemset last value to identity failed!");
 
-            // Downstream
+            // Downsweep
             for (int d = maxDepth - 1; d >= 0; d--) {    // where d is depth of iteration
-                kernDownStream << <blocksPerGrid, blockSize >> > (extended_n, d, dev_data);
+                int offsetd1 = pow(2, d + 1);
+                int offsetd = pow(2, d);
+                kernDownSweep << <blocksPerGrid, blockSize >> > (extended_n, d, offsetd, offsetd1, dev_data);
                 checkCUDAError("kernDownStream invocation failed!");
             }
+            //timer().endGpuTimer();
+
+            //// Getting parallel reduction sum which can be used to convert to inclusive scan
+            //int* lastVal = new int();
+            //cudaMemcpy(lastVal, dev_data + extended_n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+            //checkCUDAError("lastVal memcpy failed!");
 
             // Copy calculated buffer to output
             cudaMemcpy(odata, dev_data, sizeof(int) * (extended_n), cudaMemcpyDeviceToHost);
             checkCUDAError("odata memcpy failed!");
 
             cudaFree(dev_data);
-            //timer().endGpuTimer();
         }
 
 
@@ -143,7 +145,7 @@ namespace StreamCompaction {
          * @returns      The number of elements remaining after compaction.
          */
         int compact(int n, int* odata, const int* idata) {
-            timer().startGpuTimer();
+            
             // TODO
 
             int* dev_idata;
@@ -151,41 +153,47 @@ namespace StreamCompaction {
             int* dev_criteria_buffer;
             int* dev_scanned_buffer;
 
-            int* criteria_buffer = new int[n];
-            int* scanned_buffer = new int[n];
+            int maxDepth = ilog2ceil(n);
+            int extended_n = pow(2, maxDepth);
 
-            dim3 blocksPerGrid((n + blockSize - 1) / blockSize);
+            int* criteria_buffer = new int[extended_n];
+            int* scanned_buffer = new int[extended_n];
+
+            dim3 blocksPerGrid((extended_n + blockSize - 1) / blockSize);
 
             // Memory allocation
-            cudaMalloc((void**)&dev_idata, sizeof(int) * n);
+            cudaMalloc((void**)&dev_idata, sizeof(int) * extended_n);
             checkCUDAError("cudaMalloc dev_idata failed!");
-            cudaMalloc((void**)&dev_criteria_buffer, sizeof(int) * n);
+            cudaMalloc((void**)&dev_criteria_buffer, sizeof(int) * extended_n);
             checkCUDAError("cudaMalloc dev_criteria_buffer failed!");
-            cudaMalloc((void**)&dev_scanned_buffer, sizeof(int) * n);
+            cudaMalloc((void**)&dev_scanned_buffer, sizeof(int) * extended_n);
             checkCUDAError("cudaMalloc dev_scanned_buffer failed!");
 
+            cudaMemset(dev_idata, 0, sizeof(int) * extended_n);
+            checkCUDAError("cudaMemset dev_idata initialization failed!");
             cudaMemcpy(dev_idata, idata, sizeof(int) * n, cudaMemcpyHostToDevice);
             checkCUDAError("cudaMemcpy into dev_idata failed!");
 
+            timer().startGpuTimer();
             // Mapping as per criteria
-            kernMap << <blocksPerGrid, blockSize >> > (n, dev_criteria_buffer, dev_idata);
+            kernMap << <blocksPerGrid, blockSize >> > (extended_n, dev_criteria_buffer, dev_idata);
             checkCUDAError("kernMap invocation failed!");
 
-            cudaMemcpy(criteria_buffer, dev_criteria_buffer, sizeof(int) * n, cudaMemcpyDeviceToHost);
+            cudaMemcpy(criteria_buffer, dev_criteria_buffer, sizeof(int) * extended_n, cudaMemcpyDeviceToHost);
             checkCUDAError("memcpy into criteria_buffer failed!");
 
             // Scann criteria buffer to generate scanned buffer
-            scan(n, scanned_buffer, criteria_buffer);
-            cudaMemcpy(dev_scanned_buffer, scanned_buffer, sizeof(int) * n, cudaMemcpyHostToDevice);
+            scan(extended_n, scanned_buffer, criteria_buffer);
+            cudaMemcpy(dev_scanned_buffer, scanned_buffer, sizeof(int) * extended_n, cudaMemcpyHostToDevice);
             checkCUDAError("memcpy into dev_scanned_buffer failed!");
 
             // Malloc for compressed output data, compressed buffer
             // size given by last element of scanned criteria
-            cudaMalloc((void**)&dev_odata, sizeof(int) * scanned_buffer[n-1]);
+            cudaMalloc((void**)&dev_odata, sizeof(int) * scanned_buffer[extended_n -1]);
             checkCUDAError("cudaMalloc dev_odata failed!");
 
             // Initialize odata to 0
-            cudaMemset(dev_odata, 0, sizeof(int) * scanned_buffer[n-1]);
+            cudaMemset(dev_odata, 0, sizeof(int) * scanned_buffer[extended_n -1]);
             checkCUDAError("cudaMemset dev_odata initialization failed!");
 
             // Scatter data - insert input data at index obtained
@@ -193,16 +201,20 @@ namespace StreamCompaction {
             kernScatter << <blocksPerGrid, blockSize >> > (n, dev_odata, dev_scanned_buffer, dev_criteria_buffer, dev_idata);
             checkCUDAError("kernMap invocation failed!");
 
+            timer().endGpuTimer();
+
             // Copy calculated buffer to output
-            cudaMemcpy(odata, dev_odata, sizeof(int) * scanned_buffer[n-1], cudaMemcpyDeviceToHost);
+            cudaMemcpy(odata, dev_odata, sizeof(int) * scanned_buffer[extended_n -1], cudaMemcpyDeviceToHost);
             checkCUDAError("odata memcpy failed!");
 
             cudaFree(dev_scanned_buffer);
             cudaFree(dev_criteria_buffer);
             cudaFree(dev_idata);
             cudaFree(dev_odata);
-            timer().endGpuTimer();
-            return scanned_buffer[n-1];
+            /*delete[] criteria_buffer;
+            delete[] scanned_buffer;*/
+
+            return scanned_buffer[extended_n-1];
         }
     }
 }
