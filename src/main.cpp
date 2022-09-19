@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     printDesc("cpu scan, non-power-of-two");
     StreamCompaction::CPU::scan(NPOT, c, a);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
-    printArray(NPOT, b, true);
+    //printArray(NPOT, b, true);
     printCmpResult(NPOT, b, c);
 
     zeroArray(SIZE, c);
@@ -81,19 +81,19 @@ int main(int argc, char* argv[]) {
     //printArray(NPOT, c, true);
     printCmpResult(NPOT, b, c);
 
-    zeroArray(SIZE, c);
-    printDesc("thrust scan, power-of-two");
-    StreamCompaction::Thrust::scan(SIZE, c, a);
-    printElapsedTime(StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
-    //printArray(SIZE, c, true);
-    printCmpResult(SIZE, b, c);
+    //zeroArray(SIZE, c);
+    //printDesc("thrust scan, power-of-two");
+    //StreamCompaction::Thrust::scan(SIZE, c, a);
+    //printElapsedTime(StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    ////printArray(SIZE, c, true);
+    //printCmpResult(SIZE, b, c);
 
-    zeroArray(SIZE, c);
-    printDesc("thrust scan, non-power-of-two");
-    StreamCompaction::Thrust::scan(NPOT, c, a);
-    printElapsedTime(StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
-    //printArray(NPOT, c, true);
-    printCmpResult(NPOT, b, c);
+    //zeroArray(SIZE, c);
+    //printDesc("thrust scan, non-power-of-two");
+    //StreamCompaction::Thrust::scan(NPOT, c, a);
+    //printElapsedTime(StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    ////printArray(NPOT, c, true);
+    //printCmpResult(NPOT, b, c);
 
     printf("\n");
     printf("*****************************\n");
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
     count = StreamCompaction::CPU::compactWithoutScan(SIZE, b, a);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     expectedCount = count;
-    printArray(count, b, true);
+    //printArray(count, b, true);
     printCmpLenResult(count, expectedCount, b, b);
 
     zeroArray(SIZE, c);
@@ -123,14 +123,14 @@ int main(int argc, char* argv[]) {
     count = StreamCompaction::CPU::compactWithoutScan(NPOT, c, a);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     expectedNPOT = count;
-    printArray(count, c, true);
+    //printArray(count, c, true);
     printCmpLenResult(count, expectedNPOT, b, c);
 
     zeroArray(SIZE, c);
     printDesc("cpu compact with scan");
     count = StreamCompaction::CPU::compactWithScan(SIZE, c, a);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
-    printArray(count, c, true);
+    //printArray(count, c, true);
     printCmpLenResult(count, expectedCount, b, c);
 
     zeroArray(SIZE, c);
