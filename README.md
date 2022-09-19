@@ -11,8 +11,7 @@ Tested on AORUS 15P XD laptop with specs:
 - 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz 2.30 GHz  
 - NVIDIA GeForce RTX 3070 Laptop GPU  
 
-### (TODO: Your README)
-
-Include analysis, etc. (Remember, this is public, so don't put
-anything here that you don't want to share with the world.)
-
+I implemented the following parallel algorithms on the GPU and benchmarked them against my own CPU implementations and Thrust on the GPU:  
+- Scan
+- Stream compaction
+- Radix sort

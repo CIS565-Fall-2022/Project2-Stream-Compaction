@@ -13,7 +13,7 @@
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 15; // feel free to change the size of array = 256
+const int SIZE = 1 << 12; // feel free to change the size of array = 256
 const int NPOT = SIZE - 3; // Non-Power-Of-Two = 253
 int *a = new int[SIZE];
 int *b = new int[SIZE];
@@ -152,11 +152,11 @@ int main(int argc, char* argv[]) {
     printf("** RADIX SORT TESTS **\n");
     printf("*****************************\n");
 
-    genArray(SIZE - 1, a, 4);  // Leave a 0 at the end to test that edge case
+    genArray(SIZE - 1, a, 696969);  // Leave a 0 at the end to test that edge case
     a[SIZE - 1] = 0;
     printArray(SIZE, a, true);
 
-    #define RADIX_NUM_BITS ilog2ceil(4)
+    #define RADIX_NUM_BITS ilog2ceil(696969)
 
     zeroArray(SIZE, b);
     printDesc("cpu radix sort, power-of-two");
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
     printDesc("cpu radix sort, non-power-of-two");
     StreamCompaction::CPU::radixSort(NPOT, RADIX_NUM_BITS, b, a);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
-    printArray(SIZE, b, true);
+    printArray(NPOT, b, true);
 
     zeroArray(SIZE, c);
     printDesc("radix sort, non-power of two");
