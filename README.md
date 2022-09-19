@@ -24,6 +24,8 @@ is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 #### GPU: Thrust Scan
 #### GPU: Stream Compaction
 ## Output Example
+
+The following is an example of the output for N = 2^20
 ```
 ****************
 ** SCAN TESTS **
