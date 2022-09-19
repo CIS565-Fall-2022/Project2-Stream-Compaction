@@ -12,8 +12,10 @@ CUDA Stream Compaction
 
 ### Introduction
 
+Stream Compaction
+---
 Stream compaction is an important parallel computing primitive that generates a compact output buffer with selected elements of an input buffer based on some condition. Basically, given an array of elements, we want to create a new array with elements that meet a certain criteria while preserving order.
-The important steps in a stream compaction algorithm are as follows:
+The important steps in a parallel stream compaction algorithm are as follows:
 
 ![](img/stream-compaction.jpg)
 
@@ -27,16 +29,17 @@ The important steps in a stream compaction algorithm are as follows:
     - Result of scan is index into final array
     - Only write an element if temporary array has a 1
 
+Parallel Scanning
+---
+In this project, I implemented stream compaction on CPU and GPU using parallel all-prefix-sum (commonly known as scan) with CUDA and analyzed the performance of each of them. The sequential scan algorithm is poorly suited to GPUs because it does not take advantage of the GPU's data parallelism. The parallel version of scan that utilizes the parallel processors of a GPU to speed up its computation. The parallel scan can be performed in two ways:
 
-In this project, I implemented stream compaction on CPU and GPU using parallel all-prefix-sum (commonly known as scan) with CUDA and analyzed the performance of each of them. The scan can be performed in two ways:
-
-1. Naive scan
-2. Work-efficient scan
-    - Step 1: **Upsweep scan** (Parallel Reduction)
+1. Naive scan - This is an O(nlogn) algorithm which iteratively adds elements with an offset.
+2. Work-efficient scan - This is an O(n) algorithm
+    - Step 1: **Upsweep scan** (Parallel Reduction phase) - In this, we traverse the tree from leaves to root computing partial sums at internal nodes of the tree. At the end of this phase, the root node (the last node in the array) holds the sum of all nodes in the array.
 
         ![](img/upsweep.jpg)
 
-    - Step 2: **Downsweep scan** (Collecting scanned results) - At each level,
+    - Step 2: **Downsweep scan** (Collecting scanned results) - In the down-sweep phase, we traverse back down the tree from the root, using the partial sums from the reduce phase to build the scan in place on the array. At each level,
         - Left child: Copy the parent value
         - Right child: Add the parent value and left child value copying  root value.
 
