@@ -17,10 +17,12 @@ is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 
 ## Implementation and Results
 #### Scan 1. Sequential CPU Scan 
+#### Stream Compact CPU without Scan
+#### Stream Compact CPU with Scan
 #### Scan 2. Naive GPU Scan
 #### Scan 3. Work-Efficient GPU Scan
 #### Scan 4. Thrust Scan
-#### Stream Compaction
+#### Stream Compaction on GPU
 
 ## Performance Analysis
 ## Extra Credit?
