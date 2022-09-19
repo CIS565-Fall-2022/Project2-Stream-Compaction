@@ -144,15 +144,18 @@ blockSize: 256
 * Roughly optimize the block sizes of each of your implementations for minimal
   run time on your GPU.
   * (You shouldn't compare unoptimized implementations to each other!)
+  ![](img/blocksizeTable.png)
   ![](img/blocksize.png)
 
 * Compare all of these GPU Scan implementations (Naive, Work-Efficient, and
   Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
   (with array size on the independent axis).
 #### Scan
+  ![](img/scanTable.png)
   ![](img/scanpow2.png)
   ![](img/scannotpow2.png)
 #### Stream Compaction
+  ![](img/streamTable.png)
   ![](img/streampow2.png)
   ![](img/streamnotpow2.png)
   * To guess at what might be happening inside the Thrust implementation (e.g.
