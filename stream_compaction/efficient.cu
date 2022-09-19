@@ -193,7 +193,7 @@ namespace StreamCompaction {
 
             if (enableTimer) timer().startGpuTimer();
 
-            for (int bit = 0; bit < 32; bit++) {
+            for (int bit = 0; bit < 6; bit++) {
                 dim3 fullBlocksPerGrid((n + BLOCK_SIZE - 1) / BLOCK_SIZE);
                 kernCheckBit <<<fullBlocksPerGrid, BLOCK_SIZE>>> (n, bit, devInp, devTrue, devFalse);
 

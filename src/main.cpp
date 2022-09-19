@@ -13,7 +13,7 @@
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 64; // feel free to change the size of array
+const int SIZE = 4194304; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
@@ -197,14 +197,14 @@ int main(int argc, char* argv[]) {
     //printArray(SIZE, c, true);
     printCmpResult(SIZE, b, c);
 
-    for (int i = 0; i < 64; i++) {
-        std::cout << a[i] << " ";
-    }
-    std::cout << std::endl;
-    for (int i = 0; i < 64; i++) {
-        std::cout << c[i] << " ";
-    }
-    std::cout << std::endl;
+    //for (int i = 0; i < 64; i++) {
+    //    std::cout << a[i] << " ";
+    //}
+    //std::cout << std::endl;
+    //for (int i = 0; i < 64; i++) {
+    //    std::cout << c[i] << " ";
+    //}
+    //std::cout << std::endl;
 
     zeroArray(SIZE, c);
     printDesc("radix sort, non-power-of-two");
@@ -301,9 +301,9 @@ int main(int argc, char* argv[]) {
     //StreamCompaction::Efficient::compact(NPOT, c, a);
     //std::cout << StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation() << std::endl;
 
-    system("pause"); // stop Win32 console from closing on exit
-    delete[] a;
-    delete[] b;
-    delete[] c;
-    delete[] d;
+    //system("pause"); // stop Win32 console from closing on exit
+    //delete[] a;
+    //delete[] b;
+    //delete[] c;
+    //delete[] d;
 }

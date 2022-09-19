@@ -153,11 +153,9 @@ For thrust stream compaction, take a look at [thrust::remove_if](https://thrust.
 
 ## Part 5: Why is My GPU Approach So Slow? (Extra Credit) (+5)
 
-If you implement your efficient scan version following the slides closely, there's a good chance
-that you are getting an "efficient" gpu scan that is actually not that efficient -- it is slower than the cpu approach?
+If you implement your efficient scan version following the slides closely, there's a good chance that you are getting an "efficient" gpu scan that is actually not that efficient -- it is slower than the cpu approach?
 
-Though it is totally acceptable for this assignment,
-In addition to explain the reason of this phenomena, you are encouraged to try to upgrade your work-efficient gpu scan.
+Though it is totally acceptable for this assignment, In addition to explain the reason of this phenomena, you are encouraged to try to upgrade your work-efficient gpu scan.
 
 Thinking about these may lead you to an aha moment:
 

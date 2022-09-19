@@ -24,15 +24,18 @@ CUDA Stream Compaction
   * When input is:
     
     `{41, 17, 34, 0, 19, 24, 28, 8, 12, 14, 5, 45, 31, 27, 11, 41, 45, 42, 27, 36, 41, 4, 2, 3, 42, 32, 21, 16, 18, 45, 47, 26, 21, 38, 19, 12, 17, 49, 35, 44, 3, 11, 22, 33, 23, 14, 41, 11, 3, 18, 47, 44, 12, 7, 37, 9, 23, 41, 29, 28, 16, 35, 40, 0}`,
+    
     the output is:
+    
      `{0, 0, 2, 3, 3, 3, 4, 5, 7, 8, 9, 11, 11, 11, 12, 12, 12, 14, 14, 16, 16, 17, 17, 18, 18, 19, 19, 21, 21, 22, 23, 23, 24, 26, 27, 27, 28, 28, 29, 31, 32, 33, 34, 35, 35, 36, 37, 38, 40, 41, 41, 41, 41, 41, 42, 42, 44, 44, 45, 45, 45, 47, 47, 49}`.
-     I also ran comparison between my radix sort and `thrust::sort` (see [Example Output](#example-output) and [Performance Analysis](#radix-sort)).
+    
+     I also ran the comparison between my radix sort and `thrust::sort` (see [Example Output](#example-output) and [Performance Analysis](#radix-sort)).
 
 ### Example Output
 
 </div>
 
-`SIZE` is $2^{20}$. The test size for non-power-of-two case is `SIZE - 3`. CUDA block size is 128.
+`SIZE` is $2^{20} = 1.05 \times 10 ^ 6$. The test size for non-power-of-two case is `SIZE - 3`. CUDA block size is 128.
 
 ```
 ****************
@@ -116,22 +119,61 @@ CUDA block size is 128.
 
 #### Scan
 
-![Scan Time Impacted by Array Size (Power of Two)](img/Scan Time Impacted by Array Size Power of Two.png)
+When array size is small, the CPU implementation is faster than GPU implementation and the fluctuation in GPU implementation time cost is small. When array size is larger than 2.62e5, both thrust function and my work-efficient implementation outperform my CPU implementation.
+
+![Scan Time Impacted by Array Size Power of Two](img/Scan Time Impacted by Array Size Power of Two.png)
 
 <!-- ![Scan Time Impacted by Array Size (Non Power of Two)](img/Scan Time Impacted by Array Size Non Power of Two.png) -->
 
 #### Compaction
 
-![Compaction Time Impacted by Array Size (Power of Two)](img/Compaction Time Impacted by Array Size Power of Two.png)
+The situation is the same as scan and the turning point is 6.55e4. 
 
-<!-- ![Compaction Time Impacted by Array Size (Non Power of Two)](img/Compaction Time Impacted by Array Size (Non Power of Two).png) -->
+![Compaction Time Impacted by Array Size Power of Two](img/Compaction Time Impacted by Array Size Power of Two.png)
+
+<!-- ![Compaction Time Impacted by Array Size (Non Power of Two)](img/Compaction Time Impacted by Array Size Non Power of Two.png) -->
 
 #### Radix Sort
 
-![Sort Time Impacted by Array Size (Power of Two)](img/Sort Time Impacted by Array Size (Power of Two).png)
+My implementation of radix sort is very slower than thrust function. 
 
-<!-- ![Sort Time Impacted by Array Size (Non Power of Two)](img/Sort Time Impacted by Array Size (Non Power of Two).png) -->
+![Sort Time Impacted by Array Size Power of Two](img/Sort Time Impacted by Array Size Power of Two.png)
 
-## Answers to the Questions
+<!-- ![Sort Time Impacted by Array Size (Non Power of Two)](img/Sort Time Impacted by Array Size Non Power of Two.png) -->
 
-## Some Thoughts
+### Performance Impacted by CUDA Block Size
+
+`SIZE` is $2^{20} = 1.05 \times 10 ^ 6$.
+
+#### Scan
+
+![Scan Time Impacted by CUDA Block Size Power of Two](img/Scan Time Impacted by CUDA Block Size Power of Two.png)
+
+#### Compaction
+
+![Compaction Time Impacted by CUDA Block Size Power of Two](img/Compaction Time Impacted by CUDA Block Size Power of Two.png)
+
+#### Radix Sort
+
+![Radix Sort Time Impacted by CUDA Block Size Power of Two](img/Radix Sort Impacted by CUDA Block Size Power of Two.png)
+
+## Why is My GPU Approach So Slow?
+
+The optimization I made to the the work-efficient scan is to avoid Warp Partitioning by compressing the threads:
+
+![Threads Allocation of the Down Sweep Function](img/Threads Allocation of the Down Sweep Function.png)
+
+Due to time constraints, I haven't implemeted the shared memory part. I guess this is where the thurst function surpasses mine.
+
+My radix sort (6 bit)'s time cost is about 10 times as much as my work-efficient scan's. This matches my instinct because radix sort will repeate the scan function in each sort. However, I noticed that the time cost of thrust sort function is not 0 times as much as its scan function. For instance, when array size is 65536, the thrust scan costs 0.04ms while sort costs 0.09ms. This drives me to think if there is more optimizations I can do on radix sort.
+
+* Roughly optimize the block sizes of each of your implementations for minimal
+  run time on your GPU.
+  
+  * See [Performance Analysis](#performance-impacted-by-cuda-block-size).
+
+* 
+
+## Some mistakes I made
+
+* At first I put the for loop inside the kernel functions and used a `__syncthreads()` at the begining of each iteration. However, since `__syncthreads()` is block-wise, my result went wrong when the array size exceeded my block size. Then I put the for loop outside the kernel functions.
