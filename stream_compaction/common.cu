@@ -1,4 +1,5 @@
 #include "common.h"
+#include <device_launch_parameters.h>
 
 void checkCUDAErrorFn(const char *msg, const char *file, int line) {
     cudaError_t err = cudaGetLastError();
@@ -24,6 +25,12 @@ namespace StreamCompaction {
          */
         __global__ void kernMapToBoolean(int n, int *bools, const int *idata) {
             // TODO
+            int index = blockIdx.x * blockDim.x + threadIdx.x;
+            if (index >= n) {
+                return;
+            }
+
+            bools[index] = idata[index] == 0 ? 0 : 1;
         }
 
         /**
@@ -33,6 +40,14 @@ namespace StreamCompaction {
         __global__ void kernScatter(int n, int *odata,
                 const int *idata, const int *bools, const int *indices) {
             // TODO
+            int index = blockIdx.x * blockDim.x + threadIdx.x;
+            if (index >= n) {
+                return;
+            }
+
+            if (bools[index] == 1) {
+                odata[indices[index]] = idata[index];
+            }
         }
 
     }
