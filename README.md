@@ -110,6 +110,19 @@ Based on this image, it appears as if CPU takes lesser time than the GPU paralle
 1. In the current implementation, number of threads hosted in each iteration of upsweep and downsweep is the same. We know that in each iteration, many threads are idle and are simply returning without performing any meaningful operation.
 2. Even if some threads in a warp are done with execution with an early exit, they have to wait for other threads in the warp. When this happens due to conditional stalls, it is called warp divergence. This can be avoided by warp partitioning, such that threads which are likely to terminate together are grouped together in a single warp.
 
+I tried to improve the upsweep by tring to make better thread divisions to optimize parallel reduction process.
+![](img/upsweep_optimization.jpg)
+
+I tried to take strides in the reverse order, such as ... 4, 2, 1, instead of 1, 2, 4 ... by setting the offset as follows:
+```int offsetd = pow(2, maxDepth - d - 1);```
+And then inside upsweep, instead of using expensive modulo operator, using:
+```
+if (k < offsetd) {
+   data[k] += data[k + offsetd];
+}
+```
+However the implementation is still buggy, did not get time to implement it correctly and test the results.
+
 ### Stream compaction
 
 Stream compaction shows a similar trend when compared to scanning. The following graph does not cover stream compaction tests using naive scan method. The behavior with respect to block size is also similar as observed in scanning, described above. 
