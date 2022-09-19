@@ -10,8 +10,13 @@
 #include <chrono>
 #include <stdexcept>
 
+#include <iostream>
+
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
+
+#define blockSize 512
+#define TILE_WIDTH 128
 
 /**
  * Check for CUDA errors; print and exit if there was a problem.
@@ -36,6 +41,7 @@ namespace StreamCompaction {
 
         __global__ void kernScatter(int n, int *odata,
                 const int *idata, const int *bools, const int *indices);
+
 
         /**
         * This class is used for timing the performance
