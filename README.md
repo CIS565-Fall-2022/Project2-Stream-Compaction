@@ -171,8 +171,17 @@ blockSize: 256
   
  #### Stream Compaction
   ![](img/streamTable.png)
+  
+  _Table. 3 Stream Compaction Algorithm: Number of Elements vs. Results_
+  
   ![](img/streampow2.png)
+  
+  _Fig. 4 Stream Algorithm: Number of Elements vs. Results Power of 2_
+  
   ![](img/streamnotpow2.png)
+  
+  _Fig. 5 Steram Algorithm: Number of Elements vs. Results NON Power of 2_
+  
   * To guess at what might be happening inside the Thrust implementation (e.g.
     allocation, memory copy), take a look at the Nsight timeline for its
     execution. Your analysis here doesn't have to be detailed, since you aren't
