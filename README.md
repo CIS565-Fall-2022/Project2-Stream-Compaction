@@ -83,7 +83,7 @@ _Figure 2: Thrust Analysis with NSight_
   As Figure 2 shows, Thrust has the following improvements:
   * __Memory Allocation__: In the function `DeviceScanKernel`, there are 7696 bytes of Static Shared Memory. Using the shared memory can greatly reduce the memory access time.
 
-  * __Memory Copy Method__: The memory copy method used in Thrust is `cudaMemcpyAsync`. Unlike `cudaMemcpy` will block the host thread, `cudaMemcpyAsync` is non-blocking on the host. Therefore, host can transfer data concurrently, and thus is faster than `cudaMemcpy`.
+  * __Memory Copy Method__: The memory copy method used in Thrust is `cudaMemcpyAsync`. Unlike `cudaMemcpy` will block the host thread, `cudaMemcpyAsync` is non-blocking on the host. Therefore, host can transfer data concurrently, and thus is faster than `cudaMemcpy`. 
 
 ## Sample Output
 
