@@ -156,7 +156,7 @@ blockSize: 256
 * Compare all of these GPU Scan implementations (Naive, Work-Efficient, and
   Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
   (with array size on the independent axis).
-#### Scan
+ #### Scan
   ![](img/scanTable.png)
   
   _Table. 2 Scan Algorithm: Number of Elements vs. Results_
@@ -169,7 +169,7 @@ blockSize: 256
   
   _Fig. 3 Scan Algorithm: Number of Elements vs. Results NON Power of 2_
   
-#### Stream Compaction
+ #### Stream Compaction
   ![](img/streamTable.png)
   ![](img/streampow2.png)
   ![](img/streamnotpow2.png)
