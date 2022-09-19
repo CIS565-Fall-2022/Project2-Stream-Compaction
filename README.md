@@ -146,45 +146,25 @@ end
 
 #### Work-Efficient CUDA Implementation
 
-To make the parallel approach more efficient, a different scheme is used. A problem with the previous method is
-that 
+To make the parallel approach more efficient, a different scheme is used. By treating the array
+as a balanced binary tree, the new approach seperates out the algorithm into two steps: the
+up-sweep and the down-sweep. The up-sweep is just a parallel reduction, which just stores the
+sum of an array in the last index. A picture of the up-sweep on an example array is shown in Figure
+1 below:
 
-```
-function scan_gpu(input_array, output_array, number_of_elements):
+![](images/figures/scan_upsweep.png)
+*Figure 1: Demonstration of efficient scan up-sweep operation.*
 
-    let o_array_gpu_0 = input_array (this is an array on the GPU)
-    let o_array_gpu_1 = o_array_gpu_0 (this is an array on the GPU)
+After the up-sweep, the element at the last index (the sum of the array) is zeroed out, and then
+the down-sweep occurs, as seen in Figure 2 below:
 
-    for all k in parallel:
-        shift_array_right(k, o_array_gpu_1, o_array_gpu_0)
-
-    for d in range [1, ceil( log_2(n) ) ]:
-        for all k in parallel:
-            naive_scan_iteration(k, o_array_gpu_0, o_array_gpu_1, 2^d)
-
-end
-
-kernel shift_array_right(thread_ID, input_array, output_array):
-    if thread_ID_ == 0 then:
-        output_array[0] = 0
-    else:
-        output_array[thread_ID] = input_array[thread_ID - 1]
-
-end
-
-kernel naive_scan_iteration(thread_ID, input_array, output_array, offset):
-    if (thread_ID < offset) then:
-        output_array[thread_ID] = input_array[thread_ID]
-    else:
-        output_array[thread_ID] = input_array[thread_ID - offset] + input_array[thread_ID]
-    
-end
-```
+![](images/figures/scan_downsweep.png)
+*Figure 2: Demonstration of efficient scan down-sweep operation.*
 
 #### Thrust Implementation
 
 For the thrust implementation, the input and output arrays are simply converted to thrust library
-device vectors and the thrust "exclusive_scan()" function is called with them. The thrust device vector
+```device_vector```s and the thrust ```exclusive_scan()``` function is called with them. The thrust device vector
 for the output data is then transferred back to the host array.
 
 ### Stream Compaction
@@ -231,19 +211,65 @@ on the scan result to build the final output array. The psuedocode is below:
 function stream_compact_cpu_scan(input_array, output_array, number_of_elements):
 
     let num_compacted_elements = 0
-    for i in range [0, number_of_elements):
-        if input_array[i] != 0 then:
-            output_array[num_compacted_elements] = input_array[i]
-            num_compacted_elements = num_compacted_elements + 1
 
-    return num_elements
+    // GENERATE CONDITION VALUES
+
+    for i in range [0, number_of_elements):
+        if input_array[i] == 0 then:
+            output_array[i] = 0
+        else:
+            output_array[i] = 1
+
+    // SCAN
+
+    let temp_array[number_of_elements]
+    temp_array[0] = 0;
+
+    for i in range [1, number_of_elements):
+        temp_array[i] = temp_array[i - 1] + output_array[i - 1]
+
+    // SCATTER
+
+    for i in range [0, number_of_elements):
+        if output_array[i] == 1 then:
+            output_array[temp_array[i]] = input_array[i];
+            ++num_compacted_elements;
+        }
+
+    return num_compacted_elements
 
 end
 ```
 
-#### Extra Credit
+#### Efficient Parallel Implementation
 
-###### Not implemented :(
+The GPU version of this algorithm directly models the CPU with scan version, except this time the 3
+steps, the condition check, the scan, and the scatter, are all performed on the GPU. The scan
+function is the same as for the efficient parallel scan from the previous section, while the pseudocode
+for the other two functions are shown below:
+
+```
+
+kernel map_to_boolean(thread_ID, input_array, output_array):
+
+    if input_array[thread_ID] == 0 then:
+        output_array[thread_ID] = 0
+    else:
+        output_array[thread_ID] = 1
+
+end
+
+kernel scatter(thread_ID, input_array, output_array, boolean_array, indices_array):
+
+    if boolean_array[thread_ID] == 1 then:
+        output_data[indices_array[thread_ID]] = input_array[thread_ID]
+    
+end
+```
+
+### Extra Credit
+
+I implemented the CPU radix sort but did not end up finishing my GPU version.
 
 ## Testing Strategy
 
@@ -252,10 +278,10 @@ end
 The first step in generating results was to figure out the optimal block size for the 
 different GPU implementations of the scan and stream compaction algorithms. Data from each
 implementation was collected with a constant input array size of 2^25 (33,554,432) for
-powers of two block sizes from 32 to 1024, and the results are shown in Figure XXX below.
+powers of two block sizes from 32 to 1024, and the results are shown in Figure 3 below.
 
 ![](images/figures/graph_blocksize.png)
-*Figure XXX: Effect of CUDA block size on runtime of scan and stream compaction.*
+*Figure 3: Effect of CUDA block size on runtime of scan and stream compaction.*
 
 As seen from the graph, for both exclusive scan and stream compaction, the optimal block size is
 around 128-256. Below these values, the runtime shoots up exponentially with decreasing block size,
@@ -265,13 +291,17 @@ Similarly, the performance also increases with increasing block size past 256, a
 algorithms save the naive scan. This growth appears roughly linear for the other algorithms,
 while the runtime stays roughly constant for the naive scan.
 
+To be more specific, the block size with the lowest runtime and thus the **optimal block size** of
+the **naive parallel scan is 128**, and for **all others is 256**. These values will thus be used to test
+and retrieve results for the forthcoming topics of discussion.
+
 In the **Performance Analysis** section below, all data is from the ***Not Power of 2 Array Size*** tests.
 This is because this is the most general test case for analyzing these algorithms, as most often an
 array will not fit neatly into the CUDA blocks. Additionally, there is negligable difference in the
-runtimes between the power of 2 and non-power of 2 tests. This can be seen in Figure XXX below:
+runtimes between the power of 2 and non-power of 2 tests. This can be seen in Figure 4 below:
 
 ![](images/figures/graph_pow2.png)
-*Figure XXX: Demonstrating runtime comparison between tests on arrays with power of 2 size and not.*
+*Figure 4: Demonstrating runtime comparison between tests on arrays with power of 2 size and not.*
 
 ## Performance Analysis
 
@@ -279,7 +309,7 @@ runtimes between the power of 2 and non-power of 2 tests. This can be seen in Fi
 
 ### Scan
 
-As can be seen by Figure XXX below, the runtime of the scan algorithm increases roughly linearly for each of the
+As can be seen by Figure 5 below, the runtime of the scan algorithm increases roughly linearly for each of the
 different implementations, but the slope of this increase is different for each one. 
 
 The thrust version was by far the fastest in most cases and had the smallest slope. 
@@ -316,12 +346,13 @@ at least double the memory of the efficient version, along with the memory laten
 that much additional memory usage.
 
 ![](images/figures/graph_scan.png)
-*Figure XXX: Effect of input array size on runtime of scan algorithm.*
+*Figure 5 Effect of input array size on runtime of scan algorithm.*
 
 ##### Thrust NSight Analysis
 
 Taking a little deeper look into the Thrust version of Exclusive Scan, the NSight profiling timeline
-reveals that it consists of at least 1 ```cudaEventCreate``` API call, as well as 3 ```cudaMemcpyAsync```
+seen in Figures 6 and 7
+reveal that it consists of at least 1 ```cudaEventCreate``` API call, as well as 3 ```cudaMemcpyAsync```
 calls. Two of these ```cudaMemcpyAsync``` calls are performed as part of the casting the input and output
 arrays from C style arrays to Thrust ```device_vector```,  and the third is from retrieving the output
 data from the output ```device_vector``` and placing it into the output C style array. In between
@@ -331,14 +362,14 @@ of the Thrust Exclusive Scan function is, where it allocates device memory, oper
 frees it at the end.
 
 ![](images/results/thrust_nsight_timeline_memcpy.png)
-*Figure XXX: NSight Timeline of Thrust Exclusive Scan operation highlighting cudaMemcpyAsync.*
+*Figure 6: NSight Timeline of Thrust Exclusive Scan operation highlighting cudaMemcpyAsync.*
 
 ![](images/results/thrust_nsight_timeline_streamsync.png)
-*Figure XXX: NSight Timeline of Thrust Exclusive Scan operation highlighting cudaStreamSynchronize.*
+*Figure 7: NSight Timeline of Thrust Exclusive Scan operation highlighting cudaStreamSynchronize.*
 
 ### Stream Compaction
 
-Likewise, Figure XXX below shows the runtime of the stream compaction algorithm also increases linearly
+Likewise, Figure 8 below shows the runtime of the stream compaction algorithm also increases linearly
 for each of the implementations, and again the slope of this increase is the only thing that changes.
 However, unlike with scan, here the GPU stream compaction is significantly faster than either of the
 CPU implementations for arrays with very large amounts of elements (>2000000). This is because
@@ -351,12 +382,9 @@ these conditionals, the GPU implementation of stream compaction has much faster 
 in the millions.
 
 ![](images/figures/graph_compact.png)
-*Figure XXX: Effect of cuda kernel block size on average fps for uniform grid-based simulation*
+*Figure 8: Effect of input array size on runtime of stream compaction algorithm*
 
 ### Bloopers
 
-![](images/bloopers/blooper_graydeath.PNG)
-*Blooper caused by accessing wrong index values for boid position and velocity arrays*
-
-**For more bloopers, see images/bloopers.**
+No bloopers for this assignment!
 

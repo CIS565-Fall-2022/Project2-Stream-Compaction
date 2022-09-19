@@ -319,6 +319,10 @@ namespace StreamCompaction {
             return num_elements;
         }
 
+        //
+        // RADIX SORT NOT FULLY IMPLEMENTED
+        //
+
         /**
          * Performs radix sort idata, storing the result into odata.
          *

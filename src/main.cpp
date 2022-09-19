@@ -13,7 +13,7 @@
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 26; // feel free to change the size of array
+const int SIZE = 1 << 20; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int* a = new int[SIZE];
 int* b = new int[SIZE];
@@ -21,9 +21,6 @@ int* c = new int[SIZE];
 
 int main(int argc, char* argv[]) {
     // Scan tests
-
-    std::cout << "number of elements in input array for power of 2 tests = " << SIZE << std::endl;
-    std::cout << "number of elements in input array for non-power of 2 tests = " << NPOT << std::endl;
 
     printf("\n");
     printf("****************\n");
@@ -33,7 +30,7 @@ int main(int argc, char* argv[]) {
     genArray(SIZE - 1, a, 50);  // Leave a 0 at the end to test that edge case
     a[SIZE - 1] = 0;
     printArray(SIZE, a, true);
-    
+
     // initialize b using StreamCompaction::CPU::scan you implement
     // We use b for further comparison. Make sure your StreamCompaction::CPU::scan is correct.
     // At first all cases passed because b && c are all zeroes.
@@ -42,7 +39,7 @@ int main(int argc, char* argv[]) {
     StreamCompaction::CPU::scan(SIZE, b, a);
     printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     printArray(SIZE, b, true);
-    /*
+
     zeroArray(SIZE, c);
     printDesc("cpu scan, non-power-of-two");
     StreamCompaction::CPU::scan(NPOT, c, a);
@@ -57,11 +54,11 @@ int main(int argc, char* argv[]) {
     printArray(SIZE, c, true);
     printCmpResult(SIZE, b, c);
 
-     For bug-finding only: Array of 1s to help find bugs in stream compaction or scan
+    /* For bug-finding only: Array of 1s to help find bugs in stream compaction or scan
     onesArray(SIZE, c);
     printDesc("1s array for finding bugs");
     StreamCompaction::Naive::scan(SIZE, c, a);
-    printArray(SIZE, c, true); 
+    printArray(SIZE, c, true); */
 
     zeroArray(SIZE, c);
     printDesc("naive scan, non-power-of-two");
@@ -85,47 +82,19 @@ int main(int argc, char* argv[]) {
     printCmpResult(NPOT, b, c);
 
     zeroArray(SIZE, c);
-    printDesc("work-efficient optimized scan, power-of-two");
-    StreamCompaction::Efficient::scan_optimized(SIZE, c, a);
-    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
-    //printArray(SIZE, c, true);
-    printCmpResult(SIZE, b, c);
-
-    zeroArray(SIZE, c);
-    printDesc("work-efficient optimized scan, non-power-of-two");
-    StreamCompaction::Efficient::scan_optimized(NPOT, c, a);
-    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
-    //printArray(NPOT, c, true);
-    printCmpResult(NPOT, b, c);
-
-    zeroArray(SIZE, c);
-    printDesc("work-efficient shared memory scan, power-of-two");
-    StreamCompaction::Efficient::scan_sharedMem(SIZE, c, a);
-    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
-    //printArray(SIZE, c, true);
-    printCmpResult(SIZE, b, c);
-
-    zeroArray(SIZE, c);
-    printDesc("work-efficient shared memory scan, non-power-of-two");
-    StreamCompaction::Efficient::scan_sharedMem(NPOT, c, a);
-    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
-    //printArray(NPOT, c, true);
-    printCmpResult(NPOT, b, c);*/
-
-    zeroArray(SIZE, c);
     printDesc("thrust scan, power-of-two");
     StreamCompaction::Thrust::scan(SIZE, c, a);
     printElapsedTime(StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printArray(SIZE, c, true);
     printCmpResult(SIZE, b, c);
-    /*
+
     zeroArray(SIZE, c);
     printDesc("thrust scan, non-power-of-two");
     StreamCompaction::Thrust::scan(NPOT, c, a);
     printElapsedTime(StreamCompaction::Thrust::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printArray(NPOT, c, true);
     printCmpResult(NPOT, b, c);
-    
+
     printf("\n");
     printf("*****************************\n");
     printf("** STREAM COMPACTION TESTS **\n");
@@ -178,8 +147,9 @@ int main(int argc, char* argv[]) {
     printArray(count, c, true);
     printCmpLenResult(count, expectedNPOT, b, c);
 
-    
 
+    // RADIX SORT ON GPU NOT IMPLEMENTED
+    /*
     printf("\n");
     printf("*****************************\n");
     printf("** RADIX SORT TESTS **\n");
