@@ -20,7 +20,7 @@
 * CPU Compaction with/without Scan
 * GPU Naive Scan
 * GPU Work-efficient Scan
-* GPU Compatction with Scan
+* GPU Compaction with Scan
 * Thrust Scan/Compaction
 * GPU Scan Optimization (Extra Credit)
 * Radix Sort (Extra Credit)
@@ -28,6 +28,7 @@
 <a name="perf_anal"/>
 
 # Performance Analysis 
+The data is generated in Release mode
 ## Scan 
 ![Scan power-of-two](img/scan-pot.png)   
 
