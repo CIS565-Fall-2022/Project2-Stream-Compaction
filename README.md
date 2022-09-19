@@ -116,13 +116,13 @@ CUDA block size is 128.
 
 #### Scan
 
-![Scan Time Impacted by Array Size (Power of Two)](img/Scan Time Impacted by Array Size (Power of Two).png)
+![Scan Time Impacted by Array Size (Power of Two)](img/Scan Time Impacted by Array Size Power of Two.png)
 
-<!-- ![Scan Time Impacted by Array Size (Non Power of Two)](img/Scan Time Impacted by Array Size (Non Power of Two).png) -->
+<!-- ![Scan Time Impacted by Array Size (Non Power of Two)](img/Scan Time Impacted by Array Size Non Power of Two.png) -->
 
 #### Compaction
 
-![Compaction Time Impacted by Array Size (Power of Two)](img/Compaction Time Impacted by Array Size (Power of Two).png)
+![Compaction Time Impacted by Array Size (Power of Two)](img/Compaction Time Impacted by Array Size Power of Two.png)
 
 <!-- ![Compaction Time Impacted by Array Size (Non Power of Two)](img/Compaction Time Impacted by Array Size (Non Power of Two).png) -->
 
