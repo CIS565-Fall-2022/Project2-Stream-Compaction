@@ -29,6 +29,7 @@ is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 * Roughly optimize the block sizes of each of your implementations for minimal
   run time on your GPU.
   * (You shouldn't compare unoptimized implementations to each other!)
+  ![](img/blocksize.png)
 
 * Compare all of these GPU Scan implementations (Naive, Work-Efficient, and
   Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
