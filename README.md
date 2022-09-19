@@ -149,8 +149,10 @@ blockSize: 256
 * Compare all of these GPU Scan implementations (Naive, Work-Efficient, and
   Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
   (with array size on the independent axis).
+#### Scan
   ![](img/scanpow2.png)
   ![](img/scannotpow2.png)
+#### Stream Compaction
   ![](img/streampow2.png)
   ![](img/streamnotpow2.png)
   * To guess at what might be happening inside the Thrust implementation (e.g.
