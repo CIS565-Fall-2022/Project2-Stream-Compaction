@@ -48,6 +48,9 @@ In this project, I implemented stream compaction on CPU and GPU using parallel a
 
 ### Performance Analysis
 
+For different block sizes ranging from 32 to 1024, the most optimized performance was observed with a block size of 128 or 256. The following chart shows test results with block size of 256.
+
+![](img/parallel_scan_performance_analysis.png)
 
 ### References
 
