@@ -1,6 +1,5 @@
 #include <cstdio>
 #include "cpu.h"
-
 #include "common.h"
 
 namespace StreamCompaction {
@@ -19,7 +18,12 @@ namespace StreamCompaction {
          */
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
+            int identity = 0;
+            odata[0] = identity;    // exclusive scan
+            for (int i = 1; i < n; ++i)
+            {
+                odata[i] = odata[i - 1] + idata[i - 1];
+            }
             timer().endCpuTimer();
         }
 
@@ -30,9 +34,17 @@ namespace StreamCompaction {
          */
         int compactWithoutScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
+            int oIndex = 0;
+            for (int i = 0; i < n; ++i)
+            {
+                if (idata[i] != 0)
+                {
+                    odata[oIndex] = idata[i];
+                    oIndex++; 
+                }
+            }
             timer().endCpuTimer();
-            return -1;
+            return oIndex;  // the number of elements remaining
         }
 
         /**
@@ -41,10 +53,45 @@ namespace StreamCompaction {
          * @returns the number of elements remaining after compaction.
          */
         int compactWithScan(int n, int *odata, const int *idata) {
+            int* keepData = new int[n];
+            // Step 1 and Step 2
             timer().startCpuTimer();
-            // TODO
+            int identity = 0;
+            odata[0] = identity;    // exclusive scan
+
+            for (int i = 0; i < n; ++i)
+            {
+                    keepData[i] = (idata[i] == 0)? 0 : 1;
+                    if (i > 0)
+                    odata[i] = odata[i - 1] + keepData[i - 1];
+
+            }
+
+            // Step 3
+            int oIndex = 0;
+            for (int i = 0; i < n; ++i)
+            {
+                if (keepData[i])
+                {
+                    odata[oIndex] = idata[i];
+                    oIndex++;
+                }
+            }
             timer().endCpuTimer();
-            return -1;
+            delete[] keepData;
+            return oIndex;
         }
+
+        /*
+        * CPU sort using std::sort
+        */
+        void sort(int n, int* odata, const int* idata)
+        {
+            memcpy(odata, idata, n * sizeof(int));
+            timer().startCpuTimer();
+            std:: sort(odata, odata + n);
+            timer().endCpuTimer();
+        }
+
     }
 }
