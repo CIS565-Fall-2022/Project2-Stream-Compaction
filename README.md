@@ -143,7 +143,7 @@ blockSize: 256
 
 * Roughly optimize the block sizes of each of your implementations for minimal
   run time on your GPU.
-  * (You shouldn't compare unoptimized implementations to each other!)
+  * In the following performance analysis, I used N = 2^25 array size
   
   ![](img/blocksizeTable.png)
   
