@@ -7,7 +7,7 @@ CUDA Stream Compaction
   * [LinkedIn](https://www.linkedin.com/in/guanlin-huang-4406668502/), [personal website](virulentkid.github.io/personal_web/index.html)
 * Tested on: Windows 11, i9-10900K @ 4.9GHz 32GB, RTX3080 10GB; Compute Capability: 8.6
 
-###Project Description
+### Project Description
 ```
 Stream compaction is an algorithm to produce a smaller output array that contains the indices of the desired elements from the input array;
 such an algorithm will come in handy in ray path tracing of computer graphics or huge sparse matrix compression in AI.
@@ -19,7 +19,7 @@ Here is an visual representation of that algorithm:
 The following perfomance analysis of scan and stream compaction will show the benefit of using GPU comparing to CPU only.
 
 
-###Performance Analysis
+### Performance Analysis
 ```
 !["Scan"](img/scan.png)
 !["Stream Compaction"](img/comp.png)
