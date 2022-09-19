@@ -42,14 +42,27 @@ wait for each level to finish its read/write before moving on to the next level.
 
 #### GPU: Work-Efficient GPU Scan
 
-A work efficient GPU scan uses only one array and can do the operation in place. This array is treated as a balanced
-binary tree which can retain some of the original values to help us recover the entire scan array. 
+A work efficient exclusive GPU scan uses only one array and can do the operation in place. This array is treated as a balanced
+binary tree, where the left child always retains its original value from the read array. This will allow us to 
+retain some of the original values to help us recover the entire scan array after we do a down sweep.
 
 1. Up Sweep
-2. Down Sweep
+For each consecutive pair of integers, add them and store the sum in the right-side partner's slot, overwriting it.
+Do this until you only have two partners to add with one resulting sum, which will be written to the last array slot.
+Now your array should have alternating "original" and "new" values. 
+
+3. Down Sweep
+Set the last integer in the array to 0. This is your root node. Starting from the root, set a node's left child to itself, 
+and sets its right child's value to a sum of itself and the previous left child's value (i.e, the sibling node's value).
 
 #### GPU: Thrust Scan
+
+This scan is fairly simple to implement, as thrust::scan is a built-in function in the Thrust library.
+
 #### GPU: Stream Compaction
+
+On the GPU, stream compaction consists of the following steps: 
+1. 
 ## Output Example
 
 The following is an example of the output for N = 2^20
