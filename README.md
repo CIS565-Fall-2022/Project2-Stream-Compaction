@@ -126,6 +126,7 @@ However the implementation is still buggy, did not get time to implement it corr
 ### Stream compaction
 
 Stream compaction shows a similar trend when compared to scanning. The following graph does not cover stream compaction tests using naive scan method. The behavior with respect to block size is also similar as observed in scanning, described above. 
+
 ![](img/stream_compaction_analysis.png)
 
 References
