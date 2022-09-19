@@ -32,7 +32,7 @@ Performance was pretty similar for most block sizes, but started to suffer for b
 
 ![](img/Performance%20of%20Scan%20Implementations%20on%20Different%20Array%20Sizes.svg)
 
-| Array size | CPU (m/s)    | Naive (m/s)  | Work efficient (m/s) | Thrust (m/s)  |
+| Array size | CPU (ms)    | Naive (ms)  | Work efficient (ms) | Thrust (ms)  |
 |------------|---------|----------|----------------|----------|
 | 65536      | 0.1023  | 0.158464 | 0.266592       | 0.045472 |
 | 262144     | 0.399   | 0.2616   | 0.33888        | 0.194144 |
