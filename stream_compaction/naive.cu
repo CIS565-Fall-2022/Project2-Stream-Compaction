@@ -18,7 +18,7 @@ namespace StreamCompaction {
                 return;
             }
 
-            int pow2dminus1 = std::pow(2, d - 1);
+            int pow2dminus1 = 1 << d - 1;
             if (index >= pow2dminus1) {
                 odata[index] = idata[index] + idata[index - pow2dminus1];
             }
@@ -26,6 +26,7 @@ namespace StreamCompaction {
                 odata[index] = idata[index];
             }
         }
+        // Part 5
         //__global__ void scan(float* g_odata, float* g_idata, int n) {
         //    extern __shared__ float temp[]; // allocated on invocation    
         //    int thid = threadIdx.x;
@@ -44,6 +45,7 @@ namespace StreamCompaction {
         //    }
         //    g_odata[thid] = temp[pout * n + thid]; // write output 
         //} 
+
 
         /**
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
@@ -68,7 +70,9 @@ namespace StreamCompaction {
             timer().endGpuTimer();
 
             // send the data to host 
-            cudaMemcpy(odata, dev_in, sizeof(int) * (n), cudaMemcpyDeviceToHost);
+            // shift the output by 1 for exclusive scanc
+            odata[0] = 0;
+            cudaMemcpy(odata + 1, dev_in, sizeof(int) * (n - 1), cudaMemcpyDeviceToHost);
             cudaFree(dev_in);
             cudaFree(dev_out);
         }

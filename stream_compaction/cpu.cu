@@ -20,13 +20,14 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
-            odata[0] = idata[0];
-            for (size_t i = 1; i < n; i++) {
-                odata[i] = odata[i - 1] + idata[i];
+            odata[0] = 0;
+            odata[1] = idata[0];
+            for (size_t i = 2; i < n; i++) {
+                odata[i] = odata[i - 1] + idata[i - 1];
             }
             timer().endCpuTimer();
         }
-        void scanNoTimer(int n, int* odata, const int* idata) {
+        void scanInclusive(int n, int* odata, const int* idata) {
             // TODO
             odata[0] = idata[0];
             for (size_t i = 1; i < n; i++) {
@@ -48,7 +49,6 @@ namespace StreamCompaction {
                     j++;
                 }
             }
-
             timer().endCpuTimer();
             return j;
         }
@@ -67,7 +67,7 @@ namespace StreamCompaction {
             {
                 boolFlag[i] = idata[i] == 0 ? 0 : 1;
             }
-            scanNoTimer(n, scanRes, boolFlag); // odata: scan result
+            scanInclusive(n, scanRes, boolFlag); // odata: scan result
             
 
             for (size_t i = 0; i < n; i++) {
