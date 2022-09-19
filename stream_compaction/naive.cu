@@ -3,8 +3,6 @@
 #include "common.h"
 #include "naive.h"
 
-#define blockSize 128
-
 namespace StreamCompaction {
     namespace Naive {
         using StreamCompaction::Common::PerformanceTimer;
@@ -32,6 +30,8 @@ namespace StreamCompaction {
          * Performs prefix-sum (aka scan) on idata, storing the result into odata.
          */
         void scan(int n, int *odata, const int *idata) {
+            int blockSize = 128;
+
             int* dev_idata;
             int* dev_odata;
 
