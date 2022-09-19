@@ -20,9 +20,20 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+            odata[0] = 0;
+            odata[1] = idata[0];
+            for (size_t i = 2; i < n; i++) {
+                odata[i] = odata[i - 1] + idata[i - 1];
+            }
             timer().endCpuTimer();
         }
-
+        void scanInclusive(int n, int* odata, const int* idata) {
+            // TODO
+            odata[0] = idata[0];
+            for (size_t i = 1; i < n; i++) {
+                odata[i] = odata[i - 1] + idata[i];
+            }
+        }
         /**
          * CPU stream compaction without using the scan function.
          *
@@ -31,8 +42,15 @@ namespace StreamCompaction {
         int compactWithoutScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+            int j = 0;
+            for (size_t i = 0; i < n; i++) {
+                if (idata[i] != 0) {
+                    odata[j] = idata[i];
+                    j++;
+                }
+            }
             timer().endCpuTimer();
-            return -1;
+            return j;
         }
 
         /**
@@ -41,10 +59,25 @@ namespace StreamCompaction {
          * @returns the number of elements remaining after compaction.
          */
         int compactWithScan(int n, int *odata, const int *idata) {
+            int* boolFlag = new int[n]; // temporary array 
+            int* scanRes = new int[n];
             timer().startCpuTimer();
             // TODO
+            for (size_t i = 0; i < n; i++)
+            {
+                boolFlag[i] = idata[i] == 0 ? 0 : 1;
+            }
+            scanInclusive(n, scanRes, boolFlag); // odata: scan result
+            
+
+            for (size_t i = 0; i < n; i++) {
+                if (boolFlag[i] == 0) continue;
+                odata[scanRes[i] - 1] = idata[i];
+            }
+
             timer().endCpuTimer();
-            return -1;
+            return scanRes[n - 1];
+
         }
     }
 }

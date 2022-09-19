@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <ctime>
-
+#include <vector>
 template<typename T>
 int cmpArrays(int n, T *a, T *b) {
     for (int i = 0; i < n; i++) {
@@ -68,9 +68,10 @@ void printArray(int n, int *a, bool abridged = false) {
     }
     printf("]\n");
 }
-
-template<typename T>
-void printElapsedTime(T time, std::string note = "")
+//
+//template<typename T, typename A>
+void printElapsedTime(float time, std::vector<float>& timeArray, std::string note = "")
 {
     std::cout << "   elapsed time: " << time << "ms    " << note << std::endl;
+    timeArray.push_back(time);
 }
