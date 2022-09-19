@@ -102,3 +102,4 @@ That's why it is way more faster.
 ## String Compaction
 
 ![Compact Chart](img/Analysis%202.JPG)
+In this chart, the lower the attribute is, the better its performance.
