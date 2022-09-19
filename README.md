@@ -129,7 +129,7 @@ When array size is small, the CPU implementation is faster than GPU implementati
 
 The situation is the same as scan and the turning point is 6.55e4. 
 
-![Compaction Time Impacted by Array Size Power of Two](img/Compaction Time Impacted by Array Size Power of Two.png)
+![Compaction Time Impacted by Array Size Power of Two](img/Compaction_Time_Impacted_by_Array_Size_Power_of_Two.png)
 
 <!-- ![Compaction Time Impacted by Array Size (Non Power of Two)](img/Compaction Time Impacted by Array Size Non Power of Two.png) -->
 
@@ -137,7 +137,7 @@ The situation is the same as scan and the turning point is 6.55e4.
 
 My implementation of radix sort is very slower than thrust function. 
 
-![Sort Time Impacted by Array Size Power of Two](img/Sort Time Impacted by Array Size Power of Two.png)
+![Sort Time Impacted by Array Size Power of Two](img/Sort_Time_Impacted_by_Array_Size_Power_of_Two.png)
 
 <!-- ![Sort Time Impacted by Array Size (Non Power of Two)](img/Sort Time Impacted by Array Size Non Power of Two.png) -->
 
@@ -147,15 +147,15 @@ My implementation of radix sort is very slower than thrust function.
 
 #### Scan
 
-![Scan Time Impacted by CUDA Block Size Power of Two](img/Scan Time Impacted by CUDA Block Size Power of Two.png)
+![Scan Time Impacted by CUDA Block Size Power of Two](img/Scan_Time_Impacted_by_CUDA_Block_Size_Power_of_Two.png)
 
 #### Compaction
 
-![Compaction Time Impacted by CUDA Block Size Power of Two](img/Compaction Time Impacted by CUDA Block Size Power of Two.png)
+![Compaction Time Impacted by CUDA Block Size Power of Two](img/Compaction_Time_Impacted_by_CUDA_Block_Size_Power_of_Two.png)
 
 #### Radix Sort
 
-![Radix Sort Time Impacted by CUDA Block Size Power of Two](img/Radix Sort Impacted by CUDA Block Size Power of Two.png)
+![Radix Sort Time Impacted by CUDA Block Size Power of Two](img/Radix_Sort_Impacted_by_CUDA_Block_Size_Power_of_Two.png)
 
 ## Why is My GPU Approach So Slow?
 
