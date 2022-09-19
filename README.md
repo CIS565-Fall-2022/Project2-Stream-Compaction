@@ -23,6 +23,75 @@ is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 #### GPU: Work-Efficient GPU Scan
 #### GPU: Thrust Scan
 #### GPU: Stream Compaction
+## Output Example
+```
+****************
+** SCAN TESTS **
+****************
+    [  18  19  38  39  17  17  11  34   0  18  47  37  37 ...   2   0 ]
+==== cpu scan, power-of-two ====
+   elapsed time: 2.1343ms    (std::chrono Measured)
+    [   0  18  37  75 114 131 148 159 193 193 211 258 295 ... 25679509 25679511 ]
+==== cpu scan, non-power-of-two ====
+   elapsed time: 2.0678ms    (std::chrono Measured)
+    [   0  18  37  75 114 131 148 159 193 193 211 258 295 ... 25679459 25679462 ]
+    passed
+==== naive scan, power-of-two ====
+blockSize: 256
+   elapsed time: 1.40179ms    (CUDA Measured)
+    [   0  18  37  75 114 131 148 159 193 193 211 258 295 ... 25679509 25679511 ]
+    passed
+==== naive scan, non-power-of-two ====
+blockSize: 256
+   elapsed time: 1.40688ms    (CUDA Measured)
+    [   0  18  37  75 114 131 148 159 193 193 211 258 295 ...   0   0 ]
+    passed
+==== work-efficient scan, power-of-two ====
+blockSize: 256
+   elapsed time: 1.63549ms    (CUDA Measured)
+    [   0  18  37  75 114 131 148 159 193 193 211 258 295 ... 25679509 25679511 ]
+    passed
+==== work-efficient scan, non-power-of-two ====
+blockSize: 256
+   elapsed time: 1.6831ms    (CUDA Measured)
+    [   0  18  37  75 114 131 148 159 193 193 211 258 295 ... 25679459 25679462 ]
+    passed
+==== thrust scan, power-of-two ====
+   elapsed time: 0.404608ms    (CUDA Measured)
+    [   0  18  37  75 114 131 148 159 193 193 211 258 295 ... 25679509 25679511 ]
+    passed
+==== thrust scan, non-power-of-two ====
+   elapsed time: 0.3792ms    (CUDA Measured)
+    [   0  18  37  75 114 131 148 159 193 193 211 258 295 ... 25679459 25679462 ]
+    passed
+
+*****************************
+** STREAM COMPACTION TESTS **
+*****************************
+    [   0   1   2   3   1   1   1   2   0   0   3   3   3 ...   0   0 ]
+==== cpu compact without scan, power-of-two ====
+   elapsed time: 2.3575ms    (std::chrono Measured)
+    [   1   2   3   1   1   1   2   3   3   3   1   2   2 ...   1   1 ]
+    passed
+==== cpu compact without scan, non-power-of-two ====
+   elapsed time: 2.4421ms    (std::chrono Measured)
+    [   1   2   3   1   1   1   2   3   3   3   1   2   2 ...   1   1 ]
+    passed
+==== cpu compact with scan ====
+   elapsed time: 6.5362ms    (std::chrono Measured)
+    [   1   2   3   1   1   1   2   3   3   3   1   2   2 ...   1   1 ]
+    passed
+==== work-efficient compact, power-of-two ====
+blockSize: 256
+   elapsed time: 3.06957ms    (CUDA Measured)
+    [   1   2   3   1   1   1   2   3   3   3   1   2   2 ...   1   1 ]
+    passed
+==== work-efficient compact, non-power-of-two ====
+blockSize: 256
+   elapsed time: 2.88675ms    (CUDA Measured)
+    [   1   2   3   1   1   1   2   3   3   3   1   2   2 ...   1   1 ]
+    passed
+```
 
 ## Performance Analysis
 
@@ -50,8 +119,7 @@ is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 
 * Paste the output of the test program into a triple-backtick block in your
   README.
-  * If you add your own tests (e.g. for radix sort or to test additional corner
-    cases), be sure to mention it explicitly.
+  * See above
 
 These questions should help guide you in performance analysis on future
 assignments, as well.
