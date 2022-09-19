@@ -19,10 +19,10 @@ is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 #### CPU: Sequential Scan 
 #### CPU: Stream Compact without Scan
 #### CPU: Stream Compact with Scan
-#### GPU Naive GPU Scan
-#### GPU Work-Efficient GPU Scan
-#### GPU Thrust Scan
-#### GPU Stream Compaction
+#### GPU: Naive GPU Scan
+#### GPU: Work-Efficient GPU Scan
+#### GPU: Thrust Scan
+#### GPU: Stream Compaction
 
 ## Performance Analysis
 
