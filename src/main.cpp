@@ -13,7 +13,7 @@
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 20; // feel free to change the size of array = 256
+const int SIZE = 1 << 26; // feel free to change the size of array = 256
 const int NPOT = SIZE - 3; // Non-Power-Of-Two = 253
 int *a = new int[SIZE];
 int *b = new int[SIZE];
@@ -161,13 +161,13 @@ int main(int argc, char* argv[]) {
     zeroArray(SIZE, b);
     printDesc("cpu radix sort, power-of-two");
     StreamCompaction::CPU::radixSort(SIZE, RADIX_NUM_BITS, b, a);
-    //printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     printArray(SIZE, b, true);
 
     zeroArray(SIZE, c);
     printDesc("radix sort, power of two");
     StreamCompaction::Naive::radixSort(SIZE, RADIX_NUM_BITS, c, a);
-    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    printElapsedTime(StreamCompaction::Naive::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printCmpResult(SIZE, b, c); // TODO: add cpu impl and write to b for comparison
 
     zeroArray(SIZE, b);
@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
     zeroArray(SIZE, c);
     printDesc("radix sort, non-power of two");
     StreamCompaction::Naive::radixSort(NPOT, RADIX_NUM_BITS, c, a);
-    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    printElapsedTime(StreamCompaction::Naive::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printCmpResult(NPOT, b, c); // TODO: add cpu impl and write to b for comparison
 
     system("pause"); // stop Win32 console from closing on exit
