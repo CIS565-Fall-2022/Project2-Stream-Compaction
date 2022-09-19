@@ -139,6 +139,12 @@ blockSize: 256
     passed
 ```
 
+## Testing Methods
+
+To test my program, each run of the program will produce a random array of numbers between a given
+range. I varied the length of my arrays from size 4 up to 2^25. I also tried arrays with and without
+a 0 at the very end.
+
 ## Performance Analysis
 
 * Roughly optimize the block sizes of each of your implementations for minimal
