@@ -18,7 +18,6 @@ namespace StreamCompaction {
          */
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
             int identity = 0;
             odata[0] = identity;    // exclusive scan
             for (int i = 1; i < n; ++i)
@@ -35,7 +34,6 @@ namespace StreamCompaction {
          */
         int compactWithoutScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
             int oIndex = 0;
             for (int i = 0; i < n; ++i)
             {
@@ -91,9 +89,7 @@ namespace StreamCompaction {
         {
             memcpy(odata, idata, n * sizeof(int));
             timer().startCpuTimer();
-
             std:: sort(odata, odata + n);
-
             timer().endCpuTimer();
         }
 

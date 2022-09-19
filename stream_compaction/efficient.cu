@@ -42,23 +42,21 @@ namespace StreamCompaction {
                 x[index + (1 << (d + 1)) - 1] += t;
             }
         }
-        void upDownSweep(int n, int* data, dim3 blockPerGrid)
+        void upDownSweep(int n, int* data)
         {
-            for (int d = 0; d <= ilog2ceil(n) - 1; ++d) {
-                //kernUpSweep << < blockPerGrid, blockSize / pow(2, d)>> > (n, d, data);
-                kernUpSweep << < blockPerGrid, blockSize>> > (n, d, data);
+            dim3 fullBlocksPerGrid((blockSize + n - 1) / blockSize);
 
+            for (int d = 0; d <= ilog2ceil(n) - 1; ++d) {
+                kernUpSweep << < fullBlocksPerGrid, blockSize>> > (n, d, data);
             }
             cudaDeviceSynchronize();
 
             cudaMemset(data + n - 1, 0, sizeof(int));
             checkCUDAError("cudaMemset failed!");
 
-
             for (int d = ilog2ceil(n) - 1; d >= 0; --d) {
-//                kernDownSweep << < blockPerGrid, blockSize / pow(2, ilog2ceil(n) - d - 1) >> > (n, d, data);
-                kernDownSweep << < blockPerGrid, blockSize >> > (n, d, data);
 
+                kernDownSweep << < fullBlocksPerGrid, blockSize >> > (n, d, data);
             }
             cudaDeviceSynchronize();
         }
@@ -78,7 +76,7 @@ namespace StreamCompaction {
 
             timer().startGpuTimer();
 
-            upDownSweep(intermArraySize, dev_data, fullBlocksPerGrid);
+            upDownSweep(intermArraySize, dev_data);
             
             timer().endGpuTimer();
             cudaMemcpy(odata, dev_data, sizeof(int) * n, cudaMemcpyDeviceToHost);
@@ -124,7 +122,7 @@ namespace StreamCompaction {
 
 
             // Step 2
-            upDownSweep(arraySize, dev_indices, fullBlocksPerGrid);
+            upDownSweep(arraySize, dev_indices);
 
             int returnSize = 0;
             cudaMemcpy(&returnSize, dev_indices + arraySize - 1, sizeof(int), cudaMemcpyDeviceToHost);
@@ -240,7 +238,7 @@ namespace StreamCompaction {
 
                 // Step 2: exclusive scan e array and store it in f
                 cudaMemcpy(dev_f, dev_e, arraySize * sizeof(int), cudaMemcpyDeviceToDevice);
-                upDownSweep(arraySize, dev_f, fullBlocksPerGrid);
+                upDownSweep(arraySize, dev_f);
                 cudaDeviceSynchronize();
 
 
@@ -272,7 +270,12 @@ namespace StreamCompaction {
             timer().endGpuTimer();
 
             cudaMemcpy(odata, dev_odata, arraySize * sizeof(int), cudaMemcpyDeviceToHost);
-
+            cudaFree(dev_e);
+            cudaFree(dev_f);
+            cudaFree(dev_t);
+            cudaFree(dev_d);
+            cudaFree(dev_idata);
+            cudaFree(dev_odata);
         }
 
         
