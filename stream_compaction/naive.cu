@@ -3,8 +3,6 @@
 #include "common.h"
 #include "naive.h"
 
-#include <iostream> // PLEASE REMOVE THIS AFTER TESTING
-
 /*! Block size used for CUDA kernel launch. */
 #define blockSize 128
 
@@ -85,12 +83,6 @@ namespace StreamCompaction {
             // Copy data back to the CPU
             cudaMemcpy(odata, dev_scan_output, sizeof(int) * n, cudaMemcpyDeviceToHost);
             checkCUDAErrorFn("memcpy to CPU failed!");
-
-            //// Print output vals
-            //std::cout << "After scan: " << std::endl;
-            //for (int i = 0; i < n; i++) {
-            //    std::cout << "  scan[" << i << "]: " << odata[i] << std::endl;
-            //}
 
             // Cleanup memory
             cudaFree(dev_scan_input);

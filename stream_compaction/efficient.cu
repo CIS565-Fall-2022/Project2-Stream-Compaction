@@ -3,8 +3,6 @@
 #include "common.h"
 #include "efficient.h"
 
-#include <iostream> // PLEASE REMOVE THIS AFTER TESTING
-
 /*! Block size used for CUDA kernel launch. */
 #define blockSize 512
 
@@ -55,7 +53,7 @@ namespace StreamCompaction {
 #endif
         }
         /**
-         * Helper function for "scan" to avoid conflicts with global timers.
+         * Helper function for "scan".
          */
         void prefixSum(int n, int *odata, const int *idata) {
             int log2_n = ilog2ceil(n);
