@@ -19,7 +19,17 @@ namespace StreamCompaction {
          */
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
+            odata[0] = idata[0];
+            for (int k = 1; k < n; k++)
+            {
+                odata[k] = odata[k - 1] + idata[k];
+            }
+            //shift
+            for (int i = n - 1; i > 0; i--)
+            {
+                odata[i] = odata[i - 1];
+            }
+            odata[0] = 0;
             timer().endCpuTimer();
         }
 
@@ -30,9 +40,17 @@ namespace StreamCompaction {
          */
         int compactWithoutScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
+            int num_elements = 0;
+            for (int i = 0; i < n; i++)
+            {
+                if (idata[i] != 0)
+                {
+                    odata[num_elements] = idata[i];
+                    num_elements++;
+                }
+            }
             timer().endCpuTimer();
-            return -1;
+            return num_elements;
         }
 
         /**
@@ -42,9 +60,46 @@ namespace StreamCompaction {
          */
         int compactWithScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
+            int* temp_array = new int[n];
+            for (int i = 0; i < n; i++)
+            {
+                if (idata[i] != 0)
+                {
+                    temp_array[i] = 1;
+                }
+                else
+                {
+                    temp_array[i] = 0;
+                }
+            }
+            //Scan
+            odata[0] = temp_array[0];
+            for (int k = 1; k < n; k++)
+            {
+                odata[k] = odata[k - 1] + temp_array[k];
+            }
+            //shift
+            for (int i = n - 1; i > 0; i--)
+            {
+                odata[i] = odata[i - 1];
+            }
+            odata[0] = 0;
+
+            //Scatter
+            int num_elements = 0;
+            for (int i = 0; i < n; i++)
+            {
+                if (temp_array[i] == 1)
+                {
+                    odata[odata[i]] = idata[i];
+                    num_elements++;
+                }
+            }
+            delete[] temp_array;
+
+
             timer().endCpuTimer();
-            return -1;
+            return num_elements;
         }
     }
 }
