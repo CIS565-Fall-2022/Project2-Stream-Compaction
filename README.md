@@ -152,13 +152,13 @@ up-sweep and the down-sweep. The up-sweep is just a parallel reduction, which ju
 sum of an array in the last index. A picture of the up-sweep on an example array is shown in Figure
 1 below:
 
-![](images/figures/scan_upsweep.png)
+![](images/figures/scan_upsweep.PNG)
 *Figure 1: Demonstration of efficient scan up-sweep operation.*
 
 After the up-sweep, the element at the last index (the sum of the array) is zeroed out, and then
 the down-sweep occurs, as seen in Figure 2 below:
 
-![](images/figures/scan_downsweep.png)
+![](images/figures/scan_downsweep.PNG)
 *Figure 2: Demonstration of efficient scan down-sweep operation.*
 
 #### Thrust Implementation
@@ -361,10 +361,10 @@ the first two ```cudaMemcpyAsync``` calls and the third, are ```cudaMalloc```,
 of the Thrust Exclusive Scan function is, where it allocates device memory, operates on the data, and then
 frees it at the end.
 
-![](images/results/thrust_nsight_timeline_memcpy.png)
+![](images/results/thrust_nsight_timeline_memcpy.PNG)
 *Figure 6: NSight Timeline of Thrust Exclusive Scan operation highlighting cudaMemcpyAsync.*
 
-![](images/results/thrust_nsight_timeline_streamsync.png)
+![](images/results/thrust_nsight_timeline_streamsync.PNG)
 *Figure 7: NSight Timeline of Thrust Exclusive Scan operation highlighting cudaStreamSynchronize.*
 
 ### Stream Compaction
