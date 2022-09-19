@@ -220,9 +220,6 @@ Additionally, I ensured that my GPU timers included as few cudaMallocs, Memcpys,
   README.
   * See above
 
-These questions should help guide you in performance analysis on future
-assignments, as well.
-
 ## NSight Performance Confusion
 
 When running my program in Nsight, the results are extremely fast for N = 2^25 compared to 
