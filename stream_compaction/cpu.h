@@ -11,5 +11,7 @@ namespace StreamCompaction {
         int compactWithoutScan(int n, int *odata, const int *idata);
 
         int compactWithScan(int n, int *odata, const int *idata);
+
+        void radixSort(int n, int numBits, int* odata, const int* idata);
     }
 }

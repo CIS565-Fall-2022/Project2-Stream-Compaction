@@ -1,0 +1,55 @@
+On length = 1 << 18
+
+****************
+** SCAN TESTS **
+****************
+    [   4  25  22   2  14  31  30   0  44  13  11  45  24 ...   5   0 ]
+==== cpu scan, power-of-two ====
+   elapsed time: 0.3819ms    (std::chrono Measured)
+    [   0   4  29  51  53  67  98 128 128 172 185 196 241 ... 6433433 6433438 ]
+==== cpu scan, non-power-of-two ====
+   elapsed time: 0.4017ms    (std::chrono Measured)
+    [   0   4  29  51  53  67  98 128 128 172 185 196 241 ... 6433393 6433393 ]
+    passed
+==== naive scan, power-of-two ====
+   elapsed time: 0.327168ms    (CUDA Measured)
+    passed
+==== naive scan, non-power-of-two ====
+   elapsed time: 0.229856ms    (CUDA Measured)
+    passed
+==== work-efficient scan, power-of-two ====
+   elapsed time: 0.331456ms    (CUDA Measured)
+    passed
+==== work-efficient scan, non-power-of-two ====
+   elapsed time: 0.343808ms    (CUDA Measured)
+    passed
+==== thrust scan, power-of-two ====
+   elapsed time: 0.146592ms    (CUDA Measured)
+    passed
+==== thrust scan, non-power-of-two ====
+   elapsed time: 0.190304ms    (CUDA Measured)
+    passed
+
+*****************************
+** STREAM COMPACTION TESTS **
+*****************************
+    [   3   0   0   1   3   3   3   3   1   1   1   1   2 ...   1   0 ]
+==== cpu compact without scan, power-of-two ====
+   elapsed time: 0.5161ms    (std::chrono Measured)
+    [   3   1   3   3   3   3   1   1   1   1   2   3   3 ...   2   1 ]
+    passed
+==== cpu compact without scan, non-power-of-two ====
+   elapsed time: 0.5447ms    (std::chrono Measured)
+    [   3   1   3   3   3   3   1   1   1   1   2   3   3 ...   2   3 ]
+    passed
+==== cpu compact with scan ====
+   elapsed time: 1.4394ms    (std::chrono Measured)
+    [   3   1   3   3   3   3   1   1   1   1   2   3   3 ...   2   1 ]
+    passed
+==== work-efficient compact, power-of-two ====
+   elapsed time: 0.3688ms    (CUDA Measured)
+    passed
+==== work-efficient compact, non-power-of-two ====
+   elapsed time: 0.500928ms    (CUDA Measured)
+    passed
+Appuyez sur une touche pour continuer...

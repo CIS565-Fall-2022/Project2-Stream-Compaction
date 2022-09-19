@@ -13,8 +13,8 @@
 #include <stream_compaction/thrust.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 8; // feel free to change the size of array
-const int NPOT = SIZE - 3; // Non-Power-Of-Two
+const int SIZE = 1 << 26; // feel free to change the size of array = 256
+const int NPOT = SIZE - 3; // Non-Power-Of-Two = 253
 int *a = new int[SIZE];
 int *b = new int[SIZE];
 int *c = new int[SIZE];
@@ -146,6 +146,41 @@ int main(int argc, char* argv[]) {
     printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     //printArray(count, c, true);
     printCmpLenResult(count, expectedNPOT, b, c);
+
+    printf("\n");
+    printf("*****************************\n");
+    printf("** RADIX SORT TESTS **\n");
+    printf("*****************************\n");
+
+    genArray(SIZE - 1, a, 696969);  // Leave a 0 at the end to test that edge case
+    a[SIZE - 1] = 0;
+    printArray(SIZE, a, true);
+
+    #define RADIX_NUM_BITS ilog2ceil(696969)
+
+    zeroArray(SIZE, b);
+    printDesc("cpu radix sort, power-of-two");
+    StreamCompaction::CPU::radixSort(SIZE, RADIX_NUM_BITS, b, a);
+    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    printArray(SIZE, b, true);
+
+    zeroArray(SIZE, c);
+    printDesc("radix sort, power of two");
+    StreamCompaction::Naive::radixSort(SIZE, RADIX_NUM_BITS, c, a);
+    printElapsedTime(StreamCompaction::Naive::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    printCmpResult(SIZE, b, c); // TODO: add cpu impl and write to b for comparison
+
+    zeroArray(SIZE, b);
+    printDesc("cpu radix sort, non-power-of-two");
+    StreamCompaction::CPU::radixSort(NPOT, RADIX_NUM_BITS, b, a);
+    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    printArray(NPOT, b, true);
+
+    zeroArray(SIZE, c);
+    printDesc("radix sort, non-power of two");
+    StreamCompaction::Naive::radixSort(NPOT, RADIX_NUM_BITS, c, a);
+    printElapsedTime(StreamCompaction::Naive::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    printCmpResult(NPOT, b, c); // TODO: add cpu impl and write to b for comparison
 
     system("pause"); // stop Win32 console from closing on exit
     delete[] a;
