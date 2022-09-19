@@ -121,7 +121,7 @@ CUDA block size is 128.
 
 When array size is small, the CPU implementation is faster than GPU implementation and the fluctuation in GPU implementation time cost is small. When array size is larger than 2.62e5, both thrust function and my work-efficient implementation outperform my CPU implementation.
 
-![Scan Time Impacted by Array Size Power of Two](img/Scan Time Impacted by Array Size Power of Two.png)
+![Scan Time Impacted by Array Size Power of Two](img/Scan_Time_Impacted_by_Array_Size_Power_of_Two.png)
 
 <!-- ![Scan Time Impacted by Array Size (Non Power of Two)](img/Scan Time Impacted by Array Size Non Power of Two.png) -->
 
@@ -165,14 +165,19 @@ The optimization I made to the the work-efficient scan is to avoid Warp Partitio
 
 Due to time constraints, I haven't implemeted the shared memory part. I guess this is where the thurst function surpasses mine.
 
-My radix sort (6 bit)'s time cost is about 10 times as much as my work-efficient scan's. This matches my instinct because radix sort will repeate the scan function in each sort. However, I noticed that the time cost of thrust sort function is not 0 times as much as its scan function. For instance, when array size is 65536, the thrust scan costs 0.04ms while sort costs 0.09ms. This drives me to think if there is more optimizations I can do on radix sort.
+My radix sort (6 bit)'s time cost is about 10 times as much as my work-efficient scan's. This matches my instinct because radix sort will repeate the scan function in each sort. However, I noticed that the time cost of thrust sort function is not that slower than its scan function. For instance, when array size is 65536, the thrust scan costs 0.04ms while sort costs 0.09ms. This drives me to think if there is more optimizations I can do on radix sort.
 
-* Roughly optimize the block sizes of each of your implementations for minimal
-  run time on your GPU.
-  
-  * See [Performance Analysis](#performance-impacted-by-cuda-block-size).
+One drawback of my radix sort I can recognize is that in order to compute `totalFalse`, I make two device-to-host memery copies:
 
-* 
+```cpp
+int totalFalse;
+int lastNum;
+cudaMemcpy(&totalFalse, devFalse + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+cudaMemcpy(&lastNum, devInp + n - 1, sizeof(int), cudaMemcpyDeviceToHost);
+if ((lastNum & (1 << bit)) == 0) totalFalse += 1;
+```
+
+ I believe this can be optimized somehow.
 
 ## Some mistakes I made
 
