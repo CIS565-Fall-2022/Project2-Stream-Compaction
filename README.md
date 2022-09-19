@@ -96,7 +96,7 @@ Also, we can observe that CPU without scan is better than the version with scan.
 ## Sample Output
 
 ```
-Using SIZE: 16 M
+Using SIZE: 16 M 
 ****************
 ** SCAN TESTS **
 ****************

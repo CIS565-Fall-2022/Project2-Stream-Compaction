@@ -36,11 +36,9 @@ if __name__ == "__main__":
     plt.plot(x, eff, label="CUDA Work-Efficient Scan")
     plt.plot(x, thrust, label="CUDA Thrust Scan")
 
-    plt.gca().invert_yaxis()
-
     plt.xticks([0, 100, 200, 300, 400, 500], ["0", "100M", "200M", "300M", "400M", "500M"])
 
-    plt.legend()
+    plt.legend(fontsize=15)
 
     plt.title("Execution Time of Scanning (Lower Is Better)")
     plt.ylabel('Time (ms)')
@@ -53,11 +51,9 @@ if __name__ == "__main__":
     plt.plot(x, compact_cpu_scan, label="CPU Compact with Scan")
     plt.plot(x, compact_eff, label="CUDA Work-Efficient Compact")
 
-    plt.gca().invert_yaxis()
-
     plt.xticks([0, 100, 200, 300, 400, 500], ["0", "100M", "200M", "300M", "400M", "500M"])
 
-    plt.legend()
+    plt.legend(fontsize=15)
 
     plt.title("Execution Time of Stream Compaction (Lower Is Better)")
     plt.ylabel('Time (ms)')
