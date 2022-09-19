@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+#include <iostream>
+
+int INCOMPACT = 0;
 namespace StreamCompaction {
     namespace CPU {
         using StreamCompaction::Common::PerformanceTimer;
@@ -18,9 +21,19 @@ namespace StreamCompaction {
          * (Optional) For better understanding before starting moving to GPU, you can simulate your GPU scan in this function first.
          */
         void scan(int n, int *odata, const int *idata) {
-            timer().startCpuTimer();
-            // TODO
-            timer().endCpuTimer();
+            if (!INCOMPACT) {
+                timer().startCpuTimer();
+                // TODO
+                odata[0] = 0;
+                for (int i = 1; i < n; i++)
+                    odata[i] = odata[i - 1] + idata[i - 1];
+                timer().endCpuTimer();
+            }
+            else {
+                odata[0] = 0;
+                for (int i = 1; i < n; i++)
+                    odata[i] = odata[i - 1] + idata[i - 1];
+            }
         }
 
         /**
@@ -31,8 +44,15 @@ namespace StreamCompaction {
         int compactWithoutScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+            int count = 0;
+            for (int i = 0; i < n; i++) {
+                if (idata[i] != 0) {
+                    odata[count] = idata[i];
+                    count ++ ;
+                }
+            }
             timer().endCpuTimer();
-            return -1;
+            return count;
         }
 
         /**
@@ -41,10 +61,31 @@ namespace StreamCompaction {
          * @returns the number of elements remaining after compaction.
          */
         int compactWithScan(int n, int *odata, const int *idata) {
+            INCOMPACT = 1;
+            int* copy = new int[n];
+            int* scanResult = new int[n];
             timer().startCpuTimer();
             // TODO
+            //copy data from idata to temporary copy buffer
+            for (int i = 0; i < n; i++) {
+                copy[i] = idata[i] == 0? 0 : 1;
+            }
+            // run exclusive scan on temporary array
+            scan(n, scanResult, copy);
+            //scatter
+            int count = 0;
+            for (int i = 0; i < n; i++) {
+                if (copy[i]) {
+                    count = scanResult[i];
+                    odata[count] = idata[i];
+                }
+            }
+
             timer().endCpuTimer();
-            return -1;
+            delete[] copy;
+            delete[] scanResult;
+            return count+1;
+
         }
     }
 }
