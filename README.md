@@ -145,7 +145,12 @@ blockSize: 256
   run time on your GPU.
   * (You shouldn't compare unoptimized implementations to each other!)
   ![](img/blocksizeTable.png)
+  
+    _Table. 1 Blocksize vs. Results for each algorithm_
+    
   ![](img/blocksize.png)
+  
+  _Fig. 1 Blocksize vs. Results for each algorithm_
 
 * Compare all of these GPU Scan implementations (Naive, Work-Efficient, and
   Thrust) to the serial CPU version of Scan. Plot a graph of the comparison
@@ -153,9 +158,16 @@ blockSize: 256
 #### Scan
   ![](img/scanTable.png)
   
-  __Fig. 1 Scan Algorithm: Number of Elements vs. Results__
+  _Table. 2 Scan Algorithm: Number of Elements vs. Results_
+  
   ![](img/scanpow2.png)
+  
+   _Fig. 2 Scan Algorithm: Number of Elements vs. Results Power of 2_
+    
   ![](img/scannotpow2.png)
+  
+  _Fig. 3 Scan Algorithm: Number of Elements vs. Results NON Power of 2_
+  
 #### Stream Compaction
   ![](img/streamTable.png)
   ![](img/streampow2.png)
