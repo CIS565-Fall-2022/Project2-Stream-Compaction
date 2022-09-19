@@ -106,11 +106,11 @@ for d = 0 to log2 n - 1:
 
 // Downsweep
 out[n – 1] = 0
-for d = log2 n – 1 down to 0 do
-       for all k = 0 to n – 1 by 2 d +1 in parallel do
-            t = x[k +  2 d  – 1]
-            x[k +  2 d  – 1] = x[k +  2 d +1 – 1]
-            x[k +  2 d +1 – 1] = t +  x[k +  2 d +1 – 1]
+for d = log2n – 1 down to 0 do
+       for all k = 0 to n – 1 by 2^(d +1) in parallel do
+            t = x[k +  2^d  – 1]
+            x[k +  2^d  – 1] = x[k +  2^(d +1) – 1]
+            x[k +  2^(d +1) – 1] += t
 ```
 
 A third way of implementing scan on the GPU is using the **Thrust** library. 
@@ -156,11 +156,11 @@ shown below.
 
 #### Runtime vs. Block Size (Scan)
 
-![Block Size vs. Runtime Scan](img/block-scan.PNG)
+![Block Size vs. Runtime Scan](img/block-scan.png)
 
 #### Runtime vs. Block Size (Compaction)
 
-![Boids Size vs. Runtime Compaction](img/block-optimize.PNG)
+![Boids Size vs. Runtime Compaction](img/block-optimize.png)
 
 The optimal block size was 128, 256, and 512 for the naive, uoptimized work-efficient, and optimized work-efficient implementations, respectively. 
 It is worth noting that there is not much performance gain from increasing block size past 256 for both 
@@ -175,13 +175,13 @@ allocation and ended before deallocation.
 
 #### Runtime vs. Array Size (Scan)
 
-![Array Size vs. Runtime Scan](img/array-scan.PNG)
+![Array Size vs. Runtime Scan](img/array-scan.png)
 
 The Thrust implementation performed the fastest out of all the implementations. Since this is a well-established and tested library,
 there are likely several optimizations that make it perform better than the other implementations. When examining the timeline graph 
 using Nsight Systems 2022.3.4, we can see that Thrust uses `cudaMemcpyAsync` as well as `cudaStreamSynchronize` instead of `cudaDeviceSynchronize`.
 
-![Thrust Timeline](img/thrust-memcpy.png)
+![Thrust Timeline](img/thrust-memcpy.PNG)
 
 The CPU implementation performed faster than the naive and work-efficient implementations for smaller array sizes (< 15 million elements). Since memory overhead
 was not factored into timing, one possible cause of this is that for small array sizes, the extra overhead of launching kernels made GPU implementations slower.
@@ -193,11 +193,11 @@ The Naive version is slower since it adds an extra factor of log2n to its runtim
 The optimized version of the work-efficient algorithm performed better than the unoptimized version throughout. Since the indexing scheme
 during the upsweep and downsweep steps was changed to partition based on consecutive increasing thread indices, there were less divergent branches between threads and warps could be retired early.
 
-![Unoptimized vs. Optimized Work-Efficient](img/we-optimize.PNG) 
+![Unoptimized vs. Optimized Work-Efficient](img/we-optimize.png) 
 
 #### Runtime vs. Array Size (Compaction)
 
-![Array Size vs. Runtime Compaction](img/array-compact.PNG) 
+![Array Size vs. Runtime Compaction](img/array-compact.png) 
 
 The CPU with Scan implementation performed the slowest. This is most likely because there are essentially three passes over the data, each iteration being of size <em>n</em>.
 The boolean array pass scans each element to see if it meets the criteria. Then, the scan step examines each element of the boolean array to create an index array. Finally the 
