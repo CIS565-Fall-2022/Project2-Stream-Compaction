@@ -3,9 +3,9 @@ CUDA Stream Compaction
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 2**
 
-* (TODO) YOUR NAME HERE
-  * (TODO) [LinkedIn](), [personal website](), [twitter](), etc.
-* Tested on: (TODO) Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+* Wenqing Wang
+  * [LinkedIn](https://www.linkedin.com/in/wenqingwang0910/) 
+* Tested on: Windows 11, i7-11370H @ 3.30GHz 16.0 GB, GTX 3050 Ti
 
 # Highlights
 * This project implemented the scan (exclusive prefix sum) and string compact based on the following methods.
@@ -88,4 +88,5 @@ By comparing the time consumed by each method on different array sizes, we can s
 
 ![Compact runtime_2](https://user-images.githubusercontent.com/33616958/190931745-c0073135-8358-4a6b-b8f9-a28b72da9b8d.png)
 
+* As can be seen from the above graphs, the performance of the stream compression algorithm trends similarly to the scanning algorithm as the array size increases.
 
