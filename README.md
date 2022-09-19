@@ -249,7 +249,7 @@ end
 
 **All tests and results are done on Release mode in Visual Studio**
 
-The first step in the testing strategy was to figure out the optimal block size for the 
+The first step in generating results was to figure out the optimal block size for the 
 different GPU implementations of the scan and stream compaction algorithms. Data from each
 implementation was collected with a constant input array size of 2^25 (33,554,432) for
 powers of two block sizes from 32 to 1024, and the results are shown in Figure XXX below.
@@ -264,6 +264,14 @@ stream compaction on an array with a size not a power of 2.
 Similarly, the performance also increases with increasing block size past 256, at least for all the
 algorithms save the naive scan. This growth appears roughly linear for the other algorithms,
 while the runtime stays roughly constant for the naive scan.
+
+In the **Performance Analysis** section below, all data is from the ***Not Power of 2 Array Size*** tests.
+This is because this is the most general test case for analyzing these algorithms, as most often an
+array will not fit neatly into the CUDA blocks. Additionally, there is negligable difference in the
+runtimes between the power of 2 and non-power of 2 tests.
+
+![](images/figures/graph_pow2.png)
+*Figure XXX: Demonstrating runtime comparison between tests on arrays with power of 2 size and not.*
 
 ## Performance Analysis
 
