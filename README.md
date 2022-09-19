@@ -7,7 +7,7 @@ CUDA Stream Compaction
   * [LinkedIn](https://www.linkedin.com/in/guanlin-huang-4406668502/), [personal website](virulentkid.github.io/personal_web/index.html)
 * Tested on: Windows 11, i9-10900K @ 4.9GHz 32GB, RTX3080 10GB; Compute Capability: 8.6
 
-### Project Description
+## Project Description
 
 Stream compaction is an algorithm to produce a smaller output array that contains the indices of the desired elements from the input array;
 such an algorithm will come in handy in ray path tracing of computer graphics or huge sparse matrix compression in AI.
@@ -15,17 +15,19 @@ The performance of element selection is extremely important due to the enormous 
 Modern Graphics Processing Units (GPUs) have been utilized more frequently lately to speed up the processing of extremely big, concurrent data applications. 
 In this Project, the stream compaction algorithm is implemented in conjunction of an algorithm called prefix-sum, or, "scan." 
 Here is an visual representation of that algorithm:
+
 !["Scan Algorithm"](img/figure-39-2.jpg)
+
 The following perfomance analysis of scan and stream compaction will show the benefit of using GPU comparing to CPU only.
 
 
-### Performance Analysis
+## Performance Analysis
 
 !["Scan"](img/scan.png)
 !["Stream Compaction"](img/comp.png)
 As the charts are shown, when array size is large, both naive and work-efficient algorithm of GPU out-perform the CPU implemtation.
 
-##Performance Bottleneck
+### Performance Bottleneck
 * GPU-based implementations are constrained by global memory reading performance at small array sizes because of no optimization of using share memory.
 However, due to the advantages of parallel processing, GPU implementations see a less drastic rise in runtime comparing to the CPU one.
 
