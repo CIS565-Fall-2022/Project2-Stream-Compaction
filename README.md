@@ -85,6 +85,14 @@ _Figure 2: Thrust Analysis with NSight_
 
   * __Memory Copy Method__: The memory copy method used in Thrust is `cudaMemcpyAsync`. Unlike `cudaMemcpy` will block the host thread, `cudaMemcpyAsync` is non-blocking on the host. Therefore, host can transfer data concurrently, and thus is faster than `cudaMemcpy`. 
 
+### Execution Time for Stream Compaction (Lower is Better)
+![](./img/CompTime.png)
+_Figure 3: Stream Compaction Performance Comparison_
+
+Figure 3 shows the execution time of the 3 versions of Stream Compaction. We can see that the CUDA version still have the best performance. This is because it performs parallelized computation over the array.
+
+Also, we can observe that CPU without scan is better than the version with scan. This is because the stream compaction with scan will iterate the array three times, and thus will have a greater execution time when the array is large.
+
 ## Sample Output
 
 ```
