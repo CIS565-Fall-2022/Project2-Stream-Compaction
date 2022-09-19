@@ -57,16 +57,6 @@ This project included the following changes from the original project:
 ==== naive scan, non-power-of-two ====
   elapsed time: 0.403456ms    (CUDA Measured)
     passed
-==== naive scan with shared memory, power-of-two ====
-n > 1024, navie scan with shared memory failed.
-  elapsed time: 0.002048ms    (CUDA Measured)
-    a[1] = 45, b[1] = 0
-    FAIL VALUE
-==== naive scan with shared memory, non-power-of-two ====
-n > 1024, navie scan with shared memory failed.
-  elapsed time: 0.002048ms    (CUDA Measured)
-    a[1] = 45, b[1] = 0
-    FAIL VALUE
 ==== work-efficient scan, power-of-two ====
   elapsed time: 0.31744ms    (CUDA Measured)
     passed
