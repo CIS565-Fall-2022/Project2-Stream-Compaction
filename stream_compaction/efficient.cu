@@ -159,7 +159,7 @@ namespace StreamCompaction {
          * @returns      The number of elements remaining after compaction.
          */
         int compact(int n, int *odata, const int *idata) {
-            int blockSize = 128;
+            int blockSize = 64;
             int numBlocks = ((n + blockSize - 1) / blockSize);
             int* dev_idata;
             int* dev_odata;
