@@ -40,7 +40,7 @@ In this project, I implemented stream compaction on CPU and GPU using parallel a
 
         ![](img/upsweep.jpg)
 
-    - Step 2: **Downsweep scan** (Collecting scanned results) - In the down-sweep phase, we traverse back down the tree from the root, using the partial sums from the reduce phase to build the scan in place on the array. At each level,
+    - Step 2: **Downsweep scan** (Collecting scanned results) - In the down-sweep phase, we traverse back down the tree from the root, using the partial sums from the reduce phase to build the scan in place on the array. We start with adding the identity value at the end of upsweep output array. At each level,
         - Left child: Copy the parent value
         - Right child: Add the parent value and left child value copying  root value.
 
