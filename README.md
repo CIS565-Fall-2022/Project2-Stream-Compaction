@@ -34,8 +34,20 @@ compaction algorithms.
 
 #### GPU: Naive GPU Scan
 
-A naive GPU scan 
+A naive GPU scan will take an input array (or read array), and add each sequential pair of elements together
+into an output array (or write array), ping-pong the arrays (read is now write and vice versa), increment the
+additive offset, and then repeat the operation until there is only one output (the final sum). Here, each addition
+can be done in a parallel manner since we will never write to the same array slot. The only caveat is that you must
+wait for each level to finish its read/write before moving on to the next level.
+
 #### GPU: Work-Efficient GPU Scan
+
+A work efficient GPU scan uses only one array and can do the operation in place. This array is treated as a balanced
+binary tree which can retain some of the original values to help us recover the entire scan array. 
+
+1. Up Sweep
+2. Down Sweep
+
 #### GPU: Thrust Scan
 #### GPU: Stream Compaction
 ## Output Example
