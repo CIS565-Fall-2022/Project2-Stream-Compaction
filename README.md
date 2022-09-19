@@ -26,7 +26,7 @@ CUDA Stream Compaction
     `{41, 17, 34, 0, 19, 24, 28, 8, 12, 14, 5, 45, 31, 27, 11, 41, 45, 42, 27, 36, 41, 4, 2, 3, 42, 32, 21, 16, 18, 45, 47, 26, 21, 38, 19, 12, 17, 49, 35, 44, 3, 11, 22, 33, 23, 14, 41, 11, 3, 18, 47, 44, 12, 7, 37, 9, 23, 41, 29, 28, 16, 35, 40, 0}`,
     the output is:
      `{0, 0, 2, 3, 3, 3, 4, 5, 7, 8, 9, 11, 11, 11, 12, 12, 12, 14, 14, 16, 16, 17, 17, 18, 18, 19, 19, 21, 21, 22, 23, 23, 24, 26, 27, 27, 28, 28, 29, 31, 32, 33, 34, 35, 35, 36, 37, 38, 40, 41, 41, 41, 41, 41, 42, 42, 44, 44, 45, 45, 45, 47, 47, 49}`.
-     I also ran comparison between my radix sort and `thrust::sort` (see [Example Output](###Example Output) and [Performance Analysis](#### Radix Sort)).
+     I also ran comparison between my radix sort and `thrust::sort` (see [Example Output](#example-output) and [Performance Analysis](#radix-sort)).
 
 ### Example Output
 
