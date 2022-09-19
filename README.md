@@ -175,14 +175,33 @@ a 0 at the very end.
   
   _Fig. 3 Scan Algorithm: Number of Elements vs. Results NON Power of 2_
   
-  * To guess at what might be happening inside the Thrust implementation (e.g.
-    allocation, memory copy), take a look at the Nsight timeline for its
-    execution. Your analysis here doesn't have to be detailed, since you aren't
-    even looking at the code for the implementation.
+  In Scan, the performance results between Non-Power of 2 arrays and power of 2 arrays are fairly similar.
+  As expected, CPU scan is the least efficient algorithm when there are many elements. Naive scan is slightly
+  more efficient, although not by a lot. Efficient GPU scan does technically run faster than CPU and Naive, but 
+  the effects are not seen unless the size of the input array is above 1.5 million. Thrust scan is the fastest
+  out of all of them. 
 
 * Write a brief explanation of the phenomena you see here.
   * Can you find the performance bottlenecks? Is it memory I/O? Computation? Is
     it different for each implementation?
+    
+    I am not surprised that the GPU efficient implementation isn't faster until the size of the input array gets
+    significantly large. This is because I didn't optimize my implementations to ensure that threads are not idling. 
+    For example, I'm only using every other thread, then every 4 threads, etc. during scan. A way to bypass this is to
+    launch fewer threads, but computing the destination it should go to based on its idx and the current up-sweep or
+    down-sweep index.
+    
+    Additionally, I ensured that my GPU timers included as few cudaMallocs, Memcpys, and Memsets as possible, but it's not
+    always feasible to move all of them outside of my "main" algorithm code, so to speak. For example, I need to call 
+    cudaMalloc on an array where I only know its length after a value is computed during the algorithm. Hence, I can only cudaMalloc
+    within the algorithm.
+    
+  * To guess at what might be happening inside the Thrust implementation (e.g.
+    allocation, memory copy), take a look at the Nsight timeline for its
+    execution. Your analysis here doesn't have to be detailed, since you aren't
+    even looking at the code for the implementation.
+    
+    
   
  #### Stream Compaction
   ![](img/streamTable.png)
@@ -204,7 +223,76 @@ a 0 at the very end.
 These questions should help guide you in performance analysis on future
 assignments, as well.
 
+## NSight Performance Confusion
 
+When running my program in Nsight, the results are extremely fast for N = 2^25 compared to 
+Release mode in Visual Studio. I'm not exactly sure why.
+
+```****************
+** SCAN TESTS **
+****************
+    [  17  20  19   7  22  46  11   3  35  15  31  39  34 ...  20   0 ]
+==== cpu scan, power-of-two ====
+   elapsed time: 2.0798ms    (std::chrono Measured)
+    [   0  17  37  56  63  85 131 142 145 180 195 226 265 ... 25666495 25666515 ]
+==== cpu scan, non-power-of-two ====
+   elapsed time: 2.0982ms    (std::chrono Measured)
+    [   0  17  37  56  63  85 131 142 145 180 195 226 265 ... 25666419 25666467 ]
+    passed
+==== naive scan, power-of-two ====
+blockSize: 256
+   elapsed time: 1.716ms    (CUDA Measured)
+    [   0  17  37  56  63  85 131 142 145 180 195 226 265 ... 25666495 25666515 ]
+    passed
+==== naive scan, non-power-of-two ====
+blockSize: 256
+   elapsed time: 2.00374ms    (CUDA Measured)
+    [   0  17  37  56  63  85 131 142 145 180 195 226 265 ...   0   0 ]
+    passed
+==== work-efficient scan, power-of-two ====
+blockSize: 256
+   elapsed time: 2.3617ms    (CUDA Measured)
+    [   0  17  37  56  63  85 131 142 145 180 195 226 265 ... 25666495 25666515 ]
+    passed
+==== work-efficient scan, non-power-of-two ====
+blockSize: 256
+   elapsed time: 2.23104ms    (CUDA Measured)
+    [   0  17  37  56  63  85 131 142 145 180 195 226 265 ... 25666419 25666467 ]
+    passed
+==== thrust scan, power-of-two ====
+   elapsed time: 0.567744ms    (CUDA Measured)
+    [   0  17  37  56  63  85 131 142 145 180 195 226 265 ... 25666495 25666515 ]
+    passed
+==== thrust scan, non-power-of-two ====
+   elapsed time: 0.566816ms    (CUDA Measured)
+    [   0  17  37  56  63  85 131 142 145 180 195 226 265 ... 25666419 25666467 ]
+    passed
+
+*****************************
+** STREAM COMPACTION TESTS **
+*****************************
+    [   3   2   3   1   2   0   1   3   3   3   1   1   0 ...   0   0 ]
+==== cpu compact without scan, power-of-two ====
+   elapsed time: 2.3101ms    (std::chrono Measured)
+    [   3   2   3   1   2   1   3   3   3   1   1   3   1 ...   2   2 ]
+    passed
+==== cpu compact without scan, non-power-of-two ====
+   elapsed time: 2.2745ms    (std::chrono Measured)
+    [   3   2   3   1   2   1   3   3   3   1   1   3   1 ...   2   2 ]
+    passed
+==== cpu compact with scan ====
+   elapsed time: 6.392ms    (std::chrono Measured)
+    [   3   2   3   1   2   1   3   3   3   1   1   3   1 ...   2   2 ]
+    passed
+==== work-efficient compact, power-of-two ====
+blockSize: 256
+   elapsed time: 4.70064ms    (CUDA Measured)
+    [   3   2   3   1   2   1   3   3   3   1   1   3   1 ...   2   2 ]
+    passed
+==== work-efficient compact, non-power-of-two ====
+blockSize: 256
+   elapsed time: 3.8247ms    (CUDA Measured)
+```
 
 
 
