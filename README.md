@@ -8,7 +8,6 @@ CUDA Stream Compaction
 * Tested on: Windows 10, i5-11400F @ 4.3GHz 16GB, GTX 3060 12GB (personal)
 
 ## Overview
------------------------
 
 This project includes 3 implementations of GPU parallel algorithms, **Scan**, **Stream Compaction**, and **Radix Sort**. Each implementations has several versions for performance comparison.
 
@@ -66,7 +65,7 @@ Sort the array using partitions that based on one bit.
 ```
 
 ## Performance Analysis
------------------------
+
 ### Execution Time for Scan (Lower is Better)
 ![](./img/ScanTime.png)
 _Figure 1: Scan Performance Comparison_
@@ -87,7 +86,6 @@ _Figure 2: Thrust Analysis with NSight_
   * __Memory Copy Method__: The memory copy method used in Thrust is `cudaMemcpyAsync`. Unlike `cudaMemcpy` will block the host thread, `cudaMemcpyAsync` is non-blocking on the host. Therefore, host can transfer data concurrently, and thus is faster than `cudaMemcpy`.
 
 ## Sample Output
------------------------
 
 ```
 Using SIZE: 16 M
