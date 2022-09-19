@@ -71,13 +71,20 @@ In addition to explain the reason of this phenomena, you are encouraged to try t
 
 Thinking about these may lead you to an aha moment:
 - What is the occupancy at a deeper level in the upper/down sweep? Are most threads actually working?
-   Most threads are just idling since at each level, less and less indices should be written to.
+  
+  Most threads are just idling since at each level, less and less indices should be written to.
+  
 - Are you always launching the same number of blocks throughout each level of the upper/down sweep?
-   I am always launching the same number of blocks regardless of how many indices should actually be written to.
+  
+  I am always launching the same number of blocks regardless of how many indices should actually be written to.
+
 - If some threads are being lazy, can we do an early termination on them?
-   Even if we terminate them early, we cannot move onto the next iteration until the ones that need to be written to are properly finished. 
+  
+  Even if we terminate them early, we cannot move onto the next iteration until the ones that need to be written to are properly finished. 
+
 - How can I compact the threads? What should I modify to keep the remaining threads still working correctly?
-   On each iteration, dynamically dispatch the optimal number of threads and blocks that operate only on the specific indices that need to be modified.
+  
+  On each iteration, dynamically dispatch the optimal number of threads and blocks that operate only on the specific indices that need to be modified.
 
 
 
