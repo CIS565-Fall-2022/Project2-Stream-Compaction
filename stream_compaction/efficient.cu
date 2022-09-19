@@ -285,7 +285,7 @@ namespace StreamCompaction {
         void scan(int n, int *odata, const int *idata) {
             //extend to pow of 2
             int Num = 1 << ilog2ceil(n);
-            int blockSize = 128;
+            int blockSize = 256;
             int blockNum = (Num + blockSize - 1) / blockSize;
             
             int* dev_data;
@@ -296,19 +296,37 @@ namespace StreamCompaction {
             int offset = 1;
             timer().startGpuTimer();
             // TODO
-            ////up-sweep
-            //for (int i = 0; i <= ilog2ceil(Num); i++) {
-            //    kernUpSweep << <blockNum, blockSize >> > (Num, pow(2, i + 1), dev_data);
-            //}
-            // cudaDeviceSynchronize()
-            // cudaMemset(dev_data + Num - 1, 0, sizeof(int));
-            ////down-sweep
-            //for (int i = ilog2ceil(Num); i >= 0; i--) {
-            //    kernDownSweep << <blockNum, blockSize >> > (Num, pow(2, i + 1), dev_data);
-            //}
+            //up-sweep
+            for (int i = 0; i <= ilog2ceil(Num); i++) {
+                kernUpSweep << <blockNum, blockSize >> > (Num, pow(2, i + 1), dev_data);
+            }
+            cudaDeviceSynchronize();
+            cudaMemset(dev_data + Num - 1, 0, sizeof(int));
+            //down-sweep
+            for (int i = ilog2ceil(Num); i >= 0; i--) {
+                kernDownSweep << <blockNum, blockSize >> > (Num, pow(2, i + 1), dev_data);
+            }
+            
+            timer().endGpuTimer();
+            cudaMemcpy(odata, dev_data, n * sizeof(int), cudaMemcpyDeviceToHost);
+            cudaFree(dev_data);
+        }
+
+        void scanOptimized(int n, int* odata, const int* idata) {
+            int Num = 1 << ilog2ceil(n);
+            int blockSize = 128;
+            int blockNum = (Num + blockSize - 1) / blockSize;
+
+            int* dev_data;
+            cudaMalloc((void**)&dev_data, Num * sizeof(int));
+            cudaMemset(dev_data, 0, Num * sizeof(int));
+            cudaMemcpy(dev_data, idata, n * sizeof(int), cudaMemcpyHostToDevice);
+
+            int offset = 1;
+            timer().startGpuTimer();
             for (int d = Num >> 1; d > 0; d >>= 1) {
                 blockNum = (d + blockSize - 1) / blockSize;
-                kernOptimizedUpSweep << <blockNum, blockSize >> > (Num,d, offset, dev_data);
+                kernOptimizedUpSweep << <blockNum, blockSize >> > (Num, d, offset, dev_data);
                 offset <<= 1;
             }
             cudaDeviceSynchronize();
@@ -468,6 +486,14 @@ namespace StreamCompaction {
             }
             timer().endGpuTimer();
             cudaMemcpy(odata, dev_idata, n * sizeof(int), cudaMemcpyDeviceToHost);
+
+            cudaFree(dev_idata);
+            cudaFree(dev_b);
+            cudaFree(dev_e);
+            cudaFree(dev_f);
+            cudaFree(dev_t);
+            cudaFree(dev_d);
+            cudaFree(dev_output);
         }
 
     }

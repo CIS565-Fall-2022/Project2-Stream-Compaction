@@ -13,5 +13,6 @@ namespace StreamCompaction {
         void RadixSort(int n, int* odata, const int* idata);
         void scanWithSharedMemory(int n, int* odata, const int* idata);
         void scanWithoutTimer(int n, int* odata, const int* idata);
+        void scanOptimized(int n, int* odata, const int* idata);
     }
 }

@@ -57,8 +57,8 @@ namespace StreamCompaction {
             cudaMemcpy(dev_array1, idata, n * sizeof(int), cudaMemcpyHostToDevice);
             checkCUDAErrorFn("memcopy idata to dev_array1 failed.");
 
-            dim3 blocksize(512);
-            dim3 blockCount = (n + 512 - 1) / 512;
+            int blocksize = 256;
+            int blockCount = (n + blocksize - 1) / blocksize;
 
             
 
