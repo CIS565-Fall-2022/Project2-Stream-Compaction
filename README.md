@@ -268,7 +268,7 @@ while the runtime stays roughly constant for the naive scan.
 In the **Performance Analysis** section below, all data is from the ***Not Power of 2 Array Size*** tests.
 This is because this is the most general test case for analyzing these algorithms, as most often an
 array will not fit neatly into the CUDA blocks. Additionally, there is negligable difference in the
-runtimes between the power of 2 and non-power of 2 tests.
+runtimes between the power of 2 and non-power of 2 tests. This can be seen in Figure XXX below:
 
 ![](images/figures/graph_pow2.png)
 *Figure XXX: Demonstrating runtime comparison between tests on arrays with power of 2 size and not.*
@@ -294,7 +294,14 @@ each element of the output, and the serial nature of the algorithm means it is v
 It also requires no additional memory allocation (CPU or GPU), which all the parallel versions require.
 
 The work-efficient parallel scan is the next best version. This is slower than the CPU and thrust versions,
-but faster than the naive parallel version in the long run. The reason this is slower than the
+but faster than the naive parallel version in the long run. The reason this is slower than the CPU
+version is, first of all, because it is just using global memory. This is the GPU memory with the highest
+latency, and, especially when compared with the CPU version's cache coherency, is a huge bottleneck
+on the algorithm. Another problem is that the number of threads remains constant each iteration of the
+algorithm. This means that, during both the up sweep and down sweep, there are potentially millions of
+threads allocated for a process (i.e. one of the last data points on the graph), while only 1 or a few
+are actually active at a time. A more optimized version of the algorithm would allocate only the
+threads that are needed.
 
 Finally, the naive parallel scan is the worst version. For 33 million array size, this algorithm
 is 50% worse than the efficient parallel scan, and 30x slower than the thrust library implementation. 
@@ -308,9 +315,26 @@ power of two. A final problem with this approach is that it requires double buff
 at least double the memory of the efficient version, along with the memory latency that comes with
 that much additional memory usage.
 
-
 ![](images/figures/graph_scan.png)
 *Figure XXX: Effect of input array size on runtime of scan algorithm.*
+
+##### Thrust NSight Analysis
+
+Taking a little deeper look into the Thrust version of Exclusive Scan, the NSight profiling timeline
+reveals that it consists of at least 1 ```cudaEventCreate``` API call, as well as 3 ```cudaMemcpyAsync```
+calls. Two of these ```cudaMemcpyAsync``` calls are performed as part of the casting the input and output
+arrays from C style arrays to Thrust ```device_vector```,  and the third is from retrieving the output
+data from the output ```device_vector``` and placing it into the output C style array. In between
+the first two ```cudaMemcpyAsync``` calls and the third, are ```cudaMalloc```, 
+```cudaStreamSynchronize```, and ```cudaFree``` function calls. This is where the actual implementation
+of the Thrust Exclusive Scan function is, where it allocates device memory, operates on the data, and then
+frees it at the end.
+
+![](images/results/thrust_nsight_timeline_memcpy.png)
+*Figure XXX: NSight Timeline of Thrust Exclusive Scan operation highlighting cudaMemcpyAsync.*
+
+![](images/results/thrust_nsight_timeline_streamsync.png)
+*Figure XXX: NSight Timeline of Thrust Exclusive Scan operation highlighting cudaStreamSynchronize.*
 
 ### Stream Compaction
 
