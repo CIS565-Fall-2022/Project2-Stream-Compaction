@@ -106,7 +106,7 @@ For different block sizes ranging from 4 to 1024, the most optimized performance
 
 ![](img/parallel_scan_performance_analysis.png)
 
-Based on this image, we can clearly see that the CPU is taking lesser time than the GPU parallel algorithms. This can be because of the following reasons:
+Based on this image, it appears as if CPU takes lesser time than the GPU parallel algorithms. This is because of further optimizations that can be performed on GPU based parallel algorithms. Some of the things that can be considered when doing so include:
 1. In the current implementation, number of threads hosted in each iteration of upsweep and downsweep is the same. We know that in each iteration, many threads are idle and are simply returning without performing any meaningful operation.
 2. Even if some threads in a warp are done with execution with an early exit, they have to wait for other threads in the warp. When this happens due to conditional stalls, it is called warp divergence. This can be avoided by warp partitioning, such that threads which are likely to terminate together are grouped together in a single warp.
 
