@@ -15,7 +15,7 @@
 
 // const int SIZE = 1 << 8; // feel free to change the size of array
 // todo bring back
-const int SIZE = 1 << 10;
+const int SIZE = 1 << 20;
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
