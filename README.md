@@ -32,20 +32,20 @@ Condenses an array into just its non-zero elements without changing its order
 
 ## Block Size Performance Analysis
 
-![](images/Graph0.png)
+![](img/Graph0.png)
 
 ## Scan Performance
 ### Powers of 2
 
-![](images/Graph1.png)
+![](img/Graph1.png)
 
 ### Non-Powers of 2
 
-![](images/Graph2.png)
+![](img/Graph2.png)
 
 ## Compact
 
-![](images/Graph3.png)
+![](img/Graph3.png)
 
 ## Why is My GPU Approach So Slow? (Extra Credit) (+5)
 
