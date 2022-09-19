@@ -5,7 +5,17 @@
   * [LinkedIn](https://www.linkedin.com/in/leohaoquanliang/)
 * Tested on: Windows 10, Ryzen 7 5800X 8 Core 3.80 GHz, NVIDIA GeForce RTX 3080 Ti 12 GB
 
+# Table of Contents  
+[Features](#features)
+[Performance Analysis](#perf_anal)  
+[Extra Credit](#ec)
+[Debugging Notes/Example](#debug)
+[Output Sample](#output)
+[Future Improvement](#future)
+
 # Features
+<a name="features"/>
+
 * CPU Scan 
 * CPU Compaction with/without Scan
 * GPU Naive Scan
@@ -15,8 +25,9 @@
 * GPU Scan Optimization (Extra Credit)
 * Radix Sort (Extra Credit)
 
-# Performance Analysis
-## Scan
+# Performance Analysis 
+<a name="perf_anal"/>
+## Scan 
 ![Scan power-of-two](img/scan-pot.png)   
 
 ![Scan non-power-of-two](img/scan-npot.png)
@@ -35,7 +46,8 @@ CPU with scan is the least efficient in this case, which makes sense since it ac
 ![Sort non-power-of-two](img/sort-npot.png)
 The CPU side uses the std::sort, which uses the Introsort algorithm that has a time complexity of O(N log(N)). It is already a very efficient sorting algorithm, but the GPU's Radix sort still manages to beat it when the input size is more than 2^23.
 
-## Extra Credit
+# Extra Credit
+<a name="ec"/>
 ### Why is My GPU Approach So Slow?
 There are many reasons for the GPU approach to be slower, and following are some of my ideas:
 * There are way more computation overheads for the GPU scan, which is due to the nature of the algorithm being used. There isn't really any way to improve it.
@@ -102,13 +114,16 @@ for these lines:
 ```
 
 
-## Debugging Notes/Example
+# Debugging Notes/Example
+<a name="debug"/>
 For this project, I mainly used the watch and memory tool from the VS debugger. I want to clearly see the changes of the array at each step, so I copy the result from the Kernel to a local CPU array, use the watch to find out its memory, and then use the memory tool to see if it's the desired result. 
 Following is an example: 
 ![Sort Debugging](img/debug_radix_sort6.png)   
 My Radix sort is generating a wrong result, so I use the above method to go through each step. At step 5, the result wasn't expected (it should have all the 0s and 2s followed by 1s and 3s but instead they are all mixed together). I figured out it's the KernScatter function that didn't generate the correct result, so I went to check for it and find the bug. 
 
-## Output Sample
+# Output Sample
+<a name="output"/>
+
 For input size 2^26:
 ```
 
@@ -183,7 +198,8 @@ For input size 2^26:
     passed
 ```
 
-## Future Improvement
+# Future Improvement
+<a name="future"/>
 * Using Shared Memory for GPU scan
 * Improve the locality of the array to help retiring more idling threads
 * Learn more about Thrust's implementation (why it is so efficient)
