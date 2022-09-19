@@ -10,10 +10,11 @@ CUDA Stream Compaction
 * Tested on: Windows 10 Home, i5-7200U CPU @ 2.50GHz, NVIDIA GTX 940MX 4096 MB (Personal Laptop), RTX not supported
 * GPU Compatibility: 5.0
 
-### Introduction
-
-Stream Compaction
+Introduction
 ---
+
+### Stream Compaction
+
 Stream compaction is an important parallel computing primitive that generates a compact output buffer with selected elements of an input buffer based on some condition. Basically, given an array of elements, we want to create a new array with elements that meet a certain criteria while preserving order.
 The important steps in a parallel stream compaction algorithm are as follows:
 
@@ -29,8 +30,8 @@ The important steps in a parallel stream compaction algorithm are as follows:
     - Result of scan is index into final array
     - Only write an element if temporary array has a 1
 
-Parallel Scanning
----
+### Parallel Scanning
+
 In this project, I implemented stream compaction on CPU and GPU using parallel all-prefix-sum (commonly known as scan) with CUDA and analyzed the performance of each of them. The sequential scan algorithm is poorly suited to GPUs because it does not take advantage of the GPU's data parallelism. The parallel version of scan that utilizes the parallel processors of a GPU to speed up its computation. The parallel scan can be performed in two ways:
 
 1. Naive scan - This is an O(nlogn) algorithm which iteratively adds elements with an offset.
@@ -46,10 +47,10 @@ In this project, I implemented stream compaction on CPU and GPU using parallel a
         ![](img/downsweep.jpg)
 
 
-### Performance Analysis
-
-Scan algorithm
+Performance Analysis
 ---
+### Scan algorithm
+
 For different block sizes ranging from 4 to 1024, the most optimized performance was observed with a block size of 128 or 256. The performance below block size of 32 is really poor because warp size is 32 and block sizes lower than that can force it to perform operations serially. As the block size increases more than 256, the number of idle threads per iteration also increases hence decreasing performance. The following chart shows test results with block size of 256.
 
 ![](img/parallel_scan_performance_analysis.png)
@@ -58,12 +59,12 @@ Based on this image, we can clearly see that the CPU is taking lesser time than 
 1. In the current implementation, number of threads hosted in each iteration of upsweep and downsweep is the same. We know that in each iteration, many threads are idle and are simply returning without performing any meaningful operation.
 2. Even if some threads in a warp are done with execution with an early exit, they have to wait for other threads in the warp. When this happens due to conditional stalls, it is called warp divergence. This can be avoided by warp partitioning, such that threads which are likely to terminate together are grouped together in a single warp.
 
-Stream compaction
----
+### Stream compaction
+
 Stream compaction shows a similar trend when compared to scanning. The following graph does not cover stream compaction tests using naive scan method. The behavior with respect to block size is also similar as observed in scanning, described above. 
 ![](img/stream_compaction_analysis.png)
 
-### References
-
+References
+---
 1. GPU Parallel Algorithms Course Presentation - CIS 5650 - Fall 2022
 2. GPU Gems 3, Chapter 39 - [Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html)
