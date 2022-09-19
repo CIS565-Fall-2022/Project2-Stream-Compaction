@@ -8,7 +8,7 @@ CUDA Stream Compaction
   * [personal website](https://hanlinsun.github.io/)
 * Tested on: Windows 10, i7-8750H @ 3.2GHz 32GB, NVIDIA Quadro P3200 
 
-### Stream Compaction
+# Stream Compaction
 This Project involves:
 
 * CPU version of scan
@@ -22,8 +22,9 @@ These three CPU implements was used to test whether GPU implements was right. I 
 This program generates a new array of random values with each execution, where the size of array is customisable. I have varied the size of the arrays by powers of two, starting from 2^8^ all the wai to 2^20^. The program also executes each algorithm for arrays of size "non- power of two" which are generated truncating the "power of two" arrays.
 
 
-### Output Results
+# Output Results
 
+```
 ****************
 ** SCAN TESTS **
 ****************
@@ -84,14 +85,20 @@ This program generates a new array of random values with each execution, where t
    elapsed time: 0.274432ms    (CUDA Measured)
     [   1   2   2   3   2   2   3   1   1   3   2   1   1 ...   3   1 ]
     passed
+```
 
-### Performance Analysis
+# Performance Analysis
 
-* Scanning Algorithm
+## Scanning Algorithm
 
 ![Scan Chart](img/Analysis%201.JPG)
+
 In this chart, the lower the attribute is, the better its performance.
-In this chart we can see that when the array number is generally small, the performance gap between naive method and work-efficient method is generally small, but with the array length increased, this gap become larger and larger.
+We can see that when the array number is generally small, the performance gap between naive method and work-efficient method is generally small, but with the array length increased, this gap become larger and larger.
 The reason why the second method is more efficient is that even though we have limited the number of active threads, when we are doing naive scan, threads which are not doing anything have to wait for the other active threads in the warp to finish to become available again.
 But in upsweep and downsweep method, upsweep only use half number of threads to finish the work, and the rest of threads can be utilized by the GPU to do other tasks(like downsweep). So through that method we launch the same number of threads, but use less depth than the naive method.
-That's why it is more faster.
+That's why it is way more faster.
+
+## String Compaction
+
+![Compact Chart](img/Analysis%202.JPG)
