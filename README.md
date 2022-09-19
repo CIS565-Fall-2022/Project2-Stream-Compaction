@@ -12,7 +12,7 @@ CUDA Stream Compaction
 This Project involves:
 
 * CPU version of scan
-* COU version of scan without using scan
+* CPU version of scan without using scan
 * CPU version of compact with scan
 * GPU version of naive scan
 * GPU version of work-efficient scan
