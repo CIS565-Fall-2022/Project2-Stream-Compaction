@@ -30,6 +30,8 @@ The important steps in a parallel stream compaction algorithm are as follows:
     - Result of scan is index into final array
     - Only write an element if temporary array has a 1
 
+For this project the criteria into consideration is the number should not be equal to 0.
+
 ### Parallel Scanning
 
 In this project, I implemented stream compaction on CPU and GPU using parallel all-prefix-sum (commonly known as scan) with CUDA and analyzed the performance of each of them. The sequential scan algorithm is poorly suited to GPUs because it does not take advantage of the GPU's data parallelism. The parallel version of scan that utilizes the parallel processors of a GPU to speed up its computation. The parallel scan can be performed in two ways:
@@ -49,6 +51,7 @@ In this project, I implemented stream compaction on CPU and GPU using parallel a
 
 Tests performed
 ---
+The following tests are run with blocksize of 256 for an array size of 2<sup>23</sup> which is around 8 million array elements.
 ```
 ****************
 ** SCAN TESTS **
