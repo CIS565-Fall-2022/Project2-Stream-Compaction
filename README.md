@@ -185,13 +185,13 @@ a 0 at the very end.
   * Can you find the performance bottlenecks? Is it memory I/O? Computation? Is
     it different for each implementation?
     
-    I am not surprised that the GPU efficient implementation isn't faster until the size of the input array gets
+I am not surprised that the GPU efficient implementation isn't faster until the size of the input array gets
     significantly large. This is because I didn't optimize my implementations to ensure that threads are not idling. 
     For example, I'm only using every other thread, then every 4 threads, etc. during scan. A way to bypass this is to
     launch fewer threads, but computing the destination it should go to based on its idx and the current up-sweep or
     down-sweep index.
     
-    Additionally, I ensured that my GPU timers included as few cudaMallocs, Memcpys, and Memsets as possible, but it's not
+Additionally, I ensured that my GPU timers included as few cudaMallocs, Memcpys, and Memsets as possible, but it's not
     always feasible to move all of them outside of my "main" algorithm code, so to speak. For example, I need to call 
     cudaMalloc on an array where I only know its length after a value is computed during the algorithm. Hence, I can only cudaMalloc
     within the algorithm.
