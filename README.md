@@ -48,6 +48,8 @@ In this project, I implemented stream compaction on CPU and GPU using parallel a
 
 ### Performance Analysis
 
+Scan algorithm
+---
 For different block sizes ranging from 4 to 1024, the most optimized performance was observed with a block size of 128 or 256. The performance below block size of 32 is really poor because warp size is 32 and block sizes lower than that can force it to perform operations serially. As the block size increases more than 256, the number of idle threads per iteration also increases hence decreasing performance. The following chart shows test results with block size of 256.
 
 ![](img/parallel_scan_performance_analysis.png)
@@ -55,6 +57,11 @@ For different block sizes ranging from 4 to 1024, the most optimized performance
 Based on this image, we can clearly see that the CPU is taking lesser time than the GPU parallel algorithms. This can be because of the following reasons:
 1. In the current implementation, number of threads hosted in each iteration of upsweep and downsweep is the same. We know that in each iteration, many threads are idle and are simply returning without performing any meaningful operation.
 2. Even if some threads in a warp are done with execution with an early exit, they have to wait for other threads in the warp. When this happens due to conditional stalls, it is called warp divergence. This can be avoided by warp partitioning, such that threads which are likely to terminate together are grouped together in a single warp.
+
+Stream compaction
+---
+Stream compaction shows a similar trend when compared to scanning. The following graph does not cover stream compaction tests using naive scan method. The behavior with respect to block size is also similar as observed in scanning, described above. 
+![](img/stream_compaction_analysis.png)
 
 ### References
 
