@@ -62,7 +62,11 @@ This scan is fairly simple to implement, as thrust::scan is a built-in function 
 #### GPU: Stream Compaction
 
 On the GPU, stream compaction consists of the following steps: 
-1. 
+
+1. For each element in A, compute a "boolean" array such that: b[i] = 1 if A[i] meets the criteria, and b[i] = 0 otherwise.
+2. Run exclusive scan on the boolean array b to produce array s.
+3. The final output array is computed such that: if b[i] = 1, then write A[i] to index s[i] in the output array.
+
 ## Output Example
 
 The following is an example of the output for N = 2^20
