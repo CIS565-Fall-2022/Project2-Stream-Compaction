@@ -34,18 +34,32 @@ Condenses an array into just its non-zero elements without changing its order
 
 ![](img/Graph0.png)
 
+A blocksize of 256 seems to yield the best results since it was the first size large enough to take advantage of the parallelism offered by the GPU.
+
 ## Scan Performance
 ### Powers of 2
 
 ![](img/Graph1.png)
 
+Observations:
+- CPU Scan is our baseline
+- Thrust Scan is the fastest; this is expected since it is a library provided to us.
+- Efficient and Naive GPU scan were actually fairly inefficient; this is likely due to so suboptimal thread allocation.
+
 ### Non-Powers of 2
 
 ![](img/Graph2.png)
 
+Observations:
+- The same observations from running the implementations on array lengths that were powers of 2
+
 ## Compact
 
 ![](img/Graph3.png)
+
+Observations:
+- Compaction without Scan on the CPU is actually faster that with Scan
+- GPU implementations are still slower than the CPU implementations
 
 ## Why is My GPU Approach So Slow? (Extra Credit) (+5)
 
