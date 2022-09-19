@@ -120,11 +120,14 @@ function scan_gpu(input_array, output_array, number_of_elements):
 
     for all k in parallel:
         shift_array_right(k, o_array_gpu_1, o_array_gpu_0)
+    swap(o_array_gpu_0, o_array_gpu_1)
 
     for d in range [1, ceil( log_2(n) ) ]:
         for all k in parallel:
             naive_scan_iteration(k, o_array_gpu_0, o_array_gpu_1, 2^d)
-            swap(o_array_gpu_0, o_array_gpu_1)
+        swap(o_array_gpu_0, o_array_gpu_1)
+
+    output_array = o_array_gpu_0
 
 end
 
