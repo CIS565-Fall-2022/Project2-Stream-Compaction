@@ -49,7 +49,6 @@ namespace StreamCompaction {
             for (int d = 1; d <= ilog2ceil(n); d++) {
                 kernScan << <fullBlocksPerGrid, blockSize >> > (n, d, dev_odata, dev_idata);
                 std::swap(dev_odata, dev_idata);
-                cudaMemcpy(odata , dev_idata, sizeof(int) * (n), cudaMemcpyDeviceToHost);
             }
             timer().endGpuTimer();
             //convert from inclusive scan to exclusive scan
