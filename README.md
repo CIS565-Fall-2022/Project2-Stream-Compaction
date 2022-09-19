@@ -18,23 +18,23 @@ is a sum of a\[0\] + ... + a\[i - 1\] excluding itself.
 ## Implementation and Results
 #### CPU: Sequential Scan 
 
-On the CPU, a sequential scan consists of a simple for-loop that loops through all the elements
+* On the CPU, a sequential scan consists of a simple for-loop that loops through all the elements
 of input array A, and outputs to B[i] = B[i - 1] + A[i - 1]
 
 #### CPU: Stream Compact without Scan
 
-Stream compact without Scan will simply keep a counter of the current write-index in the output array B, 
+* Stream compact without Scan will simply keep a counter of the current write-index in the output array B, 
 while iterating through input array A. If A[i] != 0, then B[output_index] = A[i].
 
 #### CPU: Stream Compact with Scan
 
-Stream compact with scan is a sequential implementation of the stream compact algorithm for GPU, except on the CPU
+* Stream compact with scan is a sequential implementation of the stream compact algorithm for GPU, except on the CPU
 and thus none of the advantages of parallel programming will come into play. See the following section for GPU stream
 compaction algorithms. 
 
 #### GPU: Naive GPU Scan
 
-A naive GPU scan will take an input array (or read array), and add each sequential pair of elements together
+* A naive GPU scan will take an input array (or read array), and add each sequential pair of elements together
 into an output array (or write array), ping-pong the arrays (read is now write and vice versa), increment the
 additive offset, and then repeat the operation until there is only one output (the final sum). Here, each addition
 can be done in a parallel manner since we will never write to the same array slot. The only caveat is that you must
@@ -42,7 +42,7 @@ wait for each level to finish its read/write before moving on to the next level.
 
 #### GPU: Work-Efficient GPU Scan
 
-A work efficient exclusive GPU scan uses only one array and can do the operation in place. This array is treated as a balanced
+* A work efficient exclusive GPU scan uses only one array and can do the operation in place. This array is treated as a balanced
 binary tree, where the left child always retains its original value from the read array. This will allow us to 
 retain some of the original values to help us recover the entire scan array after we do a down sweep.
 
@@ -57,11 +57,11 @@ and sets its right child's value to a sum of itself and the previous left child'
 
 #### GPU: Thrust Scan
 
-This scan is fairly simple to implement, as thrust::scan is a built-in function in the Thrust library.
+* This scan is fairly simple to implement, as thrust::scan is a built-in function in the Thrust library.
 
 #### GPU: Stream Compaction
 
-On the GPU, stream compaction consists of the following steps: 
+* On the GPU, stream compaction consists of the following steps: 
 
 1. For each element in A, compute a "boolean" array such that: b[i] = 1 if A[i] meets the criteria, and b[i] = 0 otherwise.
 2. Run exclusive scan on the boolean array b to produce array s.
