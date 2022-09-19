@@ -11,3 +11,11 @@ namespace StreamCompaction {
         int compact(int n, int *odata, const int *idata);
     }
 }
+
+namespace RadixSort {
+
+    void split(int n, int* odata, int* idata, int bitpos);
+
+    void radixSort(int n, int* odata, int* idata);
+}
+

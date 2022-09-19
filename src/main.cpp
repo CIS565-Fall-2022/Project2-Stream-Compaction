@@ -15,7 +15,7 @@
 
 // const int SIZE = 1 << 8; // feel free to change the size of array
 // todo bring back
-const int SIZE = 1 << 19;
+const int SIZE = 1 << 10;
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
@@ -151,8 +151,58 @@ int main(int argc, char* argv[]) {
     printArray(count, c, true);
     printCmpLenResult(count, expectedNPOT, b, c);
 
+    printf("\n");
+    printf("**********************\n");
+    printf("** RADIX SORT TESTS **\n");
+    printf("**********************\n");
+
+    // Radix Sort tests
+
+    genArray(SIZE - 1, a, 8);  // Leave a 0 at the end to test that edge case
+    //genArray(SIZE, a, 4); // Case without 0 at the end;
+    a[SIZE - 1] = 0;
+    printArray(SIZE, a, true);
+
+    int* d = new int[SIZE];
+    int* e = new int[SIZE];
+
+    zeroArray(SIZE, b);
+    printDesc("control case thrust sort, power-of-two");
+    StreamCompaction::Thrust::sort(SIZE, b, a);
+    printArray(SIZE, b, true);
+
+    zeroArray(SIZE, c);
+    printDesc("control case thrust sort, non-power-of-two");
+    StreamCompaction::Thrust::sort(NPOT, c, a);
+    printArray(NPOT, c, true);
+    // do not comapre to array b. 
+
+    zeroArray(SIZE, d);
+    printDesc("radix sort, power-of-two");
+    RadixSort::radixSort(SIZE, d, a);
+    printArray(SIZE, d, true);
+    printCmpResult(SIZE, d, b);
+
+    /* zeroArray(SIZE, b);
+    printDesc("radix sort, power-of-two");
+    count = StreamCompaction::CPU::compactWithoutScan(SIZE, b, a);
+    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    expectedCount = count;
+    printArray(count, b, true);
+    printCmpLenResult(count, expectedCount, b, b);
+
+    zeroArray(SIZE, b);
+    printDesc("radix sort, non power-of-two");
+    count = StreamCompaction::CPU::compactWithoutScan(SIZE, b, a);
+    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    expectedCount = count;
+    printArray(count, b, true);
+    printCmpLenResult(count, expectedCount, b, b);*/
+
     system("pause"); // stop Win32 console from closing on exit
     delete[] a;
     delete[] b;
     delete[] c;
+    delete[] d;
+    delete[] e;
 }
