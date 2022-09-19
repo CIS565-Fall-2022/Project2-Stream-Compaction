@@ -15,7 +15,7 @@ One application of Parallel Scan is Summed Area Table, which is a very important
 
 # Description
 In this project, I mainly implemented these algorithms:
-- Naive GPU Scan & Stream compaction
+- Naive CPU Scan & Stream compaction
 - Naive GPU Scan 
 - Optimized Efficient GPU Scan & Stream Compaction (which break the scanning process into up-sweep and down-sweep stages)
 - GPU Scan with Thrust Library
