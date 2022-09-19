@@ -10,10 +10,25 @@ Project 2 - CUDA Stream Compaction**
  
 * Tested on: Windows 10 Home, i7-11800H @ 2.3GHz, 16.0GB, NVIDIA GeForce RTX 3060 Laptop GPU
 
-### Background
+## Background
+The project contains an implementation of the Scan and Compaction Algorithms.
 
+# Scan 
+Description: 
+Each index i of a scan output array is the sum of the corresponding elements in the input array at the indices that came before i. This algorithm was implemented in the following ways:
 
+1. CPU - Non-parallel Scan
+2. Naive - Naively Parallel Scan
+3. Efficient - Parallel Scan using Upsweep and Downsweep on a binary tree representation of an array
+4. Thrust - Scan using Thrust API
 
+# Compaction
+Description: 
+Condenses an array into just its non-zero elements without changing its order
+
+1. CPU - Non-parallel Compact
+2. CPU with Scan - Non-parallel Compact while using Scan
+3. GPU - Parallel Compaction using Efficient Parallel Scan
 
 ## Why is My GPU Approach So Slow? (Extra Credit) (+5)
 
