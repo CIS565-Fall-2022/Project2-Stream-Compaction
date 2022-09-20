@@ -22,8 +22,16 @@ namespace StreamCompaction {
          * Maps an array to an array of 0s and 1s for stream compaction. Elements
          * which map to 0 will be removed, and elements which map to 1 will be kept.
          */
-        __global__ void kernMapToBoolean(int n, int *bools, const int *idata) {
+        __global__ void kernMapToBoolean(int n, int *bools, const int *idata) 
+        {
             // TODO
+            //find each index
+            int index = threadIdx.x + (blockIdx.x * blockDim.x);
+            if (index >= n)
+            {
+                return;
+            }
+            bools[index] = idata[index] != 0 ? 1 : 0;
         }
 
         /**
@@ -33,6 +41,16 @@ namespace StreamCompaction {
         __global__ void kernScatter(int n, int *odata,
                 const int *idata, const int *bools, const int *indices) {
             // TODO
+            int index = threadIdx.x + (blockIdx.x * blockDim.x);
+            if (index >= n)
+            {
+                return;
+            }
+            if (bools[index] !=0)
+            {
+                int targetIdx = indices[index];
+                odata[targetIdx] = idata[index];
+            }
         }
 
     }
