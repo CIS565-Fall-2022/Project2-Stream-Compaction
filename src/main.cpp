@@ -14,7 +14,7 @@
 #include <stream_compaction/radix_sort.h>
 #include "testing_helpers.hpp"
 
-const int SIZE = 1 << 15; // feel free to change the size of array
+const int SIZE = 1 << 20; // feel free to change the size of array
 const int NPOT = SIZE - 3; // Non-Power-Of-Two
 int *a = new int[SIZE];
 int *b = new int[SIZE];
@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
 
     zeroArray(SIZE, c);
     printDesc("cpu radix sort, power-of-two");
-    StreamCompaction::Radix_Sort::radix_sort_cpu(SIZE, c, a);
+    StreamCompaction::Radix_Sort::radix_sort_cpu(SIZE, 6, c, a);
     count = SIZE;
     printElapsedTime(StreamCompaction::Radix_Sort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
     printArray(count, c, true);
@@ -181,8 +181,22 @@ int main(int argc, char* argv[]) {
     zeroArray(SIZE, c);
     printDesc("cpu radix sort, non-power-of-two");
     count = NPOT;
-    StreamCompaction::Radix_Sort::radix_sort_cpu(NPOT, c, a);
+    StreamCompaction::Radix_Sort::radix_sort_cpu(NPOT, 6, c, a);
     printElapsedTime(StreamCompaction::Radix_Sort::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    printArray(count, c, true);
+
+    zeroArray(SIZE, c);
+    printDesc("parallel radix sort, power-of-two");
+    StreamCompaction::Radix_Sort::radix_sort_parallel(SIZE, 6, c, a);
+    count = SIZE;
+    printElapsedTime(StreamCompaction::Radix_Sort::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    printArray(count, c, true);
+
+    zeroArray(SIZE, c);
+    printDesc("parallel radix sort, non-power-of-two");
+    count = NPOT;
+    StreamCompaction::Radix_Sort::radix_sort_parallel(NPOT, 6, c, a);
+    printElapsedTime(StreamCompaction::Radix_Sort::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printArray(count, c, true);
 
     system("pause"); // stop Win32 console from closing on exit
