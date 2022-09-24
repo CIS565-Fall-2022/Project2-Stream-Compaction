@@ -19,8 +19,20 @@ namespace StreamCompaction {
          */
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
+         
+            doScan(n, odata, idata);
+
             timer().endCpuTimer();
+        }
+
+        void doScan(int n, int* odata, const int* idata)
+        {
+            // Exclusive scan
+            odata[0] = 0;
+            for (int i = 1; i < n; ++i)
+            {
+                odata[i] = idata[i - 1] + odata[i - 1];
+            }
         }
 
         /**
@@ -31,8 +43,18 @@ namespace StreamCompaction {
         int compactWithoutScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
             // TODO
+
+            int count = 0;
+            for (int i = 0; i < n; ++i)
+            {
+                if (idata[i] > 0)
+                {
+                    odata[count++] = idata[i];
+                }
+            }
+
             timer().endCpuTimer();
-            return -1;
+            return count;
         }
 
         /**
@@ -41,10 +63,39 @@ namespace StreamCompaction {
          * @returns the number of elements remaining after compaction.
          */
         int compactWithScan(int n, int *odata, const int *idata) {
+
+            int* tmpInputData = new int[n];
+            int* tmpOutputData = new int[n];
+
             timer().startCpuTimer();
-            // TODO
+
+            // Transfer idata to 0,1 set
+            for (int i = 0; i < n; ++i)
+            {
+                tmpInputData[i] = idata[i] > 0 ? 1 : 0;
+            }
+
+            // Exclusive scan
+            doScan(n, tmpOutputData, tmpInputData);
+
+            // Final array size
+            int count = tmpOutputData[n - 1] + tmpInputData[n - 1];
+
+            // Scatter
+            for (int i = 0; i < n; ++i)
+            {
+                if (tmpInputData[i] > 0)
+                {
+                    odata[tmpOutputData[i]] = idata[i];
+                }
+            }
+
             timer().endCpuTimer();
-            return -1;
+
+            delete[] tmpInputData;
+            delete[] tmpOutputData;
+          
+            return count;
         }
     }
 }
