@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include "device_launch_parameters.h"
 
-#define blockSize 256
+#define blockSize 4
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define checkCUDAError(msg) checkCUDAErrorFn(msg, FILENAME, __LINE__)
