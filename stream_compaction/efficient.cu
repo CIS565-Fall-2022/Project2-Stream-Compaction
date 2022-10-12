@@ -14,10 +14,9 @@ namespace StreamCompaction {
             return timer;
         }
 
-        __global__ void kernUpSweep(int nCeil, int d, int* dev_idata) {
+        __global__ void kernUpSweep(int threadNeeded, int d, int* dev_idata) {
             int index = threadIdx.x + (blockIdx.x * blockDim.x);
             //increase1 2^(d+1), increase2 2^d
-            int threadNeeded = 1 << (nCeil - d - 1);
             if (index < threadNeeded) {
                 int increase1 = 1 << (d + 1);
                 int increase2 = 1 << d;
@@ -26,9 +25,8 @@ namespace StreamCompaction {
             }
         }
 
-        __global__ void kernDownSweep(int nCeil, int d, int* dev_idata){
+        __global__ void kernDownSweep(int threadNeeded, int d, int* dev_idata){
             int index = threadIdx.x + (blockIdx.x * blockDim.x);
-            int threadNeeded = 1 << (nCeil - d - 1);
             if (index < threadNeeded) {
                 int increase1 = 1 << (d + 1);
                 int increase2 = 1 << d;
@@ -82,17 +80,20 @@ namespace StreamCompaction {
             }
             
             //open n threads is enough
-            dim3 fullBlocksPerGrid((blockSize + n - 1) / blockSize);
             // TODO
             //up-sweep
             int depth = ilog2ceil(n2PowCeil) - 1;
             for (int d = 0; d <= depth; ++d) {
-                kernUpSweep << <fullBlocksPerGrid, blockSize>> > (nCeil, d, dev_idata);
+                int threadNeeded = 1 << (nCeil - d - 1);
+                dim3 fullBlocksPerGrid((blockSize + threadNeeded - 1) / blockSize);
+                kernUpSweep << <fullBlocksPerGrid, blockSize>> > (threadNeeded, d, dev_idata);
             }
             //down-sweep
             cudaMemset(&(dev_idata[n2PowCeil -1]), 0, sizeof(int));
             for (int d = depth; d >= 0; --d) {
-                kernDownSweep << <fullBlocksPerGrid, blockSize >> > (nCeil, d, dev_idata);
+                int threadNeeded = 1 << (nCeil - d - 1);
+                dim3 fullBlocksPerGrid((blockSize + threadNeeded - 1) / blockSize);
+                kernDownSweep << <fullBlocksPerGrid, blockSize >> > (threadNeeded, d, dev_idata);
             }
             timer().endGpuTimer();
 
@@ -148,7 +149,9 @@ namespace StreamCompaction {
             //up-sweep
             int depth = ilog2ceil(n2PowCeil) - 1;
             for (int d = 0; d <= depth; ++d) {
-                kernUpSweep << <fullBlocksPerGrid, blockSize >> > (nCeil, d, dev_tempArr);
+                int threadNeeded = 1 << (nCeil - d - 1);
+                dim3 fullBlocksPerGrid((blockSize + threadNeeded - 1) / blockSize);
+                kernUpSweep << <fullBlocksPerGrid, blockSize >> > (threadNeeded, d, dev_tempArr);
             }
             //create final array based on up-sweep result
             int numOfResults;
@@ -157,7 +160,9 @@ namespace StreamCompaction {
             //down-sweep
             cudaMemset(&(dev_tempArr[n2PowCeil - 1]), 0, sizeof(int));
             for (int d = depth; d >= 0; --d) {
-                kernDownSweep << <fullBlocksPerGrid, blockSize >> > (nCeil, d, dev_tempArr);
+                int threadNeeded = 1 << (nCeil - d - 1);
+                dim3 fullBlocksPerGrid((blockSize + threadNeeded - 1) / blockSize);
+                kernDownSweep << <fullBlocksPerGrid, blockSize >> > (threadNeeded, d, dev_tempArr);
             }
             //scatter
             kernScatter << <fullBlocksPerGrid, blockSize >> > (n, dev_tempArr, dev_finalArr, dev_idata);
