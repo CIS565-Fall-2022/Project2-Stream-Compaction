@@ -23,8 +23,8 @@ namespace StreamCompaction {
             int idx = blockDim.x * blockIdx.x + threadIdx.x;
             if (idx >= n) return;
             // Add adjacent elements to get the prefix sum
-            if (idx >= twoPow(d - 1)) 
-                odata[idx] = idata[idx - twoPow(d - 1)] + idata[idx];
+            if (idx >= twoPow(d))
+                odata[idx] = idata[idx] + idata[idx - twoPow(d)];
             else
                 odata[idx] = idata[idx];
         }
@@ -47,7 +47,7 @@ namespace StreamCompaction {
             
             timer().startGpuTimer();
             // TODO: Naive Scan
-            for (int d = 1; d <= ilog2ceil(n); d++) {
+            for (int d = 0; d < ilog2ceil(n); d++) {
                 kernNaiveScan<<<blocksPerGrid, blockSize>>>(n, d, dev_odata, dev_idata);
                 std::swap(dev_odata, dev_idata);
             }
